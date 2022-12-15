@@ -8,11 +8,18 @@ namespace System.Runtime.Intrinsics
     internal static class Scalar<T>
         where T : struct
     {
+        public static bool IsHardwareAccelerated
+        {
+            get => IsHardwareAccelerated;
+        }
         public static T AllBitsSet
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
+                if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
                 if (typeof(T) == typeof(byte))
                 {
                     return (T)(object)byte.MaxValue;
@@ -73,6 +80,9 @@ namespace System.Runtime.Intrinsics
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
+                if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
                 if (typeof(T) == typeof(byte))
                 {
                     return (T)(object)(byte)1;
@@ -132,6 +142,8 @@ namespace System.Runtime.Intrinsics
         public static T Abs(T value)
         {
             // byte, ushort, uint, and ulong should have already been handled
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
 
             if (typeof(T) == typeof(double))
             {
@@ -170,6 +182,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Add(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (T)(object)(byte)((byte)(object)left + (byte)(object)right);
@@ -227,6 +242,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Ceiling(T value)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(double))
             {
                 return (T)(object)Math.Ceiling((double)(object)value);
@@ -244,6 +262,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Divide(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (T)(object)(byte)((byte)(object)left / (byte)(object)right);
@@ -301,6 +322,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Equals(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (byte)(object)left == (byte)(object)right;
@@ -358,6 +382,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint ExtractMostSignificantBit(T value)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 uint bits = (byte)(object)value;
@@ -437,6 +464,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Floor(T value)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(double))
             {
                 return (T)(object)Math.Floor((double)(object)value);
@@ -454,6 +484,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool GreaterThan(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (byte)(object)left > (byte)(object)right;
@@ -511,6 +544,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool GreaterThanOrEqual(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (byte)(object)left >= (byte)(object)right;
@@ -568,6 +604,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool LessThan(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (byte)(object)left < (byte)(object)right;
@@ -625,6 +664,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool LessThanOrEqual(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (byte)(object)left <= (byte)(object)right;
@@ -682,6 +724,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Multiply(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (T)(object)(byte)((byte)(object)left * (byte)(object)right);
@@ -738,6 +783,9 @@ namespace System.Runtime.Intrinsics
 
         public static bool ObjectEquals(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return ((byte)(object)left).Equals((byte)(object)right);
@@ -795,6 +843,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T ShiftLeft(T value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (T)(object)(byte)((byte)(object)value << (shiftCount & 7));
@@ -856,6 +907,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T ShiftRightArithmetic(T value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (T)(object)(byte)((byte)(object)value >> (shiftCount & 7));
@@ -917,6 +971,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T ShiftRightLogical(T value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (T)(object)(byte)((byte)(object)value >>> (shiftCount & 7));
@@ -978,6 +1035,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Sqrt(T value)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (T)(object)(byte)MathF.Sqrt((byte)(object)value);
@@ -1035,6 +1095,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Subtract(T left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             if (typeof(T) == typeof(byte))
             {
                 return (T)(object)(byte)((byte)(object)left - (byte)(object)right);
