@@ -43,11 +43,7 @@ namespace System.Runtime.Intrinsics
         /// <summary>Gets a value that indicates whether 256-bit vector operations are subject to hardware acceleration through JIT intrinsic support.</summary>
         /// <value><see langword="true" /> if 256-bit vector operations are subject to hardware acceleration; otherwise, <see langword="false" />.</value>
         /// <remarks>256-bit vector operations are subject to hardware acceleration on systems that support Single Instruction, Multiple Data (SIMD) instructions for 256-bit vectors and the RyuJIT just-in-time compiler is used to compile managed code.</remarks>
-        public static bool IsHardwareAccelerated
-        {
-            [Intrinsic]
-            get => IsHardwareAccelerated;
-        }
+        public static bool IsHardwareAccelerated { get => true; }
 
         /// <summary>Computes the absolute value of each element in a vector.</summary>
         /// <typeparam name="T">The type of the elements in the vector.</typeparam>
@@ -1390,6 +1386,9 @@ namespace System.Runtime.Intrinsics
             // This is because the underlying dpps instruction on x86/x64 will do this equivalently
             // and otherwise the software vs accelerated implementations may differ in returned result.
 
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             T result = Vector128.Dot(left._lower, right._lower);
             result = Scalar<T>.Add(result, Vector128.Dot(left._upper, right._upper));
             return result;
@@ -2724,6 +2723,9 @@ namespace System.Runtime.Intrinsics
             // Doing this as Sum(lower) + Sum(upper) is important for floating-point determinism
             // This is because the underlying dpps instruction on x86/x64 will do this equivalently
             // and otherwise the software vs accelerated implementations may differ in returned result.
+
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
 
             T result = Vector128.Sum(vector._lower);
             result = Scalar<T>.Add(result, Vector128.Sum(vector._upper));

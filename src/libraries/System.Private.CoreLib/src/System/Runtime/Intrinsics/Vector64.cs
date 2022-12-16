@@ -19,11 +19,7 @@ namespace System.Runtime.Intrinsics
         /// <summary>Gets a value that indicates whether 64-bit vector operations are subject to hardware acceleration through JIT intrinsic support.</summary>
         /// <value><see langword="true" /> if 64-bit vector operations are subject to hardware acceleration; otherwise, <see langword="false" />.</value>
         /// <remarks>64-bit vector operations are subject to hardware acceleration on systems that support Single Instruction, Multiple Data (SIMD) instructions for 64-bit vectors and the RyuJIT just-in-time compiler is used to compile managed code.</remarks>
-        public static bool IsHardwareAccelerated
-        {
-            [Intrinsic]
-            get => IsHardwareAccelerated;
-        }
+        public static bool IsHardwareAccelerated { get => true; }
 
         /// <summary>Computes the absolute value of each element in a vector.</summary>
         /// <typeparam name="T">The type of the elements in the vector.</typeparam>
@@ -45,6 +41,9 @@ namespace System.Runtime.Intrinsics
             }
             else
             {
+                if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
                 Unsafe.SkipInit(out Vector64<T> result);
 
                 for (int index = 0; index < Vector64<T>.Count; index++)
@@ -260,6 +259,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<float> Ceiling(Vector64<float> vector)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<float> result);
 
             for (int index = 0; index < Vector64<float>.Count; index++)
@@ -279,6 +281,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<double> Ceiling(Vector64<double> vector)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<double> result);
 
             for (int index = 0; index < Vector64<double>.Count; index++)
@@ -1121,6 +1126,9 @@ namespace System.Runtime.Intrinsics
         public static Vector64<T> Equals<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Vector64<T>.Count; index++)
@@ -1154,6 +1162,9 @@ namespace System.Runtime.Intrinsics
         public static bool EqualsAny<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector64<T>.Count; index++)
             {
                 if (Scalar<T>.Equals(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1176,6 +1187,7 @@ namespace System.Runtime.Intrinsics
         public static uint ExtractMostSignificantBits<T>(this Vector64<T> vector)
             where T : struct
         {
+
             uint result = 0;
 
             for (int index = 0; index < Vector64<T>.Count; index++)
@@ -1195,6 +1207,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<float> Floor(Vector64<float> vector)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<float> result);
 
             for (int index = 0; index < Vector64<float>.Count; index++)
@@ -1214,6 +1229,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<double> Floor(Vector64<double> vector)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<double> result);
 
             for (int index = 0; index < Vector64<double>.Count; index++)
@@ -1256,6 +1274,9 @@ namespace System.Runtime.Intrinsics
         public static Vector64<T> GreaterThan<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Vector64<T>.Count; index++)
@@ -1278,6 +1299,9 @@ namespace System.Runtime.Intrinsics
         public static bool GreaterThanAll<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector64<T>.Count; index++)
             {
                 if (!Scalar<T>.GreaterThan(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1300,6 +1324,9 @@ namespace System.Runtime.Intrinsics
         public static bool GreaterThanAny<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector64<T>.Count; index++)
             {
                 if (Scalar<T>.GreaterThan(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1322,6 +1349,9 @@ namespace System.Runtime.Intrinsics
         public static Vector64<T> GreaterThanOrEqual<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Vector64<T>.Count; index++)
@@ -1344,6 +1374,9 @@ namespace System.Runtime.Intrinsics
         public static bool GreaterThanOrEqualAll<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector64<T>.Count; index++)
             {
                 if (!Scalar<T>.GreaterThanOrEqual(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1366,6 +1399,9 @@ namespace System.Runtime.Intrinsics
         public static bool GreaterThanOrEqualAny<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector64<T>.Count; index++)
             {
                 if (Scalar<T>.GreaterThanOrEqual(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1388,6 +1424,9 @@ namespace System.Runtime.Intrinsics
         public static Vector64<T> LessThan<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Vector64<T>.Count; index++)
@@ -1410,6 +1449,9 @@ namespace System.Runtime.Intrinsics
         public static bool LessThanAll<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector64<T>.Count; index++)
             {
                 if (!Scalar<T>.LessThan(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1432,6 +1474,9 @@ namespace System.Runtime.Intrinsics
         public static bool LessThanAny<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector64<T>.Count; index++)
             {
                 if (Scalar<T>.LessThan(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1454,6 +1499,9 @@ namespace System.Runtime.Intrinsics
         public static Vector64<T> LessThanOrEqual<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Vector64<T>.Count; index++)
@@ -1476,6 +1524,9 @@ namespace System.Runtime.Intrinsics
         public static bool LessThanOrEqualAll<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector64<T>.Count; index++)
             {
                 if (!Scalar<T>.LessThanOrEqual(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1498,6 +1549,9 @@ namespace System.Runtime.Intrinsics
         public static bool LessThanOrEqualAny<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector64<T>.Count; index++)
             {
                 if (Scalar<T>.LessThanOrEqual(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1596,6 +1650,9 @@ namespace System.Runtime.Intrinsics
         public static Vector64<T> Max<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Vector64<T>.Count; index++)
@@ -1618,6 +1675,9 @@ namespace System.Runtime.Intrinsics
         public static Vector64<T> Min<T>(Vector64<T> left, Vector64<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Vector64<T>.Count; index++)
@@ -2253,6 +2313,9 @@ namespace System.Runtime.Intrinsics
         public static Vector64<T> Sqrt<T>(Vector64<T> vector)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Vector64<T>.Count; index++)
@@ -2361,6 +2424,9 @@ namespace System.Runtime.Intrinsics
         public static T Sum<T>(Vector64<T> vector)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             T sum = default;
 
             for (int index = 0; index < Vector64<T>.Count; index++)

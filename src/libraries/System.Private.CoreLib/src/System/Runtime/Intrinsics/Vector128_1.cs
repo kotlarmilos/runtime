@@ -35,6 +35,8 @@ namespace System.Runtime.Intrinsics
         internal readonly Vector64<T> _lower;
         internal readonly Vector64<T> _upper;
 
+        public static bool IsHardwareAccelerated { get => true; }
+
         /// <summary>Gets a new <see cref="Vector128{T}" /> with all bits set to 1.</summary>
         /// <exception cref="NotSupportedException">The type of the vector (<typeparamref name="T" />) is not supported.</exception>
         public static Vector128<T> AllBitsSet
@@ -198,6 +200,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector128<T> operator /(Vector128<T> left, T right)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector128<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -258,6 +263,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector128<T> operator <<(Vector128<T> value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector128<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -330,6 +338,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector128<T> operator >>(Vector128<T> value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector128<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -390,6 +401,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector128<T> operator >>>(Vector128<T> value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector128<T> result);
 
             for (int index = 0; index < Count; index++)

@@ -42,11 +42,7 @@ namespace System.Runtime.Intrinsics
         /// <summary>Gets a value that indicates whether 128-bit vector operations are subject to hardware acceleration through JIT intrinsic support.</summary>
         /// <value><see langword="true" /> if 128-bit vector operations are subject to hardware acceleration; otherwise, <see langword="false" />.</value>
         /// <remarks>128-bit vector operations are subject to hardware acceleration on systems that support Single Instruction, Multiple Data (SIMD) instructions for 128-bit vectors and the RyuJIT just-in-time compiler is used to compile managed code.</remarks>
-        public static bool IsHardwareAccelerated
-        {
-            [Intrinsic]
-            get => IsHardwareAccelerated;
-        }
+        public static bool IsHardwareAccelerated { get => true; }
 
         /// <summary>Computes the absolute value of each element in a vector.</summary>
         /// <typeparam name="T">The type of the elements in the vector.</typeparam>
@@ -1391,6 +1387,9 @@ namespace System.Runtime.Intrinsics
         public static T Dot<T>(Vector128<T> left, Vector128<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             // Doing this as Dot(lower) + Dot(upper) is important for floating-point determinism
             // This is because the underlying dpps instruction on x86/x64 will do this equivalently
             // and otherwise the software vs accelerated implementations may differ in returned result.
@@ -2707,6 +2706,9 @@ namespace System.Runtime.Intrinsics
         public static T Sum<T>(Vector128<T> vector)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             T sum = default;
 
             for (int index = 0; index < Vector128<T>.Count; index++)

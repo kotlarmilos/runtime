@@ -34,6 +34,8 @@ namespace System.Runtime.Intrinsics
         // This field allows the debug view to work https://github.com/dotnet/runtime/issues/9495)
         internal readonly ulong _00;
 
+        public static bool IsHardwareAccelerated { get => true; }
+
         /// <summary>Gets a new <see cref="Vector64{T}" /> with all bits set to 1.</summary>
         /// <exception cref="NotSupportedException">The type of the vector (<typeparamref name="T" />) is not supported.</exception>
         public static Vector64<T> AllBitsSet
@@ -96,6 +98,9 @@ namespace System.Runtime.Intrinsics
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
+                if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
                 T scalar = Scalar<T>.One;
                 return Vector64.Create(scalar);
             }
@@ -145,6 +150,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<T> operator +(Vector64<T> left, Vector64<T> right)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -199,6 +207,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<T> operator /(Vector64<T> left, Vector64<T> right)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -218,6 +229,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<T> operator /(Vector64<T> left, T right)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -238,6 +252,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector64<T> left, Vector64<T> right)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Count; index++)
             {
                 if (!Scalar<T>.Equals(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -274,6 +291,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector64<T> left, Vector64<T> right)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Count; index++)
             {
                 if (!Scalar<T>.Equals(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -292,6 +312,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<T> operator <<(Vector64<T> value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -312,6 +335,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<T> operator *(Vector64<T> left, Vector64<T> right)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -332,6 +358,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<T> operator *(Vector64<T> left, T right)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -376,6 +405,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<T> operator >>(Vector64<T> value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -396,6 +428,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<T> operator -(Vector64<T> left, Vector64<T> right)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -435,6 +470,9 @@ namespace System.Runtime.Intrinsics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector64<T> operator >>>(Vector64<T> value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector64<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -473,20 +511,20 @@ namespace System.Runtime.Intrinsics
                 {
                     return this == other;
                 }
-            }
+            }else {
+                return SoftwareFallback(in this, other);
 
-            return SoftwareFallback(in this, other);
-
-            static bool SoftwareFallback(in Vector64<T> self, Vector64<T> other)
-            {
-                for (int index = 0; index < Count; index++)
+                static bool SoftwareFallback(in Vector64<T> self, Vector64<T> other)
                 {
-                    if (!Scalar<T>.ObjectEquals(self.GetElementUnsafe(index), other.GetElementUnsafe(index)))
+                    for (int index = 0; index < Count; index++)
                     {
-                        return false;
+                        if (!Scalar<T>.ObjectEquals(self.GetElementUnsafe(index), other.GetElementUnsafe(index)))
+                        {
+                            return false;
+                        }
                     }
+                    return true;
                 }
-                return true;
             }
         }
 

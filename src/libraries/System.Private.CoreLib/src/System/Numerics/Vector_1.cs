@@ -34,6 +34,7 @@ namespace System.Numerics
         // These fields exist to ensure the alignment is 8, rather than 1.
         internal readonly ulong _00;
         internal readonly ulong _01;
+        public static bool IsHardwareAccelerated { get => true; }
 
         /// <summary>Creates a new <see cref="Vector{T}" /> instance with all elements initialized to the specified value.</summary>
         /// <param name="value">The value that all elements will be initialized to.</param>
@@ -135,6 +136,9 @@ namespace System.Numerics
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
+                if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
                 T scalar = Scalar<T>.AllBitsSet;
                 return new Vector<T>(scalar);
             }
@@ -182,6 +186,9 @@ namespace System.Numerics
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
+                if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
                 T scalar = Scalar<T>.One;
                 return new Vector<T>(scalar);
             }
@@ -231,6 +238,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector<T> operator +(Vector<T> left, Vector<T> right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -296,6 +306,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector<T> operator /(Vector<T> left, Vector<T> right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -315,6 +328,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector<T> operator /(Vector<T> left, T right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -334,6 +350,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector<T> left, Vector<T> right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Count; index++)
             {
                 if (!Scalar<T>.Equals(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -476,6 +495,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector<T> left, Vector<T> right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Count; index++)
             {
                 if (!Scalar<T>.Equals(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -513,6 +535,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector<T> operator *(Vector<T> left, Vector<T> right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -532,6 +557,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector<T> operator *(Vector<T> value, T factor)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -580,6 +608,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector<T> operator >>(Vector<T> value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -599,6 +630,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector<T> operator -(Vector<T> left, Vector<T> right)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -637,6 +671,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector<T> operator >>>(Vector<T> value, int shiftCount)
         {
+            if (IsHardwareAccelerated)
+                throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Count; index++)
@@ -740,20 +777,20 @@ namespace System.Numerics
                 {
                     return this == other;
                 }
-            }
+            } else{
+                return SoftwareFallback(in this, other);
 
-            return SoftwareFallback(in this, other);
-
-            static bool SoftwareFallback(in Vector<T> self, Vector<T> other)
-            {
-                for (int index = 0; index < Count; index++)
+                static bool SoftwareFallback(in Vector<T> self, Vector<T> other)
                 {
-                    if (!Scalar<T>.ObjectEquals(self.GetElementUnsafe(index), other.GetElementUnsafe(index)))
+                    for (int index = 0; index < Count; index++)
                     {
-                        return false;
+                        if (!Scalar<T>.ObjectEquals(self.GetElementUnsafe(index), other.GetElementUnsafe(index)))
+                        {
+                            return false;
+                        }
                     }
+                    return true;
                 }
-                return true;
             }
         }
 

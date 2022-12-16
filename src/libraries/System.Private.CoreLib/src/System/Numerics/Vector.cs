@@ -17,11 +17,7 @@ namespace System.Numerics
         /// <summary>Gets a value that indicates whether vector operations are subject to hardware acceleration through JIT intrinsic support.</summary>
         /// <value><see langword="true" /> if vector operations are subject to hardware acceleration; otherwise, <see langword="false" />.</value>
         /// <remarks>Vector operations are subject to hardware acceleration on systems that support Single Instruction, Multiple Data (SIMD) instructions and the RyuJIT just-in-time compiler is used to compile managed code.</remarks>
-        public static bool IsHardwareAccelerated
-        {
-            [Intrinsic]
-            get => IsHardwareAccelerated;
-        }
+        public static bool IsHardwareAccelerated { get => true; }
 
         /// <summary>Computes the absolute value of each element in a vector.</summary>
         /// <param name="value">The vector that will have its absolute value computed.</param>
@@ -42,6 +38,9 @@ namespace System.Numerics
             }
             else
             {
+                if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
                 Unsafe.SkipInit(out Vector<T> result);
 
                 for (int index = 0; index < Vector<T>.Count; index++)
@@ -482,6 +481,9 @@ namespace System.Numerics
         public static T Dot<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             T result = default;
 
             for (int index = 0; index < Vector<T>.Count; index++)
@@ -503,6 +505,9 @@ namespace System.Numerics
         public static Vector<T> Equals<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Vector<T>.Count; index++)
@@ -566,6 +571,9 @@ namespace System.Numerics
         public static bool EqualsAny<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector<T>.Count; index++)
             {
                 if (Scalar<T>.Equals(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -645,6 +653,9 @@ namespace System.Numerics
         public static Vector<T> GreaterThan<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Vector<T>.Count; index++)
@@ -697,6 +708,9 @@ namespace System.Numerics
         public static bool GreaterThanAll<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector<T>.Count; index++)
             {
                 if (!Scalar<T>.GreaterThan(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -718,6 +732,9 @@ namespace System.Numerics
         public static bool GreaterThanAny<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector<T>.Count; index++)
             {
                 if (Scalar<T>.GreaterThan(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -739,6 +756,9 @@ namespace System.Numerics
         public static Vector<T> GreaterThanOrEqual<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Vector<T>.Count; index++)
@@ -792,6 +812,9 @@ namespace System.Numerics
         public static bool GreaterThanOrEqualAll<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector<T>.Count; index++)
             {
                 if (!Scalar<T>.GreaterThanOrEqual(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -813,6 +836,9 @@ namespace System.Numerics
         public static bool GreaterThanOrEqualAny<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector<T>.Count; index++)
             {
                 if (Scalar<T>.GreaterThanOrEqual(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -834,6 +860,9 @@ namespace System.Numerics
         public static Vector<T> LessThan<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Vector<T>.Count; index++)
@@ -887,6 +916,9 @@ namespace System.Numerics
         public static bool LessThanAll<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector<T>.Count; index++)
             {
                 if (!Scalar<T>.LessThan(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -908,6 +940,9 @@ namespace System.Numerics
         public static bool LessThanAny<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector<T>.Count; index++)
             {
                 if (Scalar<T>.LessThan(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -929,6 +964,9 @@ namespace System.Numerics
         public static Vector<T> LessThanOrEqual<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Vector<T>.Count; index++)
@@ -982,6 +1020,9 @@ namespace System.Numerics
         public static bool LessThanOrEqualAll<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector<T>.Count; index++)
             {
                 if (!Scalar<T>.LessThanOrEqual(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1003,6 +1044,9 @@ namespace System.Numerics
         public static bool LessThanOrEqualAny<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             for (int index = 0; index < Vector<T>.Count; index++)
             {
                 if (Scalar<T>.LessThanOrEqual(left.GetElementUnsafe(index), right.GetElementUnsafe(index)))
@@ -1102,6 +1146,9 @@ namespace System.Numerics
         public static Vector<T> Max<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Vector<T>.Count; index++)
@@ -1123,6 +1170,9 @@ namespace System.Numerics
         public static Vector<T> Min<T>(Vector<T> left, Vector<T> right)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Vector<T>.Count; index++)
@@ -1581,6 +1631,9 @@ namespace System.Numerics
         public static Vector<T> SquareRoot<T>(Vector<T> value)
             where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             Unsafe.SkipInit(out Vector<T> result);
 
             for (int index = 0; index < Vector<T>.Count; index++)
@@ -1687,6 +1740,9 @@ namespace System.Numerics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Sum<T>(Vector<T> value) where T : struct
         {
+            if (IsHardwareAccelerated)
+                    throw new PlatformNotSupportedException();
+
             T sum = default;
 
             for (int index = 0; index < Vector<T>.Count; index++)
