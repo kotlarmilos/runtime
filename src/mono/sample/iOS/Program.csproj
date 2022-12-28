@@ -9,6 +9,7 @@
     <RuntimeIdentifier>$(TargetOS.ToLower())-$(TargetArchitecture)</RuntimeIdentifier>
     <DefineConstants Condition="'$(ArchiveTests)' == 'true'">$(DefineConstants);CI_TEST</DefineConstants>
     <AppName>HelloiOS</AppName>
+    <Stats>true</Stats>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -41,12 +42,33 @@
 
     <RemoveDir Directories="$(AppDir)" />
 
+    <!-- Dedup -->
+    <PropertyGroup>
+      <_DedupAssembly>$(MSBuildThisFileDirectory)$(PublishDir)\aot-instances.dll</_DedupAssembly>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(MSBuildThisFileDirectory)$(PublishDir)/aot-instances.cs" Overwrite="true" Lines="" WriteOnlyWhenDifferent="true" />
+    <Csc
+      Sources="$(MSBuildThisFileDirectory)$(PublishDir)\aot-instances.cs"
+      OutputAssembly="$(_DedupAssembly)"
+      TargetType="library"
+      Deterministic="true"
+      References="@(ReferencePath)"
+      ToolExe="$(CscToolExe)"
+      ToolPath="$(CscToolPath)" />
+
     <ItemGroup>
       <BundleAssemblies Condition="'$(RunAOTCompilation)' != 'true'" Include="$(MSBuildThisFileDirectory)$(PublishDir)\*.dll" />
       <AotInputAssemblies Condition="'$(RunAOTCompilation)' == 'true'" Include="$(MSBuildThisFileDirectory)$(PublishDir)\*.dll">
         <AotArguments>@(MonoAOTCompilerDefaultAotArguments, ';')</AotArguments>
         <ProcessArguments>@(MonoAOTCompilerDefaultProcessArguments, ';')</ProcessArguments>
       </AotInputAssemblies>
+    </ItemGroup>
+
+    <ItemGroup>
+      <_AotInputAssemblies Include="$(_DedupAssembly)">
+        <AotArguments>@(MonoAOTCompilerDefaultAotArguments, ';')</AotArguments>
+        <ProcessArguments>@(MonoAOTCompilerDefaultProcessArguments, ';')</ProcessArguments>
+      </_AotInputAssemblies>
     </ItemGroup>
 
     <PropertyGroup>
@@ -61,6 +83,8 @@
         Mode="$(AOTMode)"
         OutputType="AsmOnly"
         Assemblies="@(AotInputAssemblies)"
+        DedupAssembly="$(_DedupAssembly)"
+        Stats="$(Stats)"
         AotModulesTablePath="$(AppDir)\modules.m"
         AotModulesTableLanguage="ObjC"
         OutputDir="$(PublishDir)"
