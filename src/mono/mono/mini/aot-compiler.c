@@ -10459,9 +10459,6 @@ dedup_skip_methods (MonoAotCompile *acfg)
 {
 	int i;
 
-	if (acfg->aot_opts.llvm_only)
-		return;
-
 	for (guint oindex = 0; oindex < acfg->method_order->len; ++oindex) {
 		MonoCompile *cfg;
 		MonoMethod *method;
@@ -10763,6 +10760,9 @@ emit_method_info_table (MonoAotCompile *acfg)
 
 	for (guint oindex = 0; oindex < acfg->method_order->len; ++oindex) {
 		i = GPOINTER_TO_UINT (g_ptr_array_index (acfg->method_order, oindex));
+
+		if (ignore_cfg (acfg->cfgs [i]))
+			continue;
 
 		if (acfg->cfgs [i]) {
 			emit_method_info (acfg, acfg->cfgs [i]);
