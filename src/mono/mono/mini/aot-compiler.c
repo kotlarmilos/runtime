@@ -10430,7 +10430,7 @@ dedup_skip_methods (MonoAotCompile *acfg)
 	int i;
 
 	if (acfg->aot_opts.llvm_only)
-			return;
+		return;
 
 	for (guint oindex = 0; oindex < acfg->method_order->len; ++oindex) {
 		MonoCompile *cfg;
