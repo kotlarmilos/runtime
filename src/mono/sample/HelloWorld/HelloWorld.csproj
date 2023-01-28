@@ -4,12 +4,31 @@
     <TargetFramework>$(NetCoreAppCurrent)</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PublishTrimmed>true</PublishTrimmed>
+  </PropertyGroup>
+
   <UsingTask TaskName="MonoAOTCompiler"
              AssemblyFile="$(MonoAOTCompilerTasksAssemblyPath)" />
 
   <Target Name="AOTCompileApp" Condition="'$(RunAOTCompilation)' == 'true'" AfterTargets="CopyFilesToPublishDirectory">
+
+    <!-- Dedup -->
     <PropertyGroup>
-      <_AotOutputType>Library</_AotOutputType>
+      <_DedupAssembly>$(PublishDir)\aot-instances.dll</_DedupAssembly>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(PublishDir)/aot-instances.cs" Overwrite="true" Lines="" WriteOnlyWhenDifferent="true" />
+    <Csc
+      Sources="$(PublishDir)\aot-instances.cs"
+      OutputAssembly="$(_DedupAssembly)"
+      TargetType="library"
+      Deterministic="true"
+      References="@(ReferencePath)"
+      ToolExe="$(CscToolExe)"
+      ToolPath="$(CscToolPath)" />
+
+    <PropertyGroup>
+      <_AotOutputType>AsmOnly</_AotOutputType>
       <_AotLibraryFormat>Dylib</_AotLibraryFormat>
       <UseAotDataFile>false</UseAotDataFile>
     </PropertyGroup>
@@ -21,18 +40,22 @@
 
     <MonoAOTCompiler
       CompilerBinaryPath="@(MonoAotCrossCompiler->WithMetadataValue('RuntimeIdentifier','$(TargetOS)-$(TargetArchitecture.ToLowerInvariant())'))"
+      Mode="Full"
       OutputType="$(_AotOutputType)"
-      LibraryFormat="$(_AotLibraryFormat)"
       Assemblies="@(AotInputAssemblies)"
+      DedupAssembly="$(_DedupAssembly)"
       OutputDir="$(PublishDir)"
       IntermediateOutputPath="$(IntermediateOutputPath)"
       UseAotDataFile="$(UseAotDataFile)"
-      CacheFilePath="$(IntermediateOutputPath)aot_compiler_cache.json"
-      NetTracePath="$(NetTracePath)"
-      PgoBinaryPath="$(PgoBinaryPath)"
-      ReferenceAssembliesForPGO="@(ReferenceAssembliesForPGO)"
-      MibcProfilePath="$(MibcProfilePath)">
+      UseLLVM="true"
+      LLVMPath="$(MonoAotCrossDir)"
+      AotModulesTablePath="$(PublishDir)\modules.m"
+      AotModulesTableLanguage="ObjC">
       <Output TaskParameter="CompiledAssemblies" ItemName="BundleAssemblies" />
     </MonoAOTCompiler>
+
+    <Copy SourceFiles="../../../../src/tasks/AppleAppBuilder/Templates/hello-world.m" DestinationFolder="$(PublishDir)"/>
+    <Copy SourceFiles="../../../../src/tasks/AppleAppBuilder/Templates/runtime.m" DestinationFolder="$(PublishDir)"/>
+    <Copy SourceFiles="../../../../src/tasks/AppleAppBuilder/Templates/runtime.h" DestinationFolder="$(PublishDir)"/>
   </Target>
 </Project>

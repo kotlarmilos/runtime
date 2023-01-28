@@ -999,7 +999,6 @@ public class MonoAOTCompiler : Microsoft.Build.Utilities.Task
                 writer.WriteLine("#include <mono/jit/jit.h>");
                 writer.WriteLine("#include <TargetConditionals.h>");
                 writer.WriteLine("");
-                writer.WriteLine("#if TARGET_OS_IPHONE && (!TARGET_IPHONE_SIMULATOR || FORCE_AOT)");
 
                 foreach (var symbol in symbols)
                 {
@@ -1013,7 +1012,6 @@ public class MonoAOTCompiler : Microsoft.Build.Utilities.Task
                     writer.WriteLine($"\tmono_aot_register_module ({symbol});");
                 }
                 writer.WriteLine("}");
-                writer.WriteLine("#endif");
             }
             else
             {

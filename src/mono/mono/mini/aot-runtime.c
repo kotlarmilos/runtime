@@ -4446,6 +4446,7 @@ find_aot_method_in_amodule (MonoAotModule *code_amodule, MonoMethod *method, gui
 	if (index != 0xffffff)
 		g_assert (index < code_amodule->info.nmethods);
 
+	printf ("Searching for %s with code module %s and metadata module %s\n", mono_method_full_name (method, TRUE), code_amodule->aot_name, metadata_amodule->aot_name);
 	return index;
 }
 
@@ -4472,12 +4473,12 @@ inst_is_private (MonoGenericInst *inst)
 gboolean
 mono_aot_can_dedup (MonoMethod *method)
 {
-#ifdef TARGET_WASM
 	/* Use a set of wrappers/instances which work and useful */
 	switch (method->wrapper_type) {
-	case MONO_WRAPPER_RUNTIME_INVOKE:
-		return TRUE;
+	case MONO_WRAPPER_RUNTIME_INVOKE: {
+		return FALSE;
 		break;
+	}
 	case MONO_WRAPPER_OTHER: {
 		WrapperInfo *info = mono_marshal_get_wrapper_info (method);
 
@@ -4516,12 +4517,6 @@ mono_aot_can_dedup (MonoMethod *method)
 		return TRUE;
 	}
 	return FALSE;
-#else
-	gboolean not_normal_gshared = method->is_inflated && !mono_method_is_generic_sharable_full (method, TRUE, FALSE, FALSE);
-	gboolean extra_method = (method->wrapper_type != MONO_WRAPPER_NONE) || not_normal_gshared;
-
-	return extra_method;
-#endif
 }
 
 
@@ -4570,6 +4565,8 @@ find_aot_method (MonoMethod *method, MonoAotModule **out_amodule)
 	index = 0xffffff;
 	for (guint i = 0; i < modules->len; ++i) {
 		MonoAotModule *amodule = (MonoAotModule *)g_ptr_array_index (modules, i);
+        // if (!strcmp(amodule->aot_name, container_amodule->aot_name))
+        //     continue;
 
 		if (amodule != m_class_get_image (method->klass)->aot_module)
 			index = find_aot_method_in_amodule (amodule, method, hash);

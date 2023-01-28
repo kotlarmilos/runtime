@@ -4333,8 +4333,10 @@ add_extra_method_full (MonoAotCompile *acfg, MonoMethod *method, gboolean prefer
 	if ((acfg->aot_opts.dedup || acfg->aot_opts.dedup_include) && mono_aot_can_dedup (method)) {
 		if (acfg->aot_opts.dedup) {
 			/* Don't emit instances */
+			// printf("Skipping %s\n", mono_method_get_full_name (method));
 			return;
 		} else if (!acfg->dedup_emit_mode) {
+			// printf("Emitting %s\n", mono_method_get_full_name (method));
 			/* Remember for later */
 			if (!g_hash_table_lookup (dedup_methods, method))
 				g_hash_table_insert (dedup_methods, method, method);
@@ -14448,7 +14450,7 @@ aot_assembly (MonoAssembly *ass, guint32 jit_opts, MonoAotOptions *aot_options)
 
 	acfg->stats.jit_time = GINT64_TO_INT (TV_ELAPSED (atv, btv));
 
-	dedup_skip_methods (acfg);
+	// dedup_skip_methods (acfg);
 
 	if (acfg->dedup_collect_only) {
 		/* We only collected methods from this assembly */

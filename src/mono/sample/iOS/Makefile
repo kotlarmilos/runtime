@@ -1,9 +1,9 @@
-MONO_CONFIG?=Debug
-MONO_ARCH?=x64
+MONO_CONFIG?=Release
+MONO_ARCH?=arm64
 DOTNET := ../../../../dotnet.sh
 USE_LLVM=true
-AOT?=false
-TARGET?=iossimulator
+AOT?=true
+TARGET?=ios
 DEPLOY_AND_RUN?=true
 APP_SANDBOX?=false
 
@@ -26,9 +26,10 @@ appbuilder:
 runtimepack:
 	../../../../build.sh Mono+Libs -os $(TARGET)  -arch $(MONO_ARCH) -c $(MONO_CONFIG)
 
-run: clean appbuilder
+run: clean # appbuilder
 	$(DOTNET) publish \
 	-c $(MONO_CONFIG) \
+	/p:DevTeamProvisioning=- \
 	/p:TargetOS=ios \
 	/p:TargetArchitecture=$(MONO_ARCH) \
 	/p:UseLLVM=$(USE_LLVM) \
@@ -40,6 +41,7 @@ run: clean appbuilder
 run-sim: clean appbuilder
 	$(DOTNET) publish \
 	-c $(MONO_CONFIG) \
+	/p:DevTeamProvisioning=- \
 	/p:TargetOS=iossimulator \
 	/p:TargetArchitecture=$(MONO_ARCH) \
 	/p:UseLLVM=$(USE_LLVM) \

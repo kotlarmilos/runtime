@@ -9,7 +9,6 @@
     <RuntimeIdentifier>$(TargetOS)-$(TargetArchitecture)</RuntimeIdentifier>
     <DefineConstants Condition="'$(ArchiveTests)' == 'true'">$(DefineConstants);CI_TEST</DefineConstants>
     <AppName>HelloiOS</AppName>
-    <Stats>true</Stats>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -84,7 +83,6 @@
         OutputType="AsmOnly"
         Assemblies="@(AotInputAssemblies)"
         DedupAssembly="$(_DedupAssembly)"
-        Stats="$(Stats)"
         AotModulesTablePath="$(AppDir)\modules.m"
         AotModulesTableLanguage="ObjC"
         OutputDir="$(PublishDir)"
