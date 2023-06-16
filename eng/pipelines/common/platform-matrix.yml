@@ -675,8 +675,7 @@ jobs:
       shouldContinueOnError: ${{ parameters.shouldContinueOnError }}
       jobParameters:
         ${{ if eq(parameters.runtimeFlavor, 'coreclr') }}:
-          hostedOs: osx
-          hostedArch: x64
+          crossBuild: true
         ${{ if eq(parameters.runtimeFlavor, '') }}:
           runtimeFlavor: mono
         ${{ else }}:
@@ -700,8 +699,7 @@ jobs:
       shouldContinueOnError: ${{ parameters.shouldContinueOnError }}
       jobParameters:
         ${{ if eq(parameters.runtimeFlavor, 'coreclr') }}:
-          hostedOs: osx
-          hostedArch: x64
+          crossBuild: true
         ${{ if eq(parameters.runtimeFlavor, '') }}:
           runtimeFlavor: mono
         ${{ else }}:
@@ -725,8 +723,7 @@ jobs:
       shouldContinueOnError: ${{ parameters.shouldContinueOnError }}
       jobParameters:
         ${{ if eq(parameters.runtimeFlavor, 'coreclr') }}:
-          hostedOs: osx
-          hostedArch: x64
+          crossBuild: true
         ${{ if eq(parameters.runtimeFlavor, '') }}:
           runtimeFlavor: mono
         ${{ else }}:
@@ -750,8 +747,7 @@ jobs:
       shouldContinueOnError: ${{ parameters.shouldContinueOnError }}
       jobParameters:
         ${{ if eq(parameters.runtimeFlavor, 'coreclr') }}:
-          hostedOs: osx
-          hostedArch: x64
+          crossBuild: true
         ${{ if eq(parameters.runtimeFlavor, '') }}:
           runtimeFlavor: mono
         ${{ else }}:
@@ -775,8 +771,7 @@ jobs:
       shouldContinueOnError: ${{ parameters.shouldContinueOnError }}
       jobParameters:
         ${{ if eq(parameters.runtimeFlavor, 'coreclr') }}:
-          hostedOs: osx
-          hostedArch: x64
+          crossBuild: true
         ${{ if eq(parameters.runtimeFlavor, '') }}:
           runtimeFlavor: mono
         ${{ else }}:
@@ -800,8 +795,7 @@ jobs:
       shouldContinueOnError: ${{ parameters.shouldContinueOnError }}
       jobParameters:
         ${{ if eq(parameters.runtimeFlavor, 'coreclr') }}:
-          hostedOs: osx
-          hostedArch: x64
+          crossBuild: true
         ${{ if eq(parameters.runtimeFlavor, '') }}:
           runtimeFlavor: mono
         ${{ else }}:
@@ -825,8 +819,7 @@ jobs:
       shouldContinueOnError: ${{ parameters.shouldContinueOnError }}
       jobParameters:
         ${{ if eq(parameters.runtimeFlavor, 'coreclr') }}:
-          hostedOs: osx
-          hostedArch: x64
+          crossBuild: true
         ${{ if eq(parameters.runtimeFlavor, '') }}:
           runtimeFlavor: mono
         ${{ else }}:
@@ -850,8 +843,7 @@ jobs:
       shouldContinueOnError: ${{ parameters.shouldContinueOnError }}
       jobParameters:
         ${{ if eq(parameters.runtimeFlavor, 'coreclr') }}:
-          hostedOs: osx
-          hostedArch: x64
+          crossBuild: true
         ${{ if eq(parameters.runtimeFlavor, '') }}:
           runtimeFlavor: mono
         ${{ else }}:

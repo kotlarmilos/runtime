@@ -23,8 +23,8 @@
 
   <PropertyGroup Condition="'$(TestNativeAot)' == 'true'">
     <IlcToolsPath>$(CoreCLRILCompilerDir)</IlcToolsPath>
-    <IlcToolsPath Condition="'$(CrossBuild)' == 'true' or '$(TargetArchitecture)' != '$(BuildArchitecture)'">$(CoreCLRCrossILCompilerDir)</IlcToolsPath>
-    <SysRoot Condition="('$(CrossBuild)' == 'true' or '$(BuildArchitecture)' != '$(TargetArchitecture)') and '$(HostOS)' != 'windows'">$(ROOTFS_DIR)</SysRoot>
+    <IlcToolsPath Condition="'$(CrossBuild)' == 'true' or '$(TargetArchitecture)' != '$(BuildArchitecture)' or '$(TargetOS)' != '$(HostOS)'">$(CoreCLRCrossILCompilerDir)</IlcToolsPath>
+    <SysRoot Condition="('$(CrossBuild)' == 'true' or '$(BuildArchitecture)' != '$(TargetArchitecture)' or '$(HostOS)' != '$(TargetOS)') and '$(HostOS)' != 'windows'">$(ROOTFS_DIR)</SysRoot>
     <IlcBuildTasksPath>$(CoreCLRILCompilerDir)netstandard/ILCompiler.Build.Tasks.dll</IlcBuildTasksPath>
     <IlcSdkPath>$(CoreCLRAotSdkDir)</IlcSdkPath>
     <IlcFrameworkPath>$(NetCoreAppCurrentTestHostSharedFrameworkPath)</IlcFrameworkPath>

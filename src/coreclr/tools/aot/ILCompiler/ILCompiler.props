@@ -51,7 +51,7 @@
     <ObjWriterVersion Condition="'$(ObjWriterVersion)' == '' and '$(ObjWriterRid)' == 'freebsd-arm64'">$(runtimefreebsdarm64MicrosoftNETCoreRuntimeObjWriterVersion)</ObjWriterVersion>
 
     <!-- CoreDisTools are used in debugging visualizers. -->
-    <IncludeCoreDisTools Condition="'$(Configuration)' != 'Release' and '$(CrossHostArch)' == ''">true</IncludeCoreDisTools>
+    <IncludeCoreDisTools Condition="'$(Configuration)' != 'Release' and '$(CrossHostOS)' == '' and '$(CrossHostArch)' == ''">true</IncludeCoreDisTools>
     <!-- source-build doesn't use ObjWriter for the ILCompiler.  the end-user will end up pulling Microsoft-built bits for NativeAOT anyway.  -->
     <IncludeObjWriter Condition="'$(DotNetBuildFromSource)' != 'true'">true</IncludeObjWriter>
   </PropertyGroup>
@@ -102,9 +102,11 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetOSComponent>unix</TargetOSComponent>
-    <TargetOSComponent Condition="'$(TargetOS)' == 'windows'">win</TargetOSComponent>
-    <TargetOSComponent Condition="'$(TargetOS)' == 'osx' and '$(TargetArchitecture)' == 'arm64'">unix_osx</TargetOSComponent>
+    <TargetOSComponent Condition="'$(CrossHostOS)' == ''">unix</TargetOSComponent>
+    <TargetOSComponent Condition="'$(CrossHostOS)' == '' and '$(TargetOS)' == 'windows'">win</TargetOSComponent>
+    <TargetOSComponent Condition="'$(CrossHostOS)' == '' and '$(TargetOS)' == 'windows'">win</TargetOSComponent>
+    <TargetOSComponent Condition="'$(CrossHostOS)' == '' and '$(TargetOS)' == 'osx' and '$(TargetArchitecture)' == 'arm64'">unix_osx</TargetOSComponent>
+    <TargetOSComponent Condition="'$(CrossHostOS)' != ''">$(CrossHostOS)</TargetOSComponent>
 
     <TargetArchitectureForSharedLibraries Condition="'$(CrossHostArch)' == ''">$(TargetArchitecture)</TargetArchitectureForSharedLibraries>
     <TargetArchitectureForSharedLibraries Condition="'$(CrossHostArch)' != ''">$(CrossHostArch)</TargetArchitectureForSharedLibraries>
@@ -117,7 +119,7 @@
 
     <JitInterfaceLibraryName>$(LibPrefix)jitinterface_$(TargetArchitectureForSharedLibraries)$(LibSuffix)</JitInterfaceLibraryName>
     <!-- This will be provided when using the liveBuild, and unset otherwise. -->
-    <CoreCLRArtifactsPath Condition="'$(CoreCLRArtifactsPath)' == ''">$(RuntimeBinDir)$(CrossHostArch)</CoreCLRArtifactsPath>
+    <CoreCLRArtifactsPath Condition="'$(CoreCLRArtifactsPath)' == ''">$(RuntimeBinDir)$(CrossHostOS)/$(CrossHostArch)</CoreCLRArtifactsPath>
   </PropertyGroup>
 
   <ItemGroup>

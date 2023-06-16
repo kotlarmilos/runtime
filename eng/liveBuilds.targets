@@ -14,8 +14,7 @@
 
   <!-- Set up default live asset paths if no overrides provided. -->
   <PropertyGroup>
-    <CoreCLRArtifactsPath Condition="'$(CoreCLRArtifactsPath)' == '' and '$(TargetsAppleMobile)' != 'true'">$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts', 'bin', 'coreclr', '$(TargetOS).$(TargetArchitecture).$(CoreCLRConfiguration)'))</CoreCLRArtifactsPath>
-    <CoreCLRArtifactsPath Condition="'$(CoreCLRArtifactsPath)' == '' and '$(TargetsAppleMobile)' == 'true'">$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts', 'bin', 'coreclr', '$(HostOS).$(BuildArchitecture).$(CoreCLRConfiguration)'))</CoreCLRArtifactsPath>
+    <CoreCLRArtifactsPath Condition="'$(CoreCLRArtifactsPath)' == ''">$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts', 'bin', 'coreclr', '$(TargetOS).$(TargetArchitecture).$(CoreCLRConfiguration)'))</CoreCLRArtifactsPath>
     <MonoArtifactsPath Condition="'$(MonoArtifactsPath)' == ''">$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts', 'bin', 'mono', '$(TargetOS).$(TargetArchitecture).$(MonoConfiguration)'))</MonoArtifactsPath>
     <LibrariesArtifactsPath Condition="'$(LibrariesArtifactsPath)' == ''">$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts'))</LibrariesArtifactsPath>
     <LibrariesAllConfigurationsArtifactsPath Condition="'$(LibrariesAllConfigurationsArtifactsPath)' == ''">$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts'))</LibrariesAllConfigurationsArtifactsPath>
@@ -26,7 +25,7 @@
     <CoreCLRSharedFrameworkDir>$([MSBuild]::NormalizeDirectory('$(CoreCLRArtifactsPath)', 'sharedFramework'))</CoreCLRSharedFrameworkDir>
     <CoreCLRCrossgen2Dir>$([MSBuild]::NormalizeDirectory('$(CoreCLRArtifactsPath)', 'crossgen2'))</CoreCLRCrossgen2Dir>
     <CoreCLRILCompilerDir>$([MSBuild]::NormalizeDirectory('$(CoreCLRArtifactsPath)', 'ilc-published'))</CoreCLRILCompilerDir>
-    <CoreCLRCrossILCompilerDir Condition="'$(CrossBuild)' == 'true' or '$(BuildArchitecture)' != '$(TargetArchitecture)'">$([MSBuild]::NormalizeDirectory('$(CoreCLRArtifactsPath)', '$(BuildArchitecture)', 'ilc'))</CoreCLRCrossILCompilerDir>
+    <CoreCLRCrossILCompilerDir Condition="'$(CrossBuild)' == 'true' or '$(BuildArchitecture)' != '$(TargetArchitecture)' or '$(HostOS)' != '$(TargetOS)'">$([MSBuild]::NormalizeDirectory('$(CoreCLRArtifactsPath)', '$(HostOS)', '$(BuildArchitecture)', 'ilc'))</CoreCLRCrossILCompilerDir>
     <CoreCLRAotSdkDir>$([MSBuild]::NormalizeDirectory('$(CoreCLRArtifactsPath)', 'aotsdk'))</CoreCLRAotSdkDir>
     <CoreCLRBuildIntegrationDir>$([MSBuild]::NormalizeDirectory('$(CoreCLRArtifactsPath)', 'build'))</CoreCLRBuildIntegrationDir>
 
