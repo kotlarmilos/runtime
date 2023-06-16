@@ -15,7 +15,7 @@
     <!-- Disable native AOT on FreeBSD when cross building from Linux. -->
     <NativeAotSupported Condition="'$(TargetOS)' == 'freebsd' and '$(CrossBuild)' == 'true'">false</NativeAotSupported>
     <PublishAot Condition="'$(NativeAotSupported)' == 'true'">true</PublishAot>
-    <SysRoot Condition="'$(NativeAotSupported)' == 'true' and '$(CrossBuild)' == 'true' and '$(HostOS)' != 'windows'">$(ROOTFS_DIR)</SysRoot>
+    <SysRoot Condition="'$(NativeAotSupported)' == 'true' and '$(CrossBuild)' == 'true' and '$(HostOS)' != 'windows' and '$(HostOS)' != 'osx'">$(ROOTFS_DIR)</SysRoot>
     <PublishReadyToRun Condition="'$(NativeAotSupported)' != 'true'">true</PublishReadyToRun>
     <PublishSingleFile Condition="'$(NativeAotSupported)' != 'true'">true</PublishSingleFile>
     <PublishTrimmed Condition="'$(NativeAotSupported)' != 'true'">true</PublishTrimmed>
@@ -25,7 +25,7 @@
   <!-- Needed for the amd64 -> amd64 musl cross-build to pass the target flag. -->
   <Target Name="_FixIlcTargetTriple"
           AfterTargets="SetupOSSpecificProps"
-          Condition="'$(CrossBuild)' == 'true' and '$(HostOS)' != 'windows'">
+          Condition="'$(CrossBuild)' == 'true' and '$(HostOS)' != 'windows' and '$(HostOS)' != 'osx'">
     <!-- Compute CrossCompileRid, and copy the downstream logic as-is. -->
     <PropertyGroup>
       <CrossCompileRid>$(RuntimeIdentifier)</CrossCompileRid>
@@ -68,7 +68,7 @@
   </Target>
 
   <ItemGroup Condition="'$(NativeAotSupported)' == 'true'">
-    <CustomLinkerArg Condition="'$(CrossBuild)' == 'true' and '$(_hostArchitecture)' == '$(_targetArchitecture)' and '$(_hostOS)' != 'windows'" Include="--gcc-toolchain=$(ROOTFS_DIR)/usr" />
+    <CustomLinkerArg Condition="'$(CrossBuild)' == 'true' and '$(_hostArchitecture)' == '$(_targetArchitecture)' and '$(_hostOS)' != 'windows' and '$(HostOS)' != 'osx'" Include="--gcc-toolchain=$(ROOTFS_DIR)/usr" />
   </ItemGroup>
 
   <Target Name="PublishCompiler"
