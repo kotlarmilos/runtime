@@ -16,9 +16,6 @@ if (MSVC)
 endif()
 
 function(create_standalone_jit)
-
-  message (STATUS "test1235678 ${ARCH_HOST_NAME}")
-
   set(oneValueArgs TARGET OS ARCH)
   set(multiValueArgs DESTINATIONS)
   cmake_parse_arguments(TARGETDETAILS "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
