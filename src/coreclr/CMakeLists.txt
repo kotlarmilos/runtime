@@ -252,7 +252,10 @@ if(CLR_CMAKE_HOST_UNIX)
 
   add_subdirectory(nativeresources)
 endif(CLR_CMAKE_HOST_UNIX)
-
+message (STATUS "host hit")
+message (STATUS ${CLR_CMAKE_HOST_MACCATALYST})
+message (STATUS ${CLR_CMAKE_HOST_IOS})
+message (STATUS ${CLR_CMAKE_HOST_TVOS})
 if(NOT CLR_CMAKE_HOST_MACCATALYST AND NOT CLR_CMAKE_HOST_IOS AND NOT CLR_CMAKE_HOST_TVOS)
   add_subdirectory(utilcode)
   add_subdirectory(inc)
@@ -284,6 +287,7 @@ endif(NOT CLR_CMAKE_HOST_MACCATALYST AND NOT CLR_CMAKE_HOST_IOS AND NOT CLR_CMAK
 # Cross target Component install configuration
 #----------------------------------------------------
 if(CLR_CROSS_COMPONENTS_BUILD)
+message (STATUS "Debug cross build")
   include(crosscomponents.cmake)
 endif(CLR_CROSS_COMPONENTS_BUILD)
 

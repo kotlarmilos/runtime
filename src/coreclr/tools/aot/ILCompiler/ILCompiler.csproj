@@ -42,7 +42,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <LinkerArg Include="--target=$(TargetTriple)" Condition="'$(TargetOS)' != 'osx' and '$(TargetTriple)' != ''" />
+      <LinkerArg Include="--target=$(TargetTriple)" Condition="'$(TargetOS)' != 'osx' and '$(TargetOS)' != 'iossimulator' and '$(TargetTriple)' != ''" />
     </ItemGroup>
   </Target>
 

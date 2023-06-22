@@ -109,6 +109,9 @@ __ConfigTriplet="$__TargetOS.$__TargetArch.$__BuildType"
 if [[ "$__TargetOS" == "linux-bionic" ]]; then
     __ConfigTriplet="linux.$__TargetArch.$__BuildType"
 fi
+# if [[ "$__TargetOS" == "osx" ]]; then
+#     __ConfigTriplet="iossimulator.$__TargetArch.$__BuildType"
+# fi
 __BinDir="$__RootBinDir/bin/coreclr/$__ConfigTriplet"
 __ArtifactsObjDir="$__RepoRootDir/artifacts/obj"
 __ArtifactsIntermediatesDir="$__ArtifactsObjDir/coreclr"
