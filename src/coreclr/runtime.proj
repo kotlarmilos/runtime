@@ -6,6 +6,7 @@
 
     <_BuildNativeTargetOS>$(TargetOS)</_BuildNativeTargetOS>
     <_BuildNativeTargetOS Condition="'$(TargetsLinuxBionic)' == 'true'">linux-bionic</_BuildNativeTargetOS>
+    <_BuildNativeTargetOS Condition="'$(TargetsAppleMobile)' == 'true'">osx</_BuildNativeTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
