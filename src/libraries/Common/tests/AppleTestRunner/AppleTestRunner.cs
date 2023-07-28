@@ -129,7 +129,7 @@ public class SimpleTestRunner : iOSApplicationEntryPoint, IDevice
 
     protected override string? IgnoreFilesDirectory => null;
 
-    protected override string IgnoredTraitsFilePath => "xunit-excludes.txt";
+    protected override string IgnoredTraitsFilePath => null;
 
     public string BundleIdentifier => "net.dot." + s_MainTestName;
 

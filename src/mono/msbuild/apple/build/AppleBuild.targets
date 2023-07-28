@@ -17,6 +17,12 @@
   <UsingTask TaskName="MonoTargetsTasks.MarshalingPInvokeScanner" 
              AssemblyFile="$(MonoTargetsTasksAssemblyPath)" />
 
+  <PropertyGroup>
+    <IlcToolsPath>$(CoreCLRCrossILCompilerDir)</IlcToolsPath>
+    <IlcSdkPath>$(CoreCLRAotSdkDir)</IlcSdkPath>
+    <IlcFrameworkPath>$(LibrariesAllBinArtifactsPath)</IlcFrameworkPath>
+    <IlcFrameworkNativePath>$(LibrariesAllBinArtifactsPath)</IlcFrameworkNativePath>
+</PropertyGroup>
   <Import Condition="Exists('$(ILCompilerTargetsPath)') and '$(UseNativeAOTRuntime)' == 'true'"
           Project="$(ILCompilerTargetsPath)" />
   <Import Condition="Exists('$(ILLinkTargetsPath)') and '$(UseNativeAOTRuntime)' == 'true'"
@@ -287,7 +293,7 @@
       AppDir="$(AppleBuildDir)"
       Arch="$(TargetArchitecture)"
       Assemblies="@(_AssembliesToBundleInternal)"
-      BuildAppBundle="$(GenerateXcodeProject)"
+      BuildAppBundle="true"
       DevTeamProvisioning="$(DevTeamProvisioning)"
       DiagnosticPorts="$(DiagnosticPorts)"
       EnableAppSandbox="$(EnableAppSandbox)"
@@ -295,7 +301,7 @@
       ForceAOT="$(RunAOTCompilation)"
       ForceInterpreter="$(MonoForceInterpreter)"
       GenerateCMakeProject="$(GenerateCMakeProject)"
-      GenerateXcodeProject="$(GenerateXcodeProject)"
+      GenerateXcodeProject="true"
       InvariantGlobalization="$(InvariantGlobalization)"
       HybridGlobalization="$(HybridGlobalization)"
       MainLibraryFileName="$(MainLibraryFileName)"
