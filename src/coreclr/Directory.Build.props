@@ -8,6 +8,9 @@
     <Configuration Condition="'$(Configuration)' == 'release'">Release</Configuration>
     <Configuration Condition="'$(Configuration)' == 'checked'">Checked</Configuration>
 
+    <!-- Version of the Android SDK we target -->
+    <AndroidApiVersion>23</AndroidApiVersion>
+
     <UseMonoRuntime>false</UseMonoRuntime>
   </PropertyGroup>
 

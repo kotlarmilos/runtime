@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TargetFramework>$(NetCoreAppCurrent)</TargetFramework>
+    <RuntimeIdentifier>android-$(TargetArchitecture)</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>Link</TrimMode>
+    <UseNativeAOTRuntime Condition="'$(UseNativeAOTRuntime)' == ''">true</UseNativeAOTRuntime>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <NativeLib>static</NativeLib>
+    <CustomNativeMain>true</CustomNativeMain>
+    <!-- Escape NativeAOT bundling targets -->
+    <NativeCompilationDuringPublish>false</NativeCompilationDuringPublish>
+    <StripSymbols>false</StripSymbols>
+  </PropertyGroup>
+
+  <Import Project="$(MonoProjectRoot)\msbuild\android\build\AndroidBuild.props" />
+  <Import Project="$(MonoProjectRoot)\msbuild\android\build\AndroidBuild.InTree.targets" />
+  <Import Condition="'$(PublishAotUsingRuntimePack)' != 'true'" Project="$(CoreClrProjectRoot)nativeaot\BuildIntegration\Microsoft.DotNet.ILCompiler.SingleEntry.targets" />
+  
+  <ItemGroup>
+    <Compile Include="../Android/Program.cs" Link="Program.cs" />
+    <DirectPInvoke Include="__Internal" />
+    <!-- The libbootstrapper and libbootstrapperdll get copied over to the AppDir, and since their extension is *.o both get included in the app build which results with an error.
+         This was not a problem before when these libraries were shipped as archives. -->
+    <_ExcludeFromAppDir Condition="'$(PublishAotUsingRuntimePack)' == 'true'"
+                        Include="libbootstrapper.o" />
+  </ItemGroup>
+
+  <!-- Run before ILC setup  -->
+  <Target Name="ConfigureIlcPathsForiOSCrossCompilation" Condition="'$(PublishAotUsingRuntimePack)' != 'true'"
+    BeforeTargets="SetupProperties">
+      <PropertyGroup>
+        <IlcToolsPath>$(CoreCLRILCompilerDir)</IlcToolsPath>
+        <IlcSdkPath>$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts', 'bin', 'coreclr', '$(TargetOS).$(TargetArchitecture).$(CoreCLRConfiguration)', 'aotsdk'))</IlcSdkPath>
+        <IlcFrameworkPath>$(LibrariesAllBinArtifactsPath)</IlcFrameworkPath>
+        <IlcFrameworkNativePath>$(LibrariesAllBinArtifactsPath)</IlcFrameworkNativePath>
+    </PropertyGroup>
+  </Target>
+</Project>

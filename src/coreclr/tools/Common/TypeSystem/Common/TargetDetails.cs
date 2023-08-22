@@ -20,6 +20,7 @@ namespace Internal.TypeSystem
         iOSSimulator,
         tvOS,
         tvOSSimulator,
+        Android,
         FreeBSD,
         NetBSD,
         SunOS,

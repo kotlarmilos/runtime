@@ -30,4 +30,5 @@ target_link_libraries(
     log
     %NativeLibrariesToLink%
     %APP_LINKER_ARGS%
+    "%ProjectName%"
 )

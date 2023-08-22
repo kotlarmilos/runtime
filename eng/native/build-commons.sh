@@ -104,6 +104,8 @@ build_native()
             echo "Error: Unknown Android architecture $hostArch."
             exit 1
         fi
+
+        cmakeArgs="-C $__RepoRootDir/eng/native/tryrun.cmake $cmakeArgs"
     elif [[ "$targetOS" == iossimulator ]]; then
         cmakeArgs="-C $__RepoRootDir/eng/native/tryrun_ios_tvos.cmake $cmakeArgs"
 
