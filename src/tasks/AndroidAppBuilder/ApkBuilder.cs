@@ -251,24 +251,24 @@ public partial class ApkBuilder
         // 1. Build libmonodroid.so via cmake
 
         string nativeLibraries = "";
-        if (!UseNativeAOTRuntime)
+        if (IsLibraryMode)
         {
-            if (IsLibraryMode)
+            nativeLibraries = string.Join("\n    ", NativeDependencies.Select(dep => dep));
+        }
+        else
+        {
+            string monoRuntimeLib = "";
+            if (StaticLinkedRuntime)
             {
-                nativeLibraries = string.Join("\n    ", NativeDependencies.Select(dep => dep));
+                monoRuntimeLib = Path.Combine(AppDir, "libmonosgen-2.0.a");
             }
             else
             {
-                string monoRuntimeLib = "";
-                if (StaticLinkedRuntime)
-                {
-                    monoRuntimeLib = Path.Combine(AppDir, "libmonosgen-2.0.a");
-                }
-                else
-                {
-                    monoRuntimeLib = Path.Combine(AppDir, "libmonosgen-2.0.so");
-                }
+                monoRuntimeLib = Path.Combine(AppDir, "libmonosgen-2.0.so");
+            }
 
+            if (!UseNativeAOTRuntime)
+            {
                 if (!File.Exists(monoRuntimeLib))
                 {
                     throw new ArgumentException($"{monoRuntimeLib} was not found");
@@ -277,68 +277,73 @@ public partial class ApkBuilder
                 {
                     nativeLibraries += $"{monoRuntimeLib}{Environment.NewLine}";
                 }
+            }
 
-                if (StaticLinkedRuntime)
+            if (StaticLinkedRuntime)
+            {
+                string[] staticComponentStubLibs = Directory.GetFiles(AppDir, "libmono-component-*-stub-static.a");
+                bool staticLinkAllComponents = false;
+                string[] staticLinkedComponents = Array.Empty<string>();
+
+                if (!string.IsNullOrEmpty(RuntimeComponents) && RuntimeComponents.Equals("*", StringComparison.OrdinalIgnoreCase))
+                    staticLinkAllComponents = true;
+                else if (!string.IsNullOrEmpty(RuntimeComponents))
+                    staticLinkedComponents = RuntimeComponents.Split(";");
+
+                // by default, component stubs will be linked and depending on how mono runtime has been build,
+                // stubs can disable or dynamic load components.
+                foreach (string staticComponentStubLib in staticComponentStubLibs)
                 {
-                    string[] staticComponentStubLibs = Directory.GetFiles(AppDir, "libmono-component-*-stub-static.a");
-                    bool staticLinkAllComponents = false;
-                    string[] staticLinkedComponents = Array.Empty<string>();
-
-                    if (!string.IsNullOrEmpty(RuntimeComponents) && RuntimeComponents.Equals("*", StringComparison.OrdinalIgnoreCase))
-                        staticLinkAllComponents = true;
-                    else if (!string.IsNullOrEmpty(RuntimeComponents))
-                        staticLinkedComponents = RuntimeComponents.Split(";");
-
-                    // by default, component stubs will be linked and depending on how mono runtime has been build,
-                    // stubs can disable or dynamic load components.
-                    foreach (string staticComponentStubLib in staticComponentStubLibs)
+                    string componentLibToLink = staticComponentStubLib;
+                    if (staticLinkAllComponents)
                     {
-                        string componentLibToLink = staticComponentStubLib;
-                        if (staticLinkAllComponents)
+                        // static link component.
+                        componentLibToLink = componentLibToLink.Replace("-stub-static.a", "-static.a", StringComparison.OrdinalIgnoreCase);
+                    }
+                    else
+                    {
+                        foreach (string staticLinkedComponent in staticLinkedComponents)
                         {
-                            // static link component.
-                            componentLibToLink = componentLibToLink.Replace("-stub-static.a", "-static.a", StringComparison.OrdinalIgnoreCase);
-                        }
-                        else
-                        {
-                            foreach (string staticLinkedComponent in staticLinkedComponents)
+                            if (componentLibToLink.Contains(staticLinkedComponent, StringComparison.OrdinalIgnoreCase))
                             {
-                                if (componentLibToLink.Contains(staticLinkedComponent, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    // static link component.
-                                    componentLibToLink = componentLibToLink.Replace("-stub-static.a", "-static.a", StringComparison.OrdinalIgnoreCase);
-                                    break;
-                                }
+                                // static link component.
+                                componentLibToLink = componentLibToLink.Replace("-stub-static.a", "-static.a", StringComparison.OrdinalIgnoreCase);
+                                break;
                             }
                         }
-
-                        // if lib doesn't exist (primarily due to runtime build without static lib support), fallback linking stub lib.
-                        if (!File.Exists(componentLibToLink))
-                        {
-                            logger.LogMessage(MessageImportance.High, $"\nCouldn't find static component library: {componentLibToLink}, linking static component stub library: {staticComponentStubLib}.\n");
-                            componentLibToLink = staticComponentStubLib;
-                        }
-
-                        nativeLibraries += $"    {componentLibToLink}{Environment.NewLine}";
                     }
 
-                    // There's a circular dependency between static mono runtime lib and static component libraries.
-                    // Adding mono runtime lib before and after component libs will resolve issues with undefined symbols
-                    // due to circular dependency.
-                    nativeLibraries += $"    {monoRuntimeLib}{Environment.NewLine}";
+                    // if lib doesn't exist (primarily due to runtime build without static lib support), fallback linking stub lib.
+                    if (!File.Exists(componentLibToLink))
+                    {
+                        logger.LogMessage(MessageImportance.High, $"\nCouldn't find static component library: {componentLibToLink}, linking static component stub library: {staticComponentStubLib}.\n");
+                        componentLibToLink = staticComponentStubLib;
+                    }
+
+                    nativeLibraries += $"    {componentLibToLink}{Environment.NewLine}";
                 }
+
+                // There's a circular dependency between static mono runtime lib and static component libraries.
+                // Adding mono runtime lib before and after component libs will resolve issues with undefined symbols
+                // due to circular dependency.
+                nativeLibraries += $"    {monoRuntimeLib}{Environment.NewLine}";
             }
         }
 
+        // foreach (string lib in Directory.GetFiles(AppDir, "*.a"))
+        // {
+        //     assemblerFilesToLink.AppendLine($"    {lib}");
+        // }
+
         foreach (var nativeDependency in NativeDependencies)
         {
-            assemblerFilesToLink.AppendLine($"    \"{nativeDependency}\"");
+            assemblerFilesToLink.AppendLine($"    {nativeDependency}");
         }
 
         StringBuilder extraLinkerArgs = new StringBuilder();
         foreach (ITaskItem item in ExtraLinkerArguments)
         {
-            extraLinkerArgs.AppendLine($"    \"{item.ItemSpec}\"");
+            extraLinkerArgs.AppendLine($"    {item.ItemSpec}");
         }
 
         nativeLibraries += assemblerFilesToLink.ToString();
@@ -410,37 +415,34 @@ public partial class ApkBuilder
 
         string packageId = $"net.dot.{ProjectName}";
 
-        if (!UseNativeAOTRuntime)
+        File.WriteAllText(javaActivityPath,
+            Utils.GetEmbeddedResource("MainActivity.java")
+                .Replace("%EntryPointLibName%", Path.GetFileName(mainLibraryFileName)));
+
+        if (!string.IsNullOrEmpty(NativeMainSource))
+            File.Copy(NativeMainSource, javaActivityPath, true);
+
+        string envVariables = "";
+        foreach (ITaskItem item in EnvironmentVariables)
         {
-            File.WriteAllText(javaActivityPath,
-                Utils.GetEmbeddedResource("MainActivity.java")
-                    .Replace("%EntryPointLibName%", Path.GetFileName(mainLibraryFileName)));
-
-            if (!string.IsNullOrEmpty(NativeMainSource))
-                File.Copy(NativeMainSource, javaActivityPath, true);
-
-            string envVariables = "";
-            foreach (ITaskItem item in EnvironmentVariables)
-            {
-                string name = item.ItemSpec;
-                string value = item.GetMetadata("Value");
-                envVariables += $"\t\tsetEnv(\"{name}\", \"{value}\");\n";
-            }
-
-            string jniLibraryName = (IsLibraryMode) ? ProjectName! : "System.Security.Cryptography.Native.Android";
-            string monoRunner = Utils.GetEmbeddedResource("MonoRunner.java")
-                .Replace("%EntryPointLibName%", Path.GetFileName(mainLibraryFileName))
-                .Replace("%JNI_LIBRARY_NAME%", jniLibraryName)
-                .Replace("%EnvVariables%", envVariables);
-
-            File.WriteAllText(monoRunnerPath, monoRunner);
-
-            File.WriteAllText(Path.Combine(OutputDir, "AndroidManifest.xml"),
-                Utils.GetEmbeddedResource("AndroidManifest.xml")
-                    .Replace("%PackageName%", packageId)
-                    .Replace("%MinSdkLevel%", MinApiLevel)
-                    .Replace("%TargetSdkVersion%", TargetApiLevel));
+            string name = item.ItemSpec;
+            string value = item.GetMetadata("Value");
+            envVariables += $"\t\tsetEnv(\"{name}\", \"{value}\");\n";
         }
+
+        string jniLibraryName = (IsLibraryMode) ? ProjectName! : "System.Security.Cryptography.Native.Android";
+        string monoRunner = Utils.GetEmbeddedResource("MonoRunner.java")
+            .Replace("%EntryPointLibName%", Path.GetFileName(mainLibraryFileName))
+            .Replace("%JNI_LIBRARY_NAME%", jniLibraryName)
+            .Replace("%EnvVariables%", envVariables);
+
+        File.WriteAllText(monoRunnerPath, monoRunner);
+
+        File.WriteAllText(Path.Combine(OutputDir, "AndroidManifest.xml"),
+            Utils.GetEmbeddedResource("AndroidManifest.xml")
+                .Replace("%PackageName%", packageId)
+                .Replace("%MinSdkLevel%", MinApiLevel)
+                .Replace("%TargetSdkVersion%", TargetApiLevel));
 
         string javaCompilerArgs = $"-d obj -classpath src -bootclasspath {androidJar} -source 1.8 -target 1.8 ";
         Utils.RunProcess(logger, javac, javaCompilerArgs + javaActivityPath, workingDir: OutputDir);
@@ -467,7 +469,7 @@ public partial class ApkBuilder
         Utils.RunProcess(logger, aapt, $"package -f -m -F {apkFile} -A assets -M AndroidManifest.xml -I {androidJar} {debugModeArg}", workingDir: OutputDir);
 
         var dynamicLibs = new List<string>();
-        dynamicLibs.Add(Path.Combine(OutputDir, "monodroid", "libmonodroid.so"));
+        dynamicLibs.Add(Path.Combine(OutputDir, "monodroid", "libmonodroid.a"));
 
         if (IsLibraryMode)
         {
@@ -475,7 +477,7 @@ public partial class ApkBuilder
         }
         else
         {
-            dynamicLibs.AddRange(Directory.GetFiles(AppDir, "*.so").Where(file => Path.GetFileName(file) != "libmonodroid.so"));
+            dynamicLibs.AddRange(Directory.GetFiles(AppDir, "*.a").Where(file => Path.GetFileName(file) != "libmonodroid.a"));
         }
 
         // add all *.so files to lib/%abi%/

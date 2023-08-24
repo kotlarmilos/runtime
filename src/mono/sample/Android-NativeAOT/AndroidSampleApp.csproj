@@ -9,11 +9,12 @@
     <TrimMode>Link</TrimMode>
     <UseNativeAOTRuntime Condition="'$(UseNativeAOTRuntime)' == ''">true</UseNativeAOTRuntime>
     <RunAOTCompilation>false</RunAOTCompilation>
-    <NativeLib>static</NativeLib>
+    <NativeLib>shared</NativeLib>
     <CustomNativeMain>true</CustomNativeMain>
     <!-- Escape NativeAOT bundling targets -->
     <NativeCompilationDuringPublish>false</NativeCompilationDuringPublish>
     <StripSymbols>false</StripSymbols>
+    <PositionIndependentExecutable>true</PositionIndependentExecutable>
   </PropertyGroup>
 
   <Import Project="$(MonoProjectRoot)\msbuild\android\build\AndroidBuild.props" />

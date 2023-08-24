@@ -65,10 +65,11 @@ The .NET Foundation licenses this file to you under the MIT license.
       <NetCoreAppNativeLibrary Include="System.Native" />
       <NetCoreAppNativeLibrary Include="System.Globalization.Native" Condition="'$(StaticICULinking)' != 'true' and '$(InvariantGlobalization)' != 'true'" />
       <NetCoreAppNativeLibrary Include="System.IO.Compression.Native" />
-      <NetCoreAppNativeLibrary Include="System.Net.Security.Native" Condition="!$(_targetOS.StartsWith('tvos')) and '$(_linuxLibcFlavor)' != 'bionic'" />
+      <NetCoreAppNativeLibrary Include="System.Net.Security.Native" Condition="!$(_targetOS.StartsWith('tvos')) and '$(_linuxLibcFlavor)' != 'bionic' and '$(TargetOS)' != 'android'" />
       <NetCoreAppNativeLibrary Include="System.Security.Cryptography.Native.Apple" Condition="'$(_IsApplePlatform)' == 'true'" />
+      <NetCoreAppNativeLibrary Include="System.Security.Cryptography.Native.Android" Condition="'$(TargetOS)' == 'android'" />
       <!-- Not compliant for iOS-like platforms -->
-      <NetCoreAppNativeLibrary Include="System.Security.Cryptography.Native.OpenSsl" Condition="'$(StaticOpenSslLinking)' != 'true' and '$(_IsiOSLikePlatform)' != 'true'" />
+      <NetCoreAppNativeLibrary Include="System.Security.Cryptography.Native.OpenSsl" Condition="'$(StaticOpenSslLinking)' != 'true' and '$(_IsiOSLikePlatform)' != 'true' and '$(TargetOS)' != 'android'" />
       <NetCoreAppNativeLibrary Include="icudata" Condition="'$(_IsiOSLikePlatform)' == 'true' and '$(InvariantGlobalization)' != 'true'" />
       <NetCoreAppNativeLibrary Include="icui18n" Condition="'$(_IsiOSLikePlatform)' == 'true' and '$(InvariantGlobalization)' != 'true'" />
       <NetCoreAppNativeLibrary Include="icuuc" Condition="'$(_IsiOSLikePlatform)' == 'true' and '$(InvariantGlobalization)' != 'true'" />
@@ -114,8 +115,8 @@ The .NET Foundation licenses this file to you under the MIT license.
       <NativeSystemLibrary Include="swiftCore" Condition="'$(_targetOS)' == 'osx'" />
       <NativeSystemLibrary Include="swiftFoundation" Condition="'$(_targetOS)' == 'osx'" />
       <NativeSystemLibrary Include="z" />
-      <NativeSystemLibrary Include="rt" Condition="'$(_IsApplePlatform)' != 'true' and '$(_linuxLibcFlavor)' != 'bionic'" />
-      <NativeSystemLibrary Include="log" Condition="'$(_linuxLibcFlavor)' == 'bionic'" />
+      <NativeSystemLibrary Include="rt" Condition="'$(_IsApplePlatform)' != 'true' and '$(_linuxLibcFlavor)' != 'bionic' and '$(TargetOS)' != 'android'" />
+      <NativeSystemLibrary Include="log" Condition="'$(_linuxLibcFlavor)' == 'bionic' or '$(TargetOS)' == 'android'" />
       <NativeSystemLibrary Include="icucore" Condition="'$(_IsApplePlatform)' == 'true'" />
       <NativeSystemLibrary Include="m" />
     </ItemGroup>
@@ -130,15 +131,15 @@ The .NET Foundation licenses this file to you under the MIT license.
       <LinkerArg Include="@(NativeLibrary)" />
       <LinkerArg Include="--sysroot=$(SysRoot)" Condition="'$(SysRoot)' != ''" />
       <LinkerArg Include="--target=$(TargetTriple)" Condition="'$(_IsApplePlatform)' != 'true' and '$(TargetTriple)' != ''" />
-      <LinkerArg Include="-arch $(CrossCompileArch)" Condition="'$(_IsApplePlatform)' == 'true' and '$(CrossCompileArch)' != ''" />
+      <LinkerArg Include="-arch $(CrossCompileArch)" Condition="('$(_IsApplePlatform)' == 'true' or '$(TargetOS)' != 'android') and '$(CrossCompileArch)' != ''" />
       <LinkerArg Include="-g" Condition="$(NativeDebugSymbols) == 'true'" />
-      <LinkerArg Include="-Wl,--strip-debug" Condition="$(NativeDebugSymbols) != 'true' and '$(_IsApplePlatform)' != 'true'" />
+      <LinkerArg Include="-Wl,--strip-debug" Condition="$(NativeDebugSymbols) != 'true' and '$(_IsApplePlatform)' != 'true' and '$(TargetOS)' != 'android'" />
       <LinkerArg Include="-Wl,-rpath,'$(IlcRPath)'" Condition="'$(StaticExecutable)' != 'true' and !$([MSBuild]::IsOSPlatform('Windows'))" />
       <LinkerArg Include="-Wl,-rpath,&quot;$(IlcRPath)&quot;" Condition="'$(StaticExecutable)' != 'true' and $([MSBuild]::IsOSPlatform('Windows'))" />
-      <LinkerArg Include="-Wl,--build-id=sha1" Condition="'$(_IsApplePlatform)' != 'true'" />
-      <LinkerArg Include="-Wl,--as-needed" Condition="'$(_IsApplePlatform)' != 'true'" />
+      <LinkerArg Include="-Wl,--build-id=sha1" Condition="'$(_IsApplePlatform)' != 'true' and '$(TargetOS)' != 'android'" />
+      <LinkerArg Include="-Wl,--as-needed" Condition="'$(_IsApplePlatform)' != 'true' and '$(TargetOS)' != 'android'" />
       <LinkerArg Include="-Wl,-e0x0" Condition="'$(NativeLib)' == 'Shared' and '$(_IsApplePlatform)' != 'true'" />
-      <LinkerArg Include="-pthread" Condition="'$(_IsApplePlatform)' != 'true'" />
+      <LinkerArg Include="-pthread" Condition="'$(_IsApplePlatform)' != 'true' and '$(TargetOS)' != 'android'" />
       <LinkerArg Include="@(NativeSystemLibrary->'-l%(Identity)')" />
       <LinkerArg Include="-L/usr/lib/swift" Condition="'$(_targetOS)' == 'osx'" />
       <LinkerArg Include="@(StaticICULibs)" Condition="'$(StaticICULinking)' == 'true'" />
@@ -151,9 +152,9 @@ The .NET Foundation licenses this file to you under the MIT license.
       <LinkerArg Include="-pie -Wl,-pie" Condition="'$(_IsApplePlatform)' != 'true' and '$(NativeLib)' == '' and '$(StaticExecutable)' != 'true' and '$(PositionIndependentExecutable)' != 'false'" />
       <LinkerArg Include="-Wl,-no-pie" Condition="'$(_IsApplePlatform)' != 'true' and '$(NativeLib)' == '' and '$(StaticExecutable)' != 'true' and '$(PositionIndependentExecutable)' == 'false'" />
       <!-- binskim warning BA3010 The GNU_RELRO segment is missing -->
-      <LinkerArg Include="-Wl,-z,relro" Condition="'$(_IsApplePlatform)' != 'true'" />
+      <LinkerArg Include="-Wl,-z,relro" Condition="'$(_IsApplePlatform)' != 'true' and '$(TargetOS)' != 'android'" />
       <!-- binskim warning BA3011 The BIND_NOW flag is missing -->
-      <LinkerArg Include="-Wl,-z,now" Condition="'$(_IsApplePlatform)' != 'true'" />
+      <LinkerArg Include="-Wl,-z,now" Condition="'$(_IsApplePlatform)' != 'true' and '$(TargetOS)' != 'android'" />
       <!-- this workaround can be deleted once the minimum supported glibc version
            (runtime's official build machine's glibc version) is at least 2.33
            see https://github.com/bminor/glibc/commit/99468ed45f5a58f584bab60364af937eb6f8afda -->
@@ -163,8 +164,8 @@ The .NET Foundation licenses this file to you under the MIT license.
       <!-- FreeBSD's inotify is an installed package and not found in default libraries  -->
       <LinkerArg Include="-L/usr/local/lib -linotify" Condition="'$(_targetOS)' == 'freebsd'" />
       <LinkerArg Include="@(ExtraLinkerArg->'-Wl,%(Identity)')" />
-      <LinkerArg Include="@(NativeFramework->'-framework %(Identity)')" Condition="'$(_IsApplePlatform)' == 'true'" />
-      <LinkerArg Include="-Wl,--eh-frame-hdr" Condition="'$(_IsApplePlatform)' != 'true'" />
+      <LinkerArg Include="@(NativeFramework->'-framework %(Identity)')" Condition="'$(_IsApplePlatform)' == 'true' or '$(TargetOS)' == 'android'" />
+      <LinkerArg Include="-Wl,--eh-frame-hdr" Condition="'$(_IsApplePlatform)' != 'true' and '$(TargetOS)' != 'android'" />
     </ItemGroup>
 
     <PropertyGroup>
