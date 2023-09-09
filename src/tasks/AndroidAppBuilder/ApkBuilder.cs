@@ -38,6 +38,7 @@ public partial class ApkBuilder
     public string? RuntimeComponents { get; set; }
     public string? DiagnosticPorts { get; set; }
     public bool IsLibraryMode { get; set; }
+    public bool UseNativeAOTRuntime { get; set; }
     public ITaskItem[] Assemblies { get; set; } = Array.Empty<ITaskItem>();
     public ITaskItem[] ExtraLinkerArguments { get; set; } = Array.Empty<ITaskItem>();
     public string[] NativeDependencies { get; set; } = Array.Empty<string>();
@@ -266,13 +267,16 @@ public partial class ApkBuilder
                 monoRuntimeLib = Path.Combine(AppDir, "libmonosgen-2.0.so");
             }
 
-            if (!File.Exists(monoRuntimeLib))
+            if (!UseNativeAOTRuntime)
             {
-                throw new ArgumentException($"{monoRuntimeLib} was not found");
-            }
-            else
-            {
-                nativeLibraries += $"{monoRuntimeLib}{Environment.NewLine}";
+                if (!File.Exists(monoRuntimeLib))
+                {
+                    throw new ArgumentException($"{monoRuntimeLib} was not found");
+                }
+                else
+                {
+                    nativeLibraries += $"{monoRuntimeLib}{Environment.NewLine}";
+                }
             }
 
             if (StaticLinkedRuntime)
@@ -326,10 +330,20 @@ public partial class ApkBuilder
             }
         }
 
+        // foreach (string lib in Directory.GetFiles(AppDir, "*.a"))
+        // {
+        //     assemblerFilesToLink.AppendLine($"    {lib}");
+        // }
+
+        foreach (var nativeDependency in NativeDependencies)
+        {
+            assemblerFilesToLink.AppendLine($"    {nativeDependency}");
+        }
+
         StringBuilder extraLinkerArgs = new StringBuilder();
         foreach (ITaskItem item in ExtraLinkerArguments)
         {
-            extraLinkerArgs.AppendLine($"    \"{item.ItemSpec}\"");
+            extraLinkerArgs.AppendLine($"    {item.ItemSpec}");
         }
 
         nativeLibraries += assemblerFilesToLink.ToString();
@@ -338,6 +352,7 @@ public partial class ApkBuilder
         string monodroidSource = (IsLibraryMode) ? "monodroid-librarymode.c" : "monodroid.c";
 
         string cmakeLists = Utils.GetEmbeddedResource("CMakeLists-android.txt")
+            .Replace("%UseNativeAOTRuntime%", UseNativeAOTRuntime ? "TRUE" : "FALSE")
             .Replace("%ProjectName%", ProjectName)
             .Replace("%MonoInclude%", monoRuntimeHeaders)
             .Replace("%NativeLibrariesToLink%", nativeLibraries)
@@ -368,6 +383,11 @@ public partial class ApkBuilder
         if (!string.IsNullOrEmpty(DiagnosticPorts))
         {
             defines.AppendLine("add_definitions(-DDIAGNOSTIC_PORTS=\"" + DiagnosticPorts + "\")");
+        }
+
+        if (UseNativeAOTRuntime)
+        {
+            defines.AppendLine("add_definitions(-DUSE_NATIVE_AOT=1)");
         }
 
         cmakeLists = cmakeLists.Replace("%Defines%", defines.ToString());
@@ -511,6 +531,12 @@ public partial class ApkBuilder
             File.Copy(dynamicLib, Path.Combine(OutputDir, destRelative), true);
             Utils.RunProcess(logger, aapt, $"add {apkFile} {destRelative}", workingDir: OutputDir);
         }
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.Native.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.Security.Cryptography.Native.Android.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libmonosgen-2.0.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.IO.Compression.Native.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libmono-component-marshal-ilgen.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.Globalization.Native.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
         Utils.RunProcess(logger, aapt, $"add {apkFile} classes.dex", workingDir: OutputDir);
 
         // Include prebuilt .dex files

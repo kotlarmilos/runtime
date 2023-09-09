@@ -7,7 +7,7 @@ public static class Program
 {
     public static int Main(string[] args)
     {
-        Console.WriteLine("Hello, Android!"); // logcat
+        Console.WriteLine("Hello, Android from Native AOT!"); // logcat
         return 42;
     }
 }

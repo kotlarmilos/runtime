@@ -106,6 +106,11 @@ public class AndroidAppBuilderTask : Task
 
     public bool ForceInterpreter { get; set; }
 
+    /// <summary>
+    /// Bundles the application for NativeAOT runtime. Default runtime is Mono.
+    /// </summary>
+    public bool UseNativeAOTRuntime { get; set; }
+
     [Output]
     public string ApkBundlePath { get; set; } = ""!;
 
@@ -138,6 +143,7 @@ public class AndroidAppBuilderTask : Task
         apkBuilder.IsLibraryMode = IsLibraryMode;
         apkBuilder.NativeDependencies = NativeDependencies;
         apkBuilder.ExtraLinkerArguments = ExtraLinkerArguments;
+        apkBuilder.UseNativeAOTRuntime = UseNativeAOTRuntime;
         (ApkBundlePath, ApkPackageId) = apkBuilder.BuildApk(RuntimeIdentifier, MainLibraryFileName, MonoRuntimeHeaders);
 
         return true;
