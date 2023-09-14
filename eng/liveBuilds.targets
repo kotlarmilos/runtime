@@ -14,7 +14,6 @@
 
   <!-- Set up default live asset paths if no overrides provided. -->
   <PropertyGroup>
-    <!-- FIXME: Should be reverted once the cross build is implemented -->
     <CoreCLRArtifactsPath Condition="'$(CoreCLRArtifactsPath)' == ''">$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts', 'bin', 'coreclr', '$(HostOS).$(TargetArchitecture).$(CoreCLRConfiguration)'))</CoreCLRArtifactsPath>
     <MonoArtifactsPath Condition="'$(MonoArtifactsPath)' == ''">$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts', 'bin', 'mono', '$(TargetOS).$(TargetArchitecture).$(MonoConfiguration)'))</MonoArtifactsPath>
     <LibrariesArtifactsPath Condition="'$(LibrariesArtifactsPath)' == ''">$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts'))</LibrariesArtifactsPath>
