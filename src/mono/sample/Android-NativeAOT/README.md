@@ -10,19 +10,29 @@ When building for the first time (on a clean checkout) run the commands below.
 
 Setup the local environment:
 ```bash
-git clone https://github.com/dotnet/runtime.git
+git clone https://github.com/kotlarmilos/runtime.git
 ```
 ```bash
 git checkout feature/nativeaot-android-poc
 ```
 
+Export SDK and NDK:
+```bash
+export ANDROID_SDK_ROOT=~/android-sdk                                                                             
+export ANDROID_NDK_ROOT=~/android-ndk-r23c
+```
 Build the ilc for the host:
 ```bash
 ./build.sh clr+clr.aot
 ```
-Build the native and managed libs:
+Build the native libs:
 ```bash
-TARGET_BUILD_ARCH=arm64 ./build.sh -s clr.nativeaotruntime+clr.nativeaotlibs+libs -arch arm64 -os Android
+TARGET_BUILD_ARCH=arm64 ./build.sh -s clr.nativeaotruntime+clr.nativeaotlibs -os linux-bionic
+```
+
+Build managed libs:
+```bash
+./build.sh -s libs -os android
 ```
 
 Create a bundle:

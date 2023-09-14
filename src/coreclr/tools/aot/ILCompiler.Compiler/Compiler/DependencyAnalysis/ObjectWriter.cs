@@ -1372,11 +1372,6 @@ namespace ILCompiler.DependencyAnalysis
                     sys = "tvos11.0";
                     abi = "simulator";
                     break;
-                case TargetOS.Android:
-                    vendor = "android";
-                    sys = "linux";
-                    abi = "arm64-v8a"; // Add x64 abi
-                    break;
                 case TargetOS.WebAssembly:
                     vendor = "unknown";
                     sys = "unknown";

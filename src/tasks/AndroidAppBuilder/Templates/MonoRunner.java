@@ -99,11 +99,11 @@ public class MonoRunner extends Instrumentation
     public void onStart() {
         Looper.prepare();
 
-        if (entryPointLibName == "") {
-            Log.e("DOTNET", "Missing entrypoint argument, pass '-e entrypoint:libname <name.dll>' to adb to specify which program to run.");
-            finish(1, null);
-            return;
-        }
+        // if (entryPointLibName == "") {
+        //     Log.e("DOTNET", "Missing entrypoint argument, pass '-e entrypoint:libname <name.dll>' to adb to specify which program to run.");
+        //     finish(1, null);
+        //     return;
+        // }
         int retcode = initialize(entryPointLibName, argsToForward, getContext());
 
         Log.i("DOTNET", "MonoRunner finished, return-code=" + retcode);

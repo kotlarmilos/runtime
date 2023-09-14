@@ -276,6 +276,7 @@
       <_LinkerFlagsToDrop Include="@(NativeFramework->'-framework %(Identity)')" />
       <LinkerArg Remove="@(_LinkerFlagsToDrop)" />
       <ExtraAppLinkerArgs Include="@(LinkerArg)" />
+      <ExtraAppLinkerArgs Include="-Wl,--version-script=/Users/miloskotlar/playground/bioniclib/obj/Release/net8.0/linux-bionic-arm64/native/bioniclib.exports" />
     </ItemGroup>
 
     <AndroidAppBuilderTask

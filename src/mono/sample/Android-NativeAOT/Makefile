@@ -10,7 +10,7 @@ appbuilder:
 run: clean appbuilder
 	$(DOTNET) publish \
 	/p:TargetArchitecture=$(MONO_ARCH) \
-	/p:TargetOS=android \
+	/p:TargetOS=linux-bionic \
 	/p:Configuration=$(MONO_CONFIG) \
 	/p:DeployAndRun=$(DEPLOY_AND_RUN) \
 	/bl

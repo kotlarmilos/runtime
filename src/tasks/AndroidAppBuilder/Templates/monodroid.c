@@ -267,7 +267,8 @@ mono_droid_runtime_init (const char* executable, int managed_argc, char* managed
     LOG_INFO ("file_path: %s\n", file_path);
     assert (num_char > 0 && num_char == str_len);
 
-    int ret_val = __managed__Main(0, NULL);
+    char *empty_argv[] = { "programName", NULL };
+    int ret_val = __managed__Main(1, empty_argv);
     return ret_val;
 
 //     if (stat (file_path, &buffer) == 0) {
@@ -290,7 +291,7 @@ mono_droid_runtime_init (const char* executable, int managed_argc, char* managed
 //     mono_set_crash_chaining (true);
 
 //     if (wait_for_debugger) {
-//         char* options[] = { "--debugger-agent=transport=dt_socket,server=y,address=0.0.0.0:55556" };
+//         char* options[] = { "--debugger-agent=transport=dt_socket,server=y,address=0.0.0.0:55555" };
 //         mono_jit_parse_options (1, options);
 //     }
 

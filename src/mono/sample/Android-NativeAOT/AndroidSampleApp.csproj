@@ -4,23 +4,23 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <TargetFramework>$(NetCoreAppCurrent)</TargetFramework>
     <RuntimeIdentifier>android-$(TargetArchitecture)</RuntimeIdentifier>
-    <SelfContained>true</SelfContained>
+    <SelfContained>false</SelfContained>
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>Link</TrimMode>
     <UseNativeAOTRuntime Condition="'$(UseNativeAOTRuntime)' == ''">true</UseNativeAOTRuntime>
     <RunAOTCompilation>false</RunAOTCompilation>
-    <NativeLib>shared</NativeLib>
+    <NativeLib>static</NativeLib>
     <CustomNativeMain>true</CustomNativeMain>
     <!-- Escape NativeAOT bundling targets -->
     <NativeCompilationDuringPublish>false</NativeCompilationDuringPublish>
     <StripSymbols>false</StripSymbols>
-    <PositionIndependentExecutable>true</PositionIndependentExecutable>
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 
   <Import Project="$(MonoProjectRoot)\msbuild\android\build\AndroidBuild.props" />
   <Import Project="$(MonoProjectRoot)\msbuild\android\build\AndroidBuild.InTree.targets" />
   <Import Condition="'$(PublishAotUsingRuntimePack)' != 'true'" Project="$(CoreClrProjectRoot)nativeaot\BuildIntegration\Microsoft.DotNet.ILCompiler.SingleEntry.targets" />
-  
+
   <ItemGroup>
     <Compile Include="../Android/Program.cs" Link="Program.cs" />
     <DirectPInvoke Include="__Internal" />
@@ -35,7 +35,7 @@
     BeforeTargets="SetupProperties">
       <PropertyGroup>
         <IlcToolsPath>$(CoreCLRILCompilerDir)</IlcToolsPath>
-        <IlcSdkPath>$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts', 'bin', 'coreclr', '$(TargetOS).$(TargetArchitecture).$(CoreCLRConfiguration)', 'aotsdk'))</IlcSdkPath>
+        <IlcSdkPath>$([MSBuild]::NormalizeDirectory('$(RepoRoot)', 'artifacts', 'bin', 'coreclr', 'linux.$(TargetArchitecture).$(CoreCLRConfiguration)', 'aotsdk'))</IlcSdkPath>
         <IlcFrameworkPath>$(LibrariesAllBinArtifactsPath)</IlcFrameworkPath>
         <IlcFrameworkNativePath>$(LibrariesAllBinArtifactsPath)</IlcFrameworkNativePath>
     </PropertyGroup>

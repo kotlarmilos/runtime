@@ -469,7 +469,7 @@ public partial class ApkBuilder
         Utils.RunProcess(logger, aapt, $"package -f -m -F {apkFile} -A assets -M AndroidManifest.xml -I {androidJar} {debugModeArg}", workingDir: OutputDir);
 
         var dynamicLibs = new List<string>();
-        dynamicLibs.Add(Path.Combine(OutputDir, "monodroid", "libmonodroid.a"));
+        dynamicLibs.Add(Path.Combine(OutputDir, "monodroid", "libmonodroid.so"));
 
         if (IsLibraryMode)
         {
@@ -477,7 +477,7 @@ public partial class ApkBuilder
         }
         else
         {
-            dynamicLibs.AddRange(Directory.GetFiles(AppDir, "*.a").Where(file => Path.GetFileName(file) != "libmonodroid.a"));
+            dynamicLibs.AddRange(Directory.GetFiles(AppDir, "*.so").Where(file => Path.GetFileName(file) != "libmonodroid.so"));
         }
 
         // add all *.so files to lib/%abi%/
@@ -531,6 +531,12 @@ public partial class ApkBuilder
             File.Copy(dynamicLib, Path.Combine(OutputDir, destRelative), true);
             Utils.RunProcess(logger, aapt, $"add {apkFile} {destRelative}", workingDir: OutputDir);
         }
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.Native.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.Security.Cryptography.Native.Android.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libmonosgen-2.0.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.IO.Compression.Native.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libmono-component-marshal-ilgen.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
+        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.Globalization.Native.so", workingDir: "/Users/miloskotlar/dotnet/runtime/artifacts/bin/AndroidSampleApp/arm64/Debug/android-arm64/publish/apk/");
         Utils.RunProcess(logger, aapt, $"add {apkFile} classes.dex", workingDir: OutputDir);
 
         // Include prebuilt .dex files

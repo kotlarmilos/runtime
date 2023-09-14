@@ -33,19 +33,19 @@ public class MainActivity extends Activity
         rootLayout.addView(textView, tvLayout);
         setContentView(rootLayout);
 
-        if (entryPointLibName == "" || entryPointLibName.startsWith("%")) {
-            textView.setText("ERROR: EntryPointLibName was not set.");
-            return;
-        } else {
+        // if (entryPointLibName == "" || entryPointLibName.startsWith("%")) {
+        //     textView.setText("ERROR: EntryPointLibName was not set.");
+        //     return;
+        // } else {
             textView.setText("Running " + entryPointLibName + "...");
-        }
+        // }
 
         final Activity ctx = this;
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
                 int retcode = MonoRunner.initialize(entryPointLibName, new String[0], ctx);
-                textView.setText("Mono Runtime returned: " + retcode);
+                textView.setText("Native AOT runtime returned: " + retcode);
             }
         }, 1000);
     }
