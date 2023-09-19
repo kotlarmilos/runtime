@@ -87,6 +87,7 @@ void mono_log_close_logcat (void);
 ### Performance measurements
 
 Collect data on startup time, SOD, and build time for both HelloWorld and Xamarin SingleView static regstrar apps. Validate their functionality to ensure the experiment results are reliable.
+Find a tool for measauring performance of android applications.
 
 ### .NET 9 tasks
 
