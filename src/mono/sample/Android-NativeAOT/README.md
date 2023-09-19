@@ -39,7 +39,7 @@ make run
 
 The goal of this experiment is to allow running Maui apps on Android devices with Native AOT. Outcome of this experiment should be a document with SOD and startup measurements comparing Mono and Native AOT runtimes, and list of tasks that needs to be done in order to support it as an opt-in feature within the .NET.
 
-### Make the sample app works with Native AOT
+### Make the sample app work with Native AOT
 
 The current version contains a number of workarounds or hardcoded values which should be replaced with correct logic.
 
