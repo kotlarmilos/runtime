@@ -29,7 +29,6 @@ public static class Program
         }
     }
 
-    // Called by native code, see main.m
     [UnmanagedCallersOnly]
     private static void OnButtonClick()
     {
