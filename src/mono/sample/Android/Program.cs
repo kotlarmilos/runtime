@@ -18,13 +18,13 @@ public static class Program
 
     private static void SetText(string txt)
     {
-        byte[] ascii = ASCIIEncoding.ASCII.GetBytes(txt);
+        byte[] bytes = Encoding.UTF8.GetBytes(txt);
         
         unsafe 
         {
-            fixed (byte* asciiPtr = ascii)
+            fixed (byte* bytesPtr = bytes)
             {
-                android_set_text(asciiPtr);
+                android_set_text(bytesPtr);
             }
         }
     }

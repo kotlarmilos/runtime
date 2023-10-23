@@ -88,7 +88,7 @@ public class MonoRunner extends Instrumentation
         }
 
         // unzip libs and test files to filesDir
-        unzipAssets(context, filesDir, "assets.zip");
+        // unzipAssets(context, filesDir, "assets.zip");
 
         Log.i("DOTNET", "MonoRunner initialize,, entryPointLibName=" + entryPointLibName);
         int localDateTimeOffset = getLocalDateTimeOffset();
