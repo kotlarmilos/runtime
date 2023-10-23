@@ -9,17 +9,21 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Button;
 import android.graphics.Color;
+import android.view.View;
 
 public class MainActivity extends Activity
 {
+    private static TextView textView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 
         final String entryPointLibName = "%EntryPointLibName%";
-        final TextView textView = new TextView(this);
+        textView = new TextView(this);
         textView.setTextSize(20);
 
         RelativeLayout rootLayout = new RelativeLayout(this);
@@ -31,7 +35,27 @@ public class MainActivity extends Activity
         tvLayout.addRule(RelativeLayout.CENTER_HORIZONTAL);
         tvLayout.addRule(RelativeLayout.CENTER_VERTICAL);
         rootLayout.addView(textView, tvLayout);
+
+        Button button = new Button(this);
+        button.setText("Click Me!");
+
+        RelativeLayout.LayoutParams buttonLayout =
+                new RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.WRAP_CONTENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+
+        buttonLayout.addRule(RelativeLayout.BELOW, textView.getId());
+        buttonLayout.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        rootLayout.addView(button, buttonLayout);
+
         setContentView(rootLayout);
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MonoRunner.onClickHandle();
+            }
+        });
 
         // if (entryPointLibName == "" || entryPointLibName.startsWith("%")) {
         //     textView.setText("ERROR: EntryPointLibName was not set.");

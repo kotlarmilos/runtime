@@ -38,11 +38,24 @@ Java_net_dot_MonoRunner_setEnv (JNIEnv* env, jobject thiz, jstring j_key, jstrin
 int
 Java_net_dot_MonoRunner_initRuntime (JNIEnv* env, jobject thiz, jstring j_files_dir, jstring j_cache_dir, jstring j_testresults_dir, jstring j_entryPointLibName, jobjectArray j_args, long current_local_time);
 
+void
+Java_net_dot_MonoRunner_onClickHandleNative (JNIEnv* env, jobject thiz);
+
+void
+android_register_button_click (void* ptr);
+
+void
+android_set_text (const char* value);
+
 // called from C#
 void
 invoke_external_native_api (void (*callback)(void));
 
 /********* implementation *********/
+
+void (*clickHandlerPtr)(void);
+
+JNIEnv* global_env;
 
 static char *bundle_path;
 static char *executable;
@@ -349,6 +362,7 @@ Java_net_dot_MonoRunner_setEnv (JNIEnv* env, jobject thiz, jstring j_key, jstrin
 int
 Java_net_dot_MonoRunner_initRuntime (JNIEnv* env, jobject thiz, jstring j_files_dir, jstring j_cache_dir, jstring j_testresults_dir, jstring j_entryPointLibName, jobjectArray j_args, long current_local_time)
 {
+    global_env = env;
     char file_dir[2048];
     char cache_dir[2048];
     char testresults_dir[2048];
@@ -386,6 +400,35 @@ Java_net_dot_MonoRunner_initRuntime (JNIEnv* env, jobject thiz, jstring j_files_
 
     free(managed_argv);
     return res;
+}
+
+void
+android_register_button_click (void* ptr)
+{
+    clickHandlerPtr = ptr;
+}
+
+void
+Java_net_dot_MonoRunner_onClickHandleNative (JNIEnv* env, jobject thiz)
+{
+    if (clickHandlerPtr)
+        clickHandlerPtr();
+}
+
+void
+android_set_text (const char* value)
+{
+    jstring jValue = (*global_env)->NewStringUTF(global_env, value);
+    jclass clazz = (*global_env)->FindClass(global_env, "net/dot/MainActivity");
+
+    jfieldID textViewField = (*global_env)->GetStaticFieldID(global_env, clazz, "textView", "Landroid/widget/TextView;");
+    jobject textViewObj = (*global_env)->GetStaticObjectField(global_env, clazz, textViewField);
+
+    jclass textViewClass = (*global_env)->GetObjectClass(global_env, textViewObj);
+    jmethodID setTextMethod = (*global_env)->GetMethodID(global_env, textViewClass, "setText", "(Ljava/lang/CharSequence;)V");
+
+    (*global_env)->CallVoidMethod(global_env, textViewObj, setTextMethod, jValue);
+    (*global_env)->DeleteLocalRef(global_env, jValue);
 }
 
 // called from C#

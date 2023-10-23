@@ -162,7 +162,13 @@ public class MonoRunner extends Instrumentation
         }
     }
 
+    public static void onClickHandle() {
+        onClickHandleNative();
+    }
+
     static native int initRuntime(String libsDir, String cacheDir, String testResultsDir, String entryPointLibName, String[] args, int local_date_time_offset);
+
+    static native void onClickHandleNative();
 
     static native int setEnv(String key, String value);
 }
