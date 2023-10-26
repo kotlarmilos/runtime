@@ -343,7 +343,9 @@ public partial class ApkBuilder
         StringBuilder extraLinkerArgs = new StringBuilder();
         foreach (ITaskItem item in ExtraLinkerArguments)
         {
-            extraLinkerArgs.AppendLine($"    {item.ItemSpec}");
+            // Skip JNI_OnLoad from the runtime
+            if (!item.ItemSpec.Contains ("libSystem.Security.Cryptography.Native.Android.a"))
+                extraLinkerArgs.AppendLine($"    {item.ItemSpec}");
         }
 
         nativeLibraries += assemblerFilesToLink.ToString();
@@ -531,12 +533,6 @@ public partial class ApkBuilder
             File.Copy(dynamicLib, Path.Combine(OutputDir, destRelative), true);
             Utils.RunProcess(logger, aapt, $"add {apkFile} {destRelative}", workingDir: OutputDir);
         }
-        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.Native.so", workingDir: "PATH_TO_DYNAMIC_LIBS");
-        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.Security.Cryptography.Native.Android.so", workingDir: "PATH_TO_DYNAMIC_LIBS");
-        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libmonosgen-2.0.so", workingDir: "PATH_TO_DYNAMIC_LIBS");
-        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.IO.Compression.Native.so", workingDir: "PATH_TO_DYNAMIC_LIBS");
-        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libmono-component-marshal-ilgen.so", workingDir: "PATH_TO_DYNAMIC_LIBS");
-        Utils.RunProcess(logger, aapt, $"add {apkFile} lib/arm64-v8a/libSystem.Globalization.Native.so", workingDir: "PATH_TO_DYNAMIC_LIBS");
         Utils.RunProcess(logger, aapt, $"add {apkFile} classes.dex", workingDir: OutputDir);
 
         // Include prebuilt .dex files

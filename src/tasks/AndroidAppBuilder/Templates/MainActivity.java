@@ -22,7 +22,6 @@ public class MainActivity extends Activity
     {
         super.onCreate(savedInstanceState);
 
-        final String entryPointLibName = "%EntryPointLibName%";
         textView = new TextView(this);
         textView.setTextSize(20);
 
@@ -53,24 +52,23 @@ public class MainActivity extends Activity
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MonoRunner.onClickHandle();
+                MonoRunner.onClick();
             }
         });
 
-        // if (entryPointLibName == "" || entryPointLibName.startsWith("%")) {
-        //     textView.setText("ERROR: EntryPointLibName was not set.");
-        //     return;
-        // } else {
-            textView.setText("Running " + entryPointLibName + "...");
-        // }
+        textView.setText("Initializing Native AOT runtime...");
 
         final Activity ctx = this;
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
-                int retcode = MonoRunner.initialize(entryPointLibName, new String[0], ctx);
-                textView.setText("Native AOT runtime returned: " + retcode);
+                int retcode = MonoRunner.initialize(new String[0], ctx);
+                textView.setText("Native AOT runtime initialized: " + retcode);
             }
         }, 1000);
+    }
+
+    public static void setText (String text) {
+        textView.setText (text);
     }
 }

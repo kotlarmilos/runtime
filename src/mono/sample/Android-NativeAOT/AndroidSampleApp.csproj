@@ -22,7 +22,21 @@
   <Import Condition="'$(PublishAotUsingRuntimePack)' != 'true'" Project="$(CoreClrProjectRoot)nativeaot\BuildIntegration\Microsoft.DotNet.ILCompiler.SingleEntry.targets" />
 
   <ItemGroup>
-    <Compile Include="../Android/Program.cs" Link="Program.cs" />
+    <RuntimeHostConfigurationOption Include="System.Resources.UseSystemResourceKeys" Value="true" Trim="true" />
+    <Reference Include="Java.Interop.dll" >
+      <HintPath>JNIEnvironment/Java.Interop.dll</HintPath>
+    </Reference>
+
+    <Compile Include="Program.cs" Link="Program.cs" />
+    <Compile Include="JNIEnvironment/AndroidRuntime.cs" Link="AndroidRuntime.cs" />
+    <Compile Include="JNIEnvironment/JreTypeManager.cs" Link="JreTypeManager.cs" />
+    <Compile Include="JNIEnvironment/ManagedObjectReferenceManager.cs" Link="ManagedObjectReferenceManager.cs" />
+    <Compile Include="JNIEnvironment/ManagedValueManager.cs" Link="ManagedValueManager.cs" />
+    <Compile Include="JNIEnvironment/MonoRuntimeObjectReferenceManager.cs" Link="MonoRuntimeObjectReferenceManager.cs" />
+    <Compile Include="JNIEnvironment/MonoRuntimeValueManager.cs" Link="MonoRuntimeValueManager.cs" />
+    <Compile Include="JNIEnvironment/JniMethodSignatureAttribute.cs" Link="JniMethodSignatureAttribute.cs" />
+    <Compile Include="JNIEnvironment/JniMemberSignatureAttribute.cs" Link="JniMemberSignatureAttribute.cs" />
+
     <DirectPInvoke Include="__Internal" />
     <!-- The libbootstrapper and libbootstrapperdll get copied over to the AppDir, and since their extension is *.o both get included in the app build which results with an error.
          This was not a problem before when these libraries were shipped as archives. -->
