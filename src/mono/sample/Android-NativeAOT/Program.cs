@@ -12,7 +12,7 @@ public static class Program
 {
 
     [DllImport("__Internal")]
-    unsafe private static extern void register_button_click(delegate* unmanaged<void> callback);
+    unsafe private static extern void register_button_click(delegate* unmanaged<IntPtr, void> callback);
     
     static JniRuntime? runtime;
     static IntPtr invocationPointer;
@@ -45,28 +45,37 @@ public static class Program
 
     private static int counter = 0;
 
-    private static void SetText(string txt)
+    private static void SetText(IntPtr env, string txt)
     {
-        var jclass = JniEnvironment.Types.FindClass("net/dot/MonoRunner");
-        var methodId = JniEnvironment.StaticMethods.GetStaticMethodID (jclass, "setText", "(Ljava/lang/String;)V");
-        unsafe {
-            JniArgumentValue* parameters = stackalloc JniArgumentValue [1] {
-                new JniArgumentValue (JniEnvironment.Strings.NewString (txt)),
-            };
-            JniEnvironment.StaticMethods.CallStaticVoidMethod (jclass, methodId, parameters);
+        var envp = new JniTransition (env);
+        try {
+            var jclass = JniEnvironment.Types.FindClass("net/dot/MonoRunner");
+            var methodId = JniEnvironment.StaticMethods.GetStaticMethodID (jclass, "setText", "(Ljava/lang/String;)V");
+            unsafe {
+                JniArgumentValue* parameters = stackalloc JniArgumentValue [1] {
+                    new JniArgumentValue (JniEnvironment.Strings.NewString (txt)),
+                };
+                JniEnvironment.StaticMethods.CallStaticVoidMethod (jclass, methodId, parameters);
+            }
+        } catch (Exception e) {
+			Console.Error.WriteLine ($"JNI_OnLoad: error: {e}");
+            envp.SetPendingException (e);
+		} finally {
+            envp.Dispose();
         }
     }
 
     [UnmanagedCallersOnly]
-    private static void OnButtonClick()
+    private static void OnButtonClick(IntPtr env)
     {
-        SetText("OnButtonClick! #" + counter++);
+        string str = "OnButtonClick! #" + counter++;
+        SetText(env, str);
     }
 
     public static int Main(string[] args)
     {
         unsafe {
-            delegate* unmanaged<void> unmanagedPtr = &OnButtonClick;
+            delegate* unmanaged<IntPtr, void> unmanagedPtr = &OnButtonClick;
             register_button_click(unmanagedPtr);
         }
         Console.WriteLine("Hello from C#!"); // logcat

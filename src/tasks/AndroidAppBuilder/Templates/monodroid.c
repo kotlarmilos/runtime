@@ -35,7 +35,7 @@ invoke_external_native_api (void (*callback)(void));
 
 /********* implementation *********/
 
-void (*onClickHandlerPtr)(void);
+void (*onClickHandlerPtr)(JNIEnv*);
 
 #define LOG_INFO(fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "DOTNET", fmt, ##__VA_ARGS__)
 #define LOG_ERROR(fmt, ...) __android_log_print(ANDROID_LOG_ERROR, "DOTNET", fmt, ##__VA_ARGS__)
@@ -74,7 +74,7 @@ void
 Java_net_dot_MonoRunner_onClickNative (JNIEnv* env, jobject thiz)
 {
     if (onClickHandlerPtr)
-        onClickHandlerPtr();
+        onClickHandlerPtr(env);
 }
 
 // called from C#
