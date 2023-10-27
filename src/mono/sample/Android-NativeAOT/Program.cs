@@ -28,19 +28,14 @@ public static class Program
     [UnmanagedCallersOnly (EntryPoint="Java_net_dot_MonoRunner_initRuntime")]
     static int initRuntime (IntPtr env, IntPtr klass)
     {
-        var envp = new JniTransition (env);
         try {
             // Initialize Java interop and runtime
             runtime = new AndroidRuntime(env, invocationPointer);
+            return Main (null);
         } catch (Exception e) {
 			Console.Error.WriteLine ($"JNI_OnLoad: error: {e}");
-            envp.SetPendingException (e);
 			return 0;
-		} finally {
-            envp.Dispose();
-        }
-
-        return Main (null);
+		}
     }
 
     private static int counter = 0;
