@@ -16,6 +16,7 @@ import android.view.View;
 public class MainActivity extends Activity
 {
     private static TextView textView;
+    private static Button button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -35,7 +36,7 @@ public class MainActivity extends Activity
         tvLayout.addRule(RelativeLayout.CENTER_VERTICAL);
         rootLayout.addView(textView, tvLayout);
 
-        Button button = new Button(this);
+        button = new Button(this);
         button.setText("Click Me!");
 
         RelativeLayout.LayoutParams buttonLayout =
@@ -69,6 +70,6 @@ public class MainActivity extends Activity
     }
 
     public static void setText (String text) {
-        textView.setText (text);
+        button.setText (text);
     }
 }

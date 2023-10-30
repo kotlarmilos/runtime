@@ -92,7 +92,7 @@ public class MonoRunner extends Instrumentation
     }
 
     public static void onClick() {
-        onClickNative();
+        OnButtonClick();
     }
 
     public static void setText(String text) {
@@ -104,7 +104,7 @@ public class MonoRunner extends Instrumentation
 
     static native int initRuntime();
 
-    static native void onClickNative();
+    static native void OnButtonClick();
 
     static native int setEnv(String key, String value);
 }

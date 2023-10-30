@@ -10,10 +10,6 @@ using System.Diagnostics;
 
 public static class Program
 {
-
-    [DllImport("__Internal")]
-    unsafe private static extern void register_button_click(delegate* unmanaged<IntPtr, void> callback);
-    
     static JniRuntime? runtime;
     static IntPtr invocationPointer;
     
@@ -25,7 +21,7 @@ public static class Program
         return (int) JniVersion.v1_6;
     }
 
-    [UnmanagedCallersOnly (EntryPoint="Java_net_dot_MonoRunner_initRuntime")]
+    [UnmanagedCallersOnly(EntryPoint="Java_net_dot_MonoRunner_initRuntime")]
     static int initRuntime (IntPtr env, IntPtr klass)
     {
         try {
@@ -60,8 +56,8 @@ public static class Program
         }
     }
 
-    [UnmanagedCallersOnly]
-    private static void OnButtonClick(IntPtr env)
+    [UnmanagedCallersOnly(EntryPoint="Java_net_dot_MonoRunner_OnButtonClick")]
+    static void OnButtonClick(IntPtr env, IntPtr klass)
     {
         string str = "OnButtonClick! #" + counter++;
         SetText(env, str);
@@ -69,10 +65,6 @@ public static class Program
 
     public static int Main(string[] args)
     {
-        unsafe {
-            delegate* unmanaged<IntPtr, void> unmanagedPtr = &OnButtonClick;
-            register_button_click(unmanagedPtr);
-        }
         Console.WriteLine("Hello from C#!"); // logcat
         return 42;
     }
