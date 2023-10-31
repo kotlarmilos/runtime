@@ -240,9 +240,9 @@ public partial class ApkBuilder
         string androidJar = Path.Combine(AndroidSdk, "platforms", "android-" + BuildApiLevel, "android.jar");
         string androidToolchain = Path.Combine(AndroidNdk, "build", "cmake", "android.toolchain.cmake");
         string javac = "javac";
-        string zip = "zip";
+        // string zip = "zip";
 
-        Utils.RunProcess(logger, zip, workingDir: assetsToZipDirectory, args: "-q -r ../assets/assets.zip .");
+        // Utils.RunProcess(logger, zip, workingDir: assetsToZipDirectory, args: "-q -r ../assets/assets.zip .");
         Directory.Delete(assetsToZipDirectory, true);
 
         if (!File.Exists(androidJar))
