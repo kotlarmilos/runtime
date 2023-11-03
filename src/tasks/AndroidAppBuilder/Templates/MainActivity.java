@@ -29,43 +29,14 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        // button = (Button) findViewById(R.Id.button1);
+        button = (Button) findViewById(R.id.button1);
 
-        // textView = new TextView(this);
-        // textView.setTextSize(20);
-
-        // RelativeLayout rootLayout = new RelativeLayout(this);
-        // RelativeLayout.LayoutParams tvLayout =
-        //         new RelativeLayout.LayoutParams(
-        //                 RelativeLayout.LayoutParams.WRAP_CONTENT,
-        //                 RelativeLayout.LayoutParams.WRAP_CONTENT);
-
-        // tvLayout.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        // tvLayout.addRule(RelativeLayout.CENTER_VERTICAL);
-        // rootLayout.addView(textView, tvLayout);
-
-        // button = new Button(this);
-        // button.setText("Click Me!");
-
-        // RelativeLayout.LayoutParams buttonLayout =
-        //         new RelativeLayout.LayoutParams(
-        //                 RelativeLayout.LayoutParams.WRAP_CONTENT,
-        //                 RelativeLayout.LayoutParams.WRAP_CONTENT);
-
-        // buttonLayout.addRule(RelativeLayout.BELOW, textView.getId());
-        // buttonLayout.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        // rootLayout.addView(button, buttonLayout);
-
-        // setContentView(rootLayout);
-
-        // button.setOnClickListener(new View.OnClickListener() {
-        //     @Override
-        //     public void onClick(View view) {
-        //         MonoRunner.onClick();
-        //     }
-        // });
-
-        // textView.setText("Initializing Native AOT runtime...");
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MonoRunner.onClick();
+            }
+        });
 
         final Activity ctx = this;
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
