@@ -23,32 +23,35 @@ public class MainActivity extends Activity
     {
         super.onCreate(savedInstanceState);
 
-        textView = new TextView(this);
-        textView.setTextSize(20);
+        setContentView(R.Layout.activity_main);
+        button = (Button) findViewById(R.Id.button1);
 
-        RelativeLayout rootLayout = new RelativeLayout(this);
-        RelativeLayout.LayoutParams tvLayout =
-                new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.WRAP_CONTENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        // textView = new TextView(this);
+        // textView.setTextSize(20);
 
-        tvLayout.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        tvLayout.addRule(RelativeLayout.CENTER_VERTICAL);
-        rootLayout.addView(textView, tvLayout);
+        // RelativeLayout rootLayout = new RelativeLayout(this);
+        // RelativeLayout.LayoutParams tvLayout =
+        //         new RelativeLayout.LayoutParams(
+        //                 RelativeLayout.LayoutParams.WRAP_CONTENT,
+        //                 RelativeLayout.LayoutParams.WRAP_CONTENT);
 
-        button = new Button(this);
-        button.setText("Click Me!");
+        // tvLayout.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        // tvLayout.addRule(RelativeLayout.CENTER_VERTICAL);
+        // rootLayout.addView(textView, tvLayout);
 
-        RelativeLayout.LayoutParams buttonLayout =
-                new RelativeLayout.LayoutParams(
-                        RelativeLayout.LayoutParams.WRAP_CONTENT,
-                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        // button = new Button(this);
+        // button.setText("Click Me!");
 
-        buttonLayout.addRule(RelativeLayout.BELOW, textView.getId());
-        buttonLayout.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        rootLayout.addView(button, buttonLayout);
+        // RelativeLayout.LayoutParams buttonLayout =
+        //         new RelativeLayout.LayoutParams(
+        //                 RelativeLayout.LayoutParams.WRAP_CONTENT,
+        //                 RelativeLayout.LayoutParams.WRAP_CONTENT);
 
-        setContentView(rootLayout);
+        // buttonLayout.addRule(RelativeLayout.BELOW, textView.getId());
+        // buttonLayout.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        // rootLayout.addView(button, buttonLayout);
+
+        // setContentView(rootLayout);
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override

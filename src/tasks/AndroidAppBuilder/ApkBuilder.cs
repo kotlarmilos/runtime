@@ -18,6 +18,7 @@ public partial class ApkBuilder
 
     public string? ProjectName { get; set; }
     public string? AppDir { get; set; }
+    public string? ResourceDir { get; set; }
     public string? AndroidNdk { get; set; }
     public string? AndroidSdk { get; set; }
     public string? MinApiLevel { get; set; }
@@ -58,6 +59,11 @@ public partial class ApkBuilder
         if (string.IsNullOrEmpty(AppDir) || !Directory.Exists(AppDir))
         {
             throw new ArgumentException($"AppDir='{AppDir}' is empty or doesn't exist");
+        }
+
+        if (string.IsNullOrEmpty(ResourceDir) || !Directory.Exists(ResourceDir))
+        {
+            throw new ArgumentException($"ResourceDir='{ResourceDir}' is empty or doesn't exist");
         }
 
         if (!string.IsNullOrEmpty(mainLibraryFileName) && !File.Exists(Path.Combine(AppDir, mainLibraryFileName)))
@@ -194,6 +200,7 @@ public partial class ApkBuilder
         Directory.CreateDirectory(Path.Combine(OutputDir, "obj"));
         Directory.CreateDirectory(Path.Combine(OutputDir, "assets-tozip"));
         Directory.CreateDirectory(Path.Combine(OutputDir, "assets"));
+        Directory.CreateDirectory(Path.Combine(OutputDir, "res"));
 
         var extensionsToIgnore = new List<string> { ".so", ".a", ".dex", ".jar" };
         if (StripDebugSymbols)
@@ -205,6 +212,9 @@ public partial class ApkBuilder
         // Copy sourceDir to OutputDir/assets-tozip (ignore native files)
         // these files then will be zipped and copied to apk/assets/assets.zip
         var assetsToZipDirectory = Path.Combine(OutputDir, "assets-tozip");
+        var resourcesToZipDirectory = Path.Combine(OutputDir, "res");
+
+        Utils.DirectoryCopy(ResourceDir, resourcesToZipDirectory);
 
         Utils.DirectoryCopy(AppDir, assetsToZipDirectory, file =>
         {
@@ -468,7 +478,7 @@ public partial class ApkBuilder
 
         string debugModeArg = StripDebugSymbols ? string.Empty : "--debug-mode";
         string apkFile = Path.Combine(OutputDir, "bin", $"{ProjectName}.unaligned.apk");
-        Utils.RunProcess(logger, aapt, $"package -f -m -F {apkFile} -A assets -M AndroidManifest.xml -I {androidJar} {debugModeArg}", workingDir: OutputDir);
+        Utils.RunProcess(logger, aapt, $"package -f -m -F {apkFile} -A assets -S res -M AndroidManifest.xml -I {androidJar} {debugModeArg}", workingDir: OutputDir);
 
         var dynamicLibs = new List<string>();
         dynamicLibs.Add(Path.Combine(OutputDir, "monodroid", "libmonodroid.so"));

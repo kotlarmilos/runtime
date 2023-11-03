@@ -281,6 +281,7 @@
 
     <AndroidAppBuilderTask
         AppDir="$(AndroidBuildDir)"
+        ResourceDir="/Users/yangfan/Documents/work/dotnet_4/runtime/src/mono/sample/Android-NativeAOT/Resources"
         Assemblies="@(_AssembliesToBundleInternal)"
         DiagnosticPorts="$(DiagnosticPorts)"
         EnvironmentVariables="@(AndroidEnv)"

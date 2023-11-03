@@ -18,6 +18,8 @@ public class AndroidAppBuilderTask : Task
     [Required]
     public string AppDir { get; set; } = ""!;
 
+    public string ResourceDir { get; set; } = ""!;
+
     /// <summary>
     /// This library will be used as an entry-point (e.g. TestRunner.dll)
     /// </summary>
@@ -122,6 +124,7 @@ public class AndroidAppBuilderTask : Task
         var apkBuilder = new ApkBuilder(Log);
         apkBuilder.ProjectName = ProjectName;
         apkBuilder.AppDir = AppDir;
+        apkBuilder.ResourceDir = ResourceDir;
         apkBuilder.OutputDir = OutputDir;
         apkBuilder.AndroidSdk = AndroidSdk;
         apkBuilder.AndroidNdk = AndroidNdk;
