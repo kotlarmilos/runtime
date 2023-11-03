@@ -12,19 +12,24 @@ import android.widget.TextView;
 import android.widget.Button;
 import android.graphics.Color;
 import android.view.View;
+import net.dot.AndroidSampleApp.R;
 
 public class MainActivity extends Activity
 {
     private static TextView textView;
     private static Button button;
 
+    public static long startTime;
+    public static long endTime;    
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.Layout.activity_main);
-        button = (Button) findViewById(R.Id.button1);
+        setContentView(R.layout.activity_main);
+        // button = (Button) findViewById(R.Id.button1);
 
         // textView = new TextView(this);
         // textView.setTextSize(20);
@@ -53,21 +58,24 @@ public class MainActivity extends Activity
 
         // setContentView(rootLayout);
 
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                MonoRunner.onClick();
-            }
-        });
+        // button.setOnClickListener(new View.OnClickListener() {
+        //     @Override
+        //     public void onClick(View view) {
+        //         MonoRunner.onClick();
+        //     }
+        // });
 
-        textView.setText("Initializing Native AOT runtime...");
+        // textView.setText("Initializing Native AOT runtime...");
 
         final Activity ctx = this;
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
+                startTime = System.nanoTime();
                 int retcode = MonoRunner.initialize(new String[0], ctx);
-                textView.setText("Native AOT runtime initialized: " + retcode);
+                endTime = System.nanoTime();
+                System.out.println ("Runtime startup time: "+ ((endTime - startTime) / 1000 / 1000) + " ms");
+                // textView.setText("Native AOT runtime initialized: " + retcode);
             }
         }, 1000);
     }

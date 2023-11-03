@@ -32,9 +32,6 @@ import java.time.ZoneOffset;
 
 public class MonoRunner extends Instrumentation
 {
-    static {
-        System.loadLibrary("monodroid");
-    }
 
     static String entryPointLibName = "%EntryPointLibName%";
     static Bundle result = new Bundle();
@@ -73,6 +70,7 @@ public class MonoRunner extends Instrumentation
     }
 
     public static int initialize(String[] args, Context context) {
+        System.loadLibrary("monodroid");
         Log.i("DOTNET", "MonoRunner initialize");
         activityContext = context;
         int retcode = initRuntime();

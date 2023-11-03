@@ -420,6 +420,7 @@ public partial class ApkBuilder
 
         string javaActivityPath = Path.Combine(javaSrcFolder, "MainActivity.java");
         string monoRunnerPath = Path.Combine(javaSrcFolder, "MonoRunner.java");
+        string RPath = Path.Combine(javaSrcFolder, ProjectName ?? string.Empty, "R.java");
 
         Regex checkNumerics = DotNumberRegex();
         if (!string.IsNullOrEmpty(ProjectName) && checkNumerics.IsMatch(ProjectName))
@@ -456,7 +457,14 @@ public partial class ApkBuilder
                 .Replace("%MinSdkLevel%", MinApiLevel)
                 .Replace("%TargetSdkVersion%", TargetApiLevel));
 
+        // 3. Generate APK
+
+        string debugModeArg = StripDebugSymbols ? string.Empty : "--debug-mode";
+        string apkFile = Path.Combine(OutputDir, "bin", $"{ProjectName}.unaligned.apk");
+        Utils.RunProcess(logger, aapt, $"package -f -m -F {apkFile} -A assets -S res -J src -M AndroidManifest.xml -I {androidJar} {debugModeArg}", workingDir: OutputDir);
+
         string javaCompilerArgs = $"-d obj -classpath src -bootclasspath {androidJar} -source 1.8 -target 1.8 ";
+        Utils.RunProcess(logger, javac, javaCompilerArgs + RPath, workingDir: OutputDir);
         Utils.RunProcess(logger, javac, javaCompilerArgs + javaActivityPath, workingDir: OutputDir);
         Utils.RunProcess(logger, javac, javaCompilerArgs + monoRunnerPath, workingDir: OutputDir);
 
@@ -473,12 +481,6 @@ public partial class ApkBuilder
         {
             Utils.RunProcess(logger, dx, "--dex --output=classes.dex obj", workingDir: OutputDir);
         }
-
-        // 3. Generate APK
-
-        string debugModeArg = StripDebugSymbols ? string.Empty : "--debug-mode";
-        string apkFile = Path.Combine(OutputDir, "bin", $"{ProjectName}.unaligned.apk");
-        Utils.RunProcess(logger, aapt, $"package -f -m -F {apkFile} -A assets -S res -M AndroidManifest.xml -I {androidJar} {debugModeArg}", workingDir: OutputDir);
 
         var dynamicLibs = new List<string>();
         dynamicLibs.Add(Path.Combine(OutputDir, "monodroid", "libmonodroid.so"));
