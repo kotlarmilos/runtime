@@ -2655,6 +2655,8 @@ mono_metadata_parse_method_signature_full (MonoImage *m, MonoGenericContainer *c
 		explicit_this = 1;
 	call_convention = *ptr & 0x0F;
 	ptr++;
+	// TODO: Decode ext_callconv
+
 	if (gen_param_count)
 		gen_param_count = mono_metadata_decode_value (ptr, &ptr);
 	param_count = mono_metadata_decode_value (ptr, &ptr);

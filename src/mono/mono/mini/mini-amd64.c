@@ -8184,7 +8184,10 @@ MONO_RESTORE_WARNING
 				}
 
 				if (ainfo->storage == ArgSwiftSelf) {
-					amd64_mov_reg_membase (code, AMD64_R13, ins->inst_basereg, ins->inst_offset, sizeof(gpointer));
+					if (cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED)
+						amd64_mov_membase_reg (code, ins->inst_basereg, ins->inst_offset, AMD64_R13, sizeof (gpointer));
+					else
+						amd64_mov_reg_membase (code, AMD64_R13, ins->inst_basereg, ins->inst_offset, sizeof(gpointer));
 				}
 				break;
 			case ArgValuetypeAddrInIReg:
@@ -8351,17 +8354,19 @@ mono_arch_emit_epilog (MonoCompile *cfg)
 	code = realloc_code (cfg, max_epilog_size);
 
 	cinfo = cfg->arch.cinfo;
-	for (int i = 0; i < cinfo->nargs; ++i) {
-		ArgInfo* ainfo = cinfo->args + i;
-		MonoInst* arg = cfg->args [i];
 
-		switch (ainfo->storage) {
-		case ArgSwiftError:
-			amd64_mov_reg_membase (code, AMD64_R11, arg->inst_basereg, arg->inst_offset, 8);
-			amd64_mov_membase_reg (code, AMD64_R11, 0, AMD64_R12, 8);
-			break;
-		default:
-			break;
+	if (cfg->method->wrapper_type == MONO_WRAPPER_MANAGED_TO_NATIVE) {
+		for (int i = 0; i < cinfo->nargs; ++i) {
+			ArgInfo* ainfo = cinfo->args + i;
+			MonoInst* arg = cfg->args [i];
+			switch (ainfo->storage) {
+			case ArgSwiftError:
+				amd64_mov_reg_membase (code, AMD64_R11, arg->inst_basereg, arg->inst_offset, 8);
+				amd64_mov_membase_reg (code, AMD64_R11, 0, AMD64_R12, 8);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 
@@ -8397,6 +8402,21 @@ mono_arch_emit_epilog (MonoCompile *cfg)
 				async_exc_point (code);
 			}
 			save_area_offset += 8;
+		}
+	}
+
+	if (cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
+		for (int i = 0; i < cinfo->nargs; ++i) {
+			ArgInfo* ainfo = cinfo->args + i;
+			MonoInst* arg = cfg->args [i];
+			switch (ainfo->storage) {
+			case ArgSwiftError:
+				amd64_mov_reg_membase (code, AMD64_R12, arg->inst_basereg, arg->inst_offset, 8);
+				amd64_mov_reg_membase (code, AMD64_R12, AMD64_R12, 0, 8);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 

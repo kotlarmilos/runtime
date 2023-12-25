@@ -633,6 +633,7 @@ inflate_generic_signature_checked (MonoImage *image, MonoMethodSignature *sig, M
 	res->hasthis = sig->hasthis;
 	res->explicit_this = sig->explicit_this;
 	res->call_convention = sig->call_convention;
+	res->ext_callconv = sig->ext_callconv;
 	res->pinvoke = sig->pinvoke;
 	res->generic_param_count = sig->generic_param_count;
 	res->sentinelpos = sig->sentinelpos;

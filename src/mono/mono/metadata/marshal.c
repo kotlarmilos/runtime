@@ -3360,6 +3360,8 @@ mono_marshal_set_signature_callconv_from_attribute(MonoMethodSignature *sig, Mon
 		sig->call_convention = MONO_CALL_THISCALL;
 	else if (!strcmp (name, "Fastcall"))
 		sig->call_convention = MONO_CALL_FASTCALL;
+	else if (!strcmp (name, "Swift"))
+		sig->ext_callconv |= MONO_EXT_CALLCONV_SWIFTCALL;
 	else if (!strcmp (name, "SuppressGCTransition"))
 		sig->ext_callconv |= MONO_EXT_CALLCONV_SUPPRESS_GC_TRANSITION;
 	// TODO: Support CallConvMemberFunction?
