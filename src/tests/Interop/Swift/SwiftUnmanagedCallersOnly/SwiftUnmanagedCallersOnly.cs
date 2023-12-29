@@ -17,6 +17,12 @@ public class UnmanagedCallersOnlyTests
 
     [UnmanagedCallersOnly(CallConvs = new Type[] { typeof(CallConvSwift) })]
     public static unsafe void ProxyMethod(SwiftSelf self, SwiftError* error) {
+        Console.WriteLine("SwiftSelf pointer: 0x{0:X}", (IntPtr)(void*)&self);
+        Console.WriteLine("SwiftSelf pointee: 0x{0:X}", self.Value);
+        Console.WriteLine("SwiftError pointer: 0x{0:X}", (IntPtr)error);
+        Console.WriteLine("SwiftError pointee: 0x{0:X}", (*error).Value);
+        // Self register is callee saved so we can't rely on it being preserved across calls. 
+        // Change the test to explicitly set the value in Swift code?
         long value = *(long*)self.Value;
         Console.WriteLine ("ProxyMethod: {0}", value);
         *error = *(SwiftError*)(void*)&value;
