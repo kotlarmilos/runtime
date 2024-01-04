@@ -2667,7 +2667,7 @@ mono_arch_create_vars (MonoCompile *cfg)
 	if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL) && cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
 		MonoInst *ins = mono_compile_create_var (cfg, mono_get_int_type (), OP_LOCAL);
 		ins->flags |= MONO_INST_VOLATILE;
-		cfg->arch.swift_error_ptr = ins;
+		cfg->arch.swift_error_var = ins;
 	}
 }
 
@@ -2918,7 +2918,7 @@ mono_arch_allocate_vars (MonoCompile *cfg)
 	}
 	
 	if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL) && cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
-		ins = cfg->arch.swift_error_ptr;
+		ins = cfg->arch.swift_error_var;
 		if (ins) {
 			size = 8;
 			align = 8;
@@ -5849,10 +5849,10 @@ emit_move_args (MonoCompile *cfg, guint8 *code)
 					code = emit_imm (code, ARMREG_R21, 0);
 
 					if (cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
-						MonoInst* swift_error_ptr = cfg->arch.swift_error_ptr;
-						g_assert (swift_error_ptr->opcode == OP_REGOFFSET);
+						MonoInst* swift_error_var = cfg->arch.swift_error_var;
+						g_assert (swift_error_var->opcode == OP_REGOFFSET);
 
-						code = emit_addx_imm (code, ARMREG_IP1, swift_error_ptr->inst_basereg, GTMREG_TO_INT (swift_error_ptr->inst_offset));
+						code = emit_addx_imm (code, ARMREG_IP1, swift_error_var->inst_basereg, GTMREG_TO_INT (swift_error_var->inst_offset));
 						code = emit_strx (code, ARMREG_IP1, ins->inst_basereg, GTMREG_TO_INT (ins->inst_offset));
 					}
 				}

@@ -2056,6 +2056,12 @@ mono_arch_create_vars (MonoCompile *cfg)
 	if (cfg->method->save_lmf) {
 		cfg->lmf_ir = TRUE;
 	}
+
+	if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL) && cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
+		MonoInst *ins = mono_compile_create_var (cfg, mono_get_int_type (), OP_LOCAL);
+		ins->flags |= MONO_INST_VOLATILE;
+		cfg->arch.swift_error_var = ins;
+	}
 }
 
 static void
@@ -8154,6 +8160,14 @@ MONO_RESTORE_WARNING
 
 				if (ainfo->storage == ArgSwiftError) {
 					amd64_mov_reg_imm (code, AMD64_R12, 0);
+
+					if (cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
+						MonoInst* swift_error_var = cfg->arch.swift_error_var;
+						g_assert (swift_error_var->opcode == OP_REGOFFSET);
+
+						amd64_lea_membase (code, AMD64_R11, swift_error_var->inst_basereg, GTMREG_TO_INT (swift_error_var->inst_offset));
+						amd64_mov_membase_reg (code, ins->inst_basereg, GTMREG_TO_INT (ins->inst_offset), AMD64_R11, sizeof (target_mgreg_t));
+					}
 				}
 				break;
 			}
