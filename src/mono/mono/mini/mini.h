@@ -1417,6 +1417,7 @@ typedef struct {
 	/* Points to the call to mini_init_method_rgctx () */
 	MonoInst *init_method_rgctx_ins;
 	MonoInst *init_method_rgctx_ins_arg;
+	MonoInst *init_method_rgctx_ins_load;
 
 	MonoInst *lmf_var;
 	MonoInst *lmf_addr_var;
@@ -1514,6 +1515,7 @@ typedef struct {
 	guint            disable_inline_rgctx_fetch : 1;
 	guint            deopt : 1;
 	guint            prefer_instances : 1;
+	guint            init_method_rgctx_elim : 1;
 	guint8           uses_simd_intrinsics;
 	int              r4_stack_type;
 	gpointer         debug_info;
@@ -2535,6 +2537,7 @@ gpointer mono_arch_get_ftnptr_arg_trampoline    (MonoMemoryManager *mem_manager,
 gpointer mono_arch_get_gsharedvt_arg_trampoline (gpointer arg, gpointer addr);
 void     mono_arch_patch_callsite               (guint8 *method_start, guint8 *code, guint8 *addr);
 void     mono_arch_patch_plt_entry              (guint8 *code, gpointer *got, host_mgreg_t *regs, guint8 *addr);
+void     mono_arch_patch_jump_trampoline        (guint8 *jump_tramp, guint8 *addr);
 int      mono_arch_get_this_arg_reg             (guint8 *code);
 gpointer mono_arch_get_this_arg_from_call       (host_mgreg_t *regs, guint8 *code);
 gpointer mono_arch_get_delegate_invoke_impl     (MonoMethodSignature *sig, gboolean has_target);
@@ -2564,7 +2567,7 @@ gpointer mono_arch_get_native_call_context_args     (CallContext *ccontext, gpoi
 void mono_arch_get_native_call_context_ret      (CallContext *ccontext, gpointer frame, MonoMethodSignature *sig, gpointer call_info);
 #ifdef MONO_ARCH_HAVE_SWIFTCALL
 // After the pinvoke call is done, this return an error context value from the ccontext.
-gpointer mono_arch_get_swift_error 				(CallContext *ccontext, MonoMethodSignature *sig, gpointer call_info, int *arg_index);
+gpointer mono_arch_get_swift_error 				(CallContext *ccontext, MonoMethodSignature *sig, int *arg_index);
 #endif
 /* Free the structure returned by mono_arch_get_interp_native_call_info (NULL, sig) */
 void mono_arch_free_interp_native_call_info (gpointer call_info);
@@ -2727,6 +2730,9 @@ mini_rgctx_info_type_to_patch_info_type (MonoRgctxInfoType info_type);
 
 gboolean
 mono_method_needs_static_rgctx_invoke (MonoMethod *method, gboolean allow_type_vars);
+
+gboolean
+mono_method_needs_mrgctx_arg_for_eh (MonoMethod *method);
 
 int
 mono_class_rgctx_get_array_size (int n, gboolean mrgctx);

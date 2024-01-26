@@ -183,6 +183,7 @@ typedef struct {
 #define MONO_ARCH_FLOAT32_SUPPORTED 1
 #define MONO_ARCH_HAVE_INTERP_PINVOKE_TRAMP 1
 #define MONO_ARCH_HAVE_INIT_MRGCTX 1
+#define MONO_ARCH_HAVE_PATCH_JUMP_TRAMPOLINE 1
 #define MONO_ARCH_LLVM_TARGET_LAYOUT "e-i64:64-i128:128-n32:64-S128"
 
 // Does the ABI have a volatile non-parameter register, so tailcall
@@ -207,7 +208,7 @@ typedef struct {
 #define MONO_ARCH_EXPLICIT_NULL_CHECKS 1
 #endif
 
-#if defined(TARGET_LINUX) || defined(TARGET_OSX) || defined(TARGET_APPLE_MOBILE)
+#if defined(TARGET_OSX) || defined(TARGET_APPLE_MOBILE)
 #define MONO_ARCH_HAVE_SWIFTCALL 1
 #endif
 
@@ -241,7 +242,6 @@ typedef enum {
 	ArgVtypeOnStack,
 	ArgHFA,
 	ArgSwiftError,
-	ArgSwiftSelf,
 	ArgNone
 } ArgStorage;
 
@@ -276,7 +276,7 @@ struct CallInfo {
 };
 
 typedef struct {
-	/* General registers + context registers + ARMREG_R8 for indirect returns */
+	/* General registers + ARMREG_R8 for indirect returns + context registers  */
 	host_mgreg_t gregs [PARAM_REGS + CTX_REGS + 1];
 	/* Floating registers */
 	double fregs [FP_PARAM_REGS];

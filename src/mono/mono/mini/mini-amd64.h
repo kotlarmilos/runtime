@@ -303,7 +303,6 @@ typedef enum {
 	/* Variable sized gsharedvt argument passed/returned by addr */
 	ArgGsharedvtVariableInReg,
 	ArgSwiftError,
-	ArgSwiftSelf,
 	ArgNone /* only in pair_storage */
 } ArgStorage;
 
@@ -331,6 +330,7 @@ struct CallInfo {
 	guint32 stack_usage;
 	guint32 reg_usage;
 	guint32 freg_usage;
+	gint32 swift_error_index;
 	gboolean need_stack_align;
 	gboolean gsharedvt;
 	/* The index of the vret arg in the argument list */
@@ -460,12 +460,15 @@ typedef struct {
 #define MONO_ARCH_HAVE_SDB_TRAMPOLINES 1
 #define MONO_ARCH_HAVE_OP_GENERIC_CLASS_INIT 1
 #define MONO_ARCH_HAVE_GENERAL_RGCTX_LAZY_FETCH_TRAMPOLINE 1
+#define MONO_ARCH_HAVE_PATCH_JUMP_TRAMPOLINE 1
 #define MONO_ARCH_FLOAT32_SUPPORTED 1
 #define MONO_ARCH_LLVM_TARGET_LAYOUT "e-i64:64-i128:128-n8:16:32:64-S128"
 
 #define MONO_ARCH_HAVE_INTERP_PINVOKE_TRAMP
 #define MONO_ARCH_HAVE_INTERP_ENTRY_TRAMPOLINE 1
 #define MONO_ARCH_HAVE_INTERP_NATIVE_TO_MANAGED 1
+// FIXME: Doesn't work on windows
+//#define MONO_ARCH_HAVE_INIT_MRGCTX 1
 
 #if defined(TARGET_OSX) || defined(__linux__)
 #define MONO_ARCH_HAVE_UNWIND_BACKTRACE 1
@@ -491,7 +494,7 @@ typedef struct {
 // can pass context to generics or interfaces?
 #define MONO_ARCH_HAVE_VOLATILE_NON_PARAM_REGISTER 1
 
-#if defined(TARGET_LINUX) || defined(TARGET_OSX) || defined(TARGET_APPLE_MOBILE)
+#if defined(TARGET_OSX) || defined(TARGET_APPLE_MOBILE)
 #define MONO_ARCH_HAVE_SWIFTCALL 1
 #endif
 

@@ -28,6 +28,8 @@
 
 #include <mono/metadata/components.h>
 
+#define JUMP_TRAMP_PATCH_OFFSET (7 * 4)
+
 void
 mono_arch_patch_callsite (guint8 *method_start, guint8 *code_ptr, guint8 *addr)
 {
@@ -69,6 +71,15 @@ mono_arch_patch_plt_entry (guint8 *code, gpointer *got, host_mgreg_t *regs, guin
 
 	g_assert (*(guint64*)slot_addr);
 	*(gpointer*)slot_addr = addr;
+}
+
+void
+mono_arch_patch_jump_trampoline (guint8 *jump_tramp, guint8 *addr)
+{
+	MINI_BEGIN_CODEGEN ();
+	guint8 *patch_addr = jump_tramp + JUMP_TRAMP_PATCH_OFFSET;
+	*(gpointer*)patch_addr = addr;
+	MINI_END_CODEGEN (patch_addr, 8, -1, NULL);
 }
 
 guint8*
@@ -348,10 +359,25 @@ mono_arch_create_specific_trampoline (gpointer arg1, MonoTrampolineType tramp_ty
 
 	MINI_BEGIN_CODEGEN ();
 
-	code = mono_arm_emit_imm64 (code, ARMREG_IP1, (guint64)arg1);
-	code = mono_arm_emit_imm64 (code, ARMREG_IP0, (guint64)tramp);
+	if (tramp_type == MONO_TRAMPOLINE_JUMP) {
+		/* Create a patchable trampoline by emitting the address at the end */
 
-	code = mono_arm_emit_brx (code, ARMREG_IP0);
+		guint64 imm = (guint64)arg1;
+		arm_movzx (code, ARMREG_IP1, imm & 0xffff, 0);
+		arm_movkx (code, ARMREG_IP1, (imm >> 16) & 0xffff, 16);
+		arm_movkx (code, ARMREG_IP1, (imm >> 32) & 0xffff, 32);
+		arm_movkx (code, ARMREG_IP1, (imm >> 48) & 0xffff, 48);
+
+		arm_adrx (code, ARMREG_IP0, code + (3 * 4));
+		arm_ldrx (code, ARMREG_IP0, ARMREG_IP0, 0);
+		code = mono_arm_emit_brx (code, ARMREG_IP0);
+		g_assert (code - buf == JUMP_TRAMP_PATCH_OFFSET);
+		*(guint64*)code = (guint64)(gsize)tramp;
+	} else {
+		code = mono_arm_emit_imm64 (code, ARMREG_IP1, (guint64)arg1);
+		code = mono_arm_emit_imm64 (code, ARMREG_IP0, (guint64)tramp);
+		code = mono_arm_emit_brx (code, ARMREG_IP0);
+	}
 
 	g_assert ((code - buf) < buf_len);
 
@@ -660,7 +686,7 @@ mono_arch_get_interp_to_native_trampoline (MonoTrampInfo **info)
 	guint8 *label_start_copy, *label_exit_copy;
 	MonoJumpInfo *ji = NULL;
 	GSList *unwind_ops = NULL;
-	int buf_len, i, framesize = 0, off_ctxregs, off_methodargs, off_targetaddr;
+	int buf_len, i, framesize = 0, off_methodargs, off_targetaddr;
 
 	buf_len = 512 + 1024;
 	start = code = (guint8 *) mono_global_codeman_reserve (buf_len);
@@ -668,8 +694,10 @@ mono_arch_get_interp_to_native_trampoline (MonoTrampInfo **info)
 	/* allocate frame */
 	framesize += 2 * sizeof (host_mgreg_t);
 
-	off_ctxregs = framesize;
+#ifdef MONO_ARCH_HAVE_SWIFTCALL
+	int off_ctxregs = framesize;
 	framesize += CTX_REGS * sizeof (host_mgreg_t);
+#endif
 
 	off_methodargs = framesize;
 	framesize += sizeof (host_mgreg_t);
@@ -725,11 +753,13 @@ mono_arch_get_interp_to_native_trampoline (MonoTrampInfo **info)
 	for (i = 0; i < FP_PARAM_REGS; i++)
 		arm_ldrfpx (code, i, ARMREG_IP0, MONO_STRUCT_OFFSET (CallContext, fregs) + i * sizeof (double));
 
+#ifdef MONO_ARCH_HAVE_SWIFTCALL
 	/* store the values of context registers onto the stack and set the context registers from CallContext */
 	for (i = 0; i < CTX_REGS; i++) {
 		arm_strx (code, i + CTX_REGS_OFFSET, ARMREG_FP, off_ctxregs + i * sizeof (host_mgreg_t));
 		arm_ldrx (code, i + CTX_REGS_OFFSET, ARMREG_IP0, MONO_STRUCT_OFFSET (CallContext, gregs) + (i + PARAM_REGS + 1) * sizeof (host_mgreg_t));
 	}
+#endif
 
 	/* load target addr */
 	arm_ldrx (code, ARMREG_IP0, ARMREG_FP, off_targetaddr);
@@ -748,11 +778,13 @@ mono_arch_get_interp_to_native_trampoline (MonoTrampInfo **info)
 	for (i = 0; i < FP_PARAM_REGS; i++)
 		arm_strfpx (code, i, ARMREG_IP0, MONO_STRUCT_OFFSET (CallContext, fregs) + i * sizeof (double));
 
+#ifdef MONO_ARCH_HAVE_SWIFTCALL
 	/* set context registers to CallContext and load context registers from the stack */	
 	for (i = 0; i < CTX_REGS; i++) {
 		arm_strx (code, i + CTX_REGS_OFFSET, ARMREG_IP0, MONO_STRUCT_OFFSET (CallContext, gregs) + (i + PARAM_REGS + 1) * sizeof (host_mgreg_t));
 		arm_ldrx (code, i + CTX_REGS_OFFSET, ARMREG_FP, off_ctxregs + i * sizeof (host_mgreg_t));
 	}
+#endif
 
 	arm_movspx (code, ARMREG_SP, ARMREG_FP);
 	arm_ldpx (code, ARMREG_FP, ARMREG_LR, ARMREG_SP, 0);

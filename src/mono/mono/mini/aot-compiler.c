@@ -3751,7 +3751,7 @@ static void
 encode_signature (MonoAotCompile *acfg, MonoMethodSignature *sig, guint8 *buf, guint8 **endbuf)
 {
 	guint8 *p = buf;
-	guint8 flags = 0;
+	guint32 flags = 0;
 	int i;
 
 	/* Similar to the metadata encoding */
@@ -3759,15 +3759,19 @@ encode_signature (MonoAotCompile *acfg, MonoMethodSignature *sig, guint8 *buf, g
 		flags |= 0x10;
 	if (sig->hasthis)
 		flags |= 0x20;
-	if (sig->explicit_this)
-		flags |= 0x40;
 	if (sig->pinvoke)
+		flags |= 0x40;
+	if (sig->explicit_this)
 		flags |= 0x80;
+	if (sig->ext_callconv)
+		flags |= 0x100;
 	flags |= (sig->call_convention & 0x0F);
 	// TODO: Encode ext_callconv
 
-	*p = flags;
-	++p;
+	encode_value (flags, p, &p);
+	if (sig->ext_callconv)
+		encode_value (sig->ext_callconv, p, &p);
+
 	if (sig->generic_param_count)
 		encode_value (sig->generic_param_count, p, &p);
 	encode_value (sig->param_count, p, &p);
@@ -6689,6 +6693,9 @@ compute_line_numbers (MonoMethod *method, int code_size, MonoDebugMethodJitInfo 
 			mono_debug_free_source_location (loc);
 			continue;
 		}
+		if (loc->row > 0xffffff)
+			// FIXME: Invalid debug info
+			continue;
 		prev_line = loc->row;
 		//printf ("D: %s:%d il=%x native=%x\n", loc->source_file, loc->row, il_offset, i);
 		if (first)

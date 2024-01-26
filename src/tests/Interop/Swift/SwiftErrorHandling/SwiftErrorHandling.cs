@@ -17,10 +17,14 @@ public class ErrorHandlingTests
 
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvSwift) })]
     [DllImport(SwiftLib, EntryPoint = "$s18SwiftErrorHandling018conditionallyThrowB004willE0SiSb_tKF")]
-    public unsafe static extern nint conditionallyThrowError(bool willThrow, SwiftError* error);
+    public static extern nint conditionallyThrowError(bool willThrow, ref SwiftError error);
+
+    [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvSwift) })]
+    [DllImport(SwiftLib, EntryPoint = "$s18SwiftErrorHandling018conditionallyThrowB004willE0SiSb_tKF")]
+    public static extern nint conditionallyThrowErrorOnStack(bool willThrow, int dummy1, int dummy2, int dummy3, int dummy4, int dummy5, int dummy6, int dummy7, int dummy8, int dummy9, ref SwiftError error);
 
     [DllImport(SwiftLib, EntryPoint = "$s18SwiftErrorHandling05getMyB7Message4from13messageLengthSPys6UInt16VGSgs0B0_p_s5Int32VztF")]
-    public static extern IntPtr GetErrorMessage(IntPtr handle, out int length);
+    public unsafe static extern void* GetErrorMessage(void* handle, out int length);
 
     [Fact]
     public unsafe static void TestSwiftErrorThrown()
@@ -28,11 +32,11 @@ public class ErrorHandlingTests
         const string expectedErrorMessage = "Catch me if you can!";
         SetErrorMessageForSwift(expectedErrorMessage);
 
-        SwiftError error;
+        SwiftError error = new SwiftError();
 
         // This will throw an error
-        conditionallyThrowError(true, &error);
-        Assert.True(error.Value != IntPtr.Zero, "A Swift error was expected to be thrown.");
+        conditionallyThrowError(true, ref error);
+        Assert.True(error.Value != null, "A Swift error was expected to be thrown.");
 
         string errorMessage = GetErrorMessageFromSwift(error);
         Assert.True(errorMessage == expectedErrorMessage, string.Format("The error message retrieved from Swift does not match the expected message. Expected: {0}, Actual: {1}", expectedErrorMessage, errorMessage));
@@ -44,12 +48,45 @@ public class ErrorHandlingTests
         const string expectedErrorMessage = "Catch me if you can!";
         SetErrorMessageForSwift(expectedErrorMessage);
 
-        SwiftError error;
+        SwiftError error = new SwiftError();
 
         // This will not throw an error
-        int result = (int)conditionallyThrowError(false, &error);
+        int result = (int)conditionallyThrowError(false, ref error);
 
-        Assert.True(error.Value == IntPtr.Zero, "No Swift error was expected to be thrown.");
+        Assert.True(error.Value == null, "No Swift error was expected to be thrown.");
+        Assert.True(result == 42, "The result from Swift does not match the expected value.");
+    }
+
+    [Fact]
+    public unsafe static void TestSwiftErrorOnStackThrown()
+    {
+        const string expectedErrorMessage = "Catch me if you can!";
+        SetErrorMessageForSwift(expectedErrorMessage);
+
+        SwiftError error = new SwiftError();
+
+        int i = 0;
+        // This will throw an error
+        conditionallyThrowErrorOnStack(true, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, i + 8, i + 9, ref error);
+        Assert.True(error.Value != null, "A Swift error was expected to be thrown.");
+
+        string errorMessage = GetErrorMessageFromSwift(error);
+        Assert.True(errorMessage == expectedErrorMessage, string.Format("The error message retrieved from Swift does not match the expected message. Expected: {0}, Actual: {1}", expectedErrorMessage, errorMessage));
+    }
+
+    [Fact]
+    public unsafe static void TestSwiftErrorOnStackNotThrown()
+    {
+        const string expectedErrorMessage = "Catch me if you can!";
+        SetErrorMessageForSwift(expectedErrorMessage);
+
+        SwiftError error = new SwiftError();
+
+        int i = 0;
+        // This will not throw an error
+        int result = (int)conditionallyThrowErrorOnStack(false, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, i + 8, i + 9, ref error);
+
+        Assert.True(error.Value == null, "No Swift error was expected to be thrown.");
         Assert.True(result == 42, "The result from Swift does not match the expected value.");
     }
     
@@ -60,8 +97,8 @@ public class ErrorHandlingTests
 
     private unsafe static string GetErrorMessageFromSwift(SwiftError error)
     {
-        IntPtr pointer = GetErrorMessage(error.Value, out int messageLength);
-        string errorMessage = Marshal.PtrToStringUni(pointer, messageLength);
+        void* pointer = GetErrorMessage(error.Value, out int messageLength);
+        string errorMessage = Marshal.PtrToStringUni((IntPtr)pointer, messageLength);
         NativeMemory.Free((void*)pointer);
         return errorMessage;
     }
