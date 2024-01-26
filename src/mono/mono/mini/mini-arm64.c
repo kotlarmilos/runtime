@@ -1869,10 +1869,7 @@ get_call_info (MonoMemPool *mp, MonoMethodSignature *sig)
 				ainfo->reg = ARMREG_R20;
 				continue;
 			} else if (klass == swift_error || klass == swift_error_ptr) {
-				if (sig->pinvoke)
-					ainfo->reg = ARMREG_R21;
-				else
-					add_param (cinfo, ainfo, sig->params [pindex], FALSE);
+				add_param (cinfo, ainfo, sig->params [pindex], FALSE);
 				ainfo->storage = ArgSwiftError;
 				continue;
 			}
@@ -2107,6 +2104,17 @@ mono_arch_get_native_call_context_args (CallContext *ccontext, gpointer frame, M
 		} else {
 			storage = arg_get_storage (ccontext, ainfo);
 		}
+
+#ifdef MONO_ARCH_HAVE_SWIFTCALL
+		if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL)) {
+			MonoClass *swift_self = mono_class_try_get_swift_self_class ();
+			MonoClass *klass = mono_class_from_mono_type_internal (sig->params [i]);
+			if (klass == swift_self) {
+				storage = &ccontext->gregs [PARAM_REGS + 1];
+			}
+		}
+#endif
+
 		interp_cb->data_to_frame_arg ((MonoInterpFrameHandle)frame, sig, i, storage);
 	}
 
@@ -2677,12 +2685,6 @@ mono_arch_create_vars (MonoCompile *cfg)
 		cfg->create_lmf_var = TRUE;
 		cfg->lmf_ir = TRUE;
 	}
-
-	if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL) && cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
-		MonoInst *ins = mono_compile_create_var (cfg, mono_get_int_type (), OP_LOCAL);
-		ins->flags |= MONO_INST_VOLATILE;
-		cfg->arch.swift_error_var = ins;
-	}
 }
 
 void
@@ -2891,7 +2893,8 @@ mono_arch_allocate_vars (MonoCompile *cfg)
 			offset += size;
 
 			cfg->arch.swift_error_var = ins;
-			cfg->used_int_regs |= 1 << ARMREG_R21;
+			if (cfg->method->wrapper_type == MONO_WRAPPER_MANAGED_TO_NATIVE)
+				cfg->used_int_regs |= 1 << ARMREG_R21;
 			break;
 		}
 		default:
@@ -2934,20 +2937,6 @@ mono_arch_allocate_vars (MonoCompile *cfg)
 		ins->inst_basereg = cfg->frame_reg;
 		ins->inst_offset = offset;
 		offset += size;
-	}
-	
-	if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL) && cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
-		ins = cfg->arch.swift_error_var;
-		if (ins) {
-			size = 8;
-			align = 8;
-			offset += align - 1;
-			offset &= ~(align - 1);
-			ins->opcode = OP_REGOFFSET;
-			ins->inst_basereg = cfg->frame_reg;
-			ins->inst_offset = offset;
-			offset += size;
-		}
 	}
 
 	/* Locals */
@@ -3258,7 +3247,7 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 			break;
 		}
 		case ArgSwiftError: {
-			MONO_EMIT_NEW_I8CONST (cfg, ainfo->reg, 0);
+			MONO_EMIT_NEW_I8CONST (cfg, ARMREG_R21, 0);
 			break;
 		}
 		default:
@@ -3749,8 +3738,12 @@ emit_move_return_value (MonoCompile *cfg, guint8 * code, MonoInst *ins)
 	MonoCallInst *call;
 
 	if (cfg->arch.swift_error_var) {
-		code = emit_ldrx (code, ARMREG_IP0, cfg->arch.swift_error_var->inst_basereg, GTMREG_TO_INT (cfg->arch.swift_error_var->inst_offset));
-		code = emit_strx (code, ARMREG_R21, ARMREG_IP0, 0);
+		if (cfg->method->wrapper_type == MONO_WRAPPER_MANAGED_TO_NATIVE) {
+			code = emit_ldrx (code, ARMREG_IP0, cfg->arch.swift_error_var->inst_basereg, GTMREG_TO_INT (cfg->arch.swift_error_var->inst_offset));
+			code = emit_strx (code, ARMREG_R21, ARMREG_IP0, 0);
+		} else if (cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
+			code = emit_ldrx (code, ARMREG_R21, cfg->arch.swift_error_var->inst_basereg, GTMREG_TO_INT (cfg->arch.swift_error_var->inst_offset));
+		}
 	}
 
 	call = (MonoCallInst*)ins;
@@ -6320,21 +6313,6 @@ mono_arch_emit_epilog (MonoCompile *cfg)
 	} else {
 		/* Restore gregs */
 		code = emit_load_regset (code, MONO_ARCH_CALLEE_SAVED_REGS & cfg->used_int_regs, ARMREG_FP, cfg->arch.saved_gregs_offset);
-	}
-
-	if (cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
-		for (i = 0; i < cinfo->nargs; ++i) {
-			ArgInfo* ainfo = cinfo->args + i;
-			MonoInst* arg = cfg->args [i];
-			switch (ainfo->storage) {
-			case ArgSwiftError:
-					code = emit_ldrx (code, ARMREG_R21, arg->inst_basereg, GTMREG_TO_INT (arg->inst_offset));
-					code = emit_ldrx (code, ARMREG_R21, ARMREG_R21, 0);
-				break;
-			default:
-				break;
-			}
-		}
 	}
 
 	/* Load returned vtypes into registers if needed */

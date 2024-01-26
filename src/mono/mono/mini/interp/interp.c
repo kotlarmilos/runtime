@@ -3138,19 +3138,6 @@ interp_entry_from_trampoline (gpointer ccontext_untyped, gpointer rmethod_untype
 		newsp = STACK_ADD_BYTES (newsp, size);
 	}
 
-#ifdef MONO_ARCH_HAVE_SWIFTCALL
-	if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL)) {
-		newsp = STACK_ADD_BYTES (newsp, MINT_STACK_SLOT_SIZE);
-		int arg_index;
-		gpointer data = mono_arch_get_swift_error (ccontext, sig, call_info, &arg_index);
-
-		if (data != NULL) {
-			stackval *result = (stackval*) STACK_ADD_BYTES (frame.stack, get_arg_offset (frame.imethod, sig, arg_index));
-			result->data.p = newsp;
-		}
-	}
-#endif
-
 	newsp = (stackval*)ALIGN_TO (newsp, MINT_STACK_ALIGNMENT);
 	context->stack_pointer = (guchar*)newsp;
 	g_assert (context->stack_pointer < context->stack_end);
@@ -3170,17 +3157,18 @@ interp_entry_from_trampoline (gpointer ccontext_untyped, gpointer rmethod_untype
 		return;
 	}
 
-#ifdef MONO_ARCH_HAVE_SWIFTCALL
-	if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL)) {
-		int arg_index;
-		gpointer data = mono_arch_get_swift_error (ccontext, sig, call_info, &arg_index);
+// TODO: Access SwiftError arg
+// #ifdef MONO_ARCH_HAVE_SWIFTCALL
+// 	if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL)) {
+// 		int arg_index;
+// 		gpointer data = mono_arch_get_swift_error (ccontext, sig, call_info, &arg_index);
 
-		if (data != NULL) {
-			stackval *result = (stackval*) STACK_ADD_BYTES (frame.stack, get_arg_offset (frame.imethod, sig, arg_index));
-			*(gpointer*)data = *(gpointer*)result->data.p;
-		}
-	}
-#endif
+// 		if (data != NULL) {
+// 			stackval *result = (stackval*) STACK_ADD_BYTES (frame.stack, get_arg_offset (frame.imethod, sig, arg_index));
+// 			*(gpointer*)data = *(gpointer*)result->data.p;
+// 		}
+// 	}
+// #endif
 
 	/* Write back the return value */
 	/* 'frame' is still valid */

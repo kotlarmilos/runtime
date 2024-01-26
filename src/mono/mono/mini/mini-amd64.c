@@ -1025,10 +1025,7 @@ get_call_info (MonoMemPool *mp, MonoMethodSignature *sig)
 					gr--;
 				continue;
 			} else if (klass == swift_error || klass == swift_error_ptr) {
-				if (sig->pinvoke)
-					ainfo->reg = GINT32_TO_UINT8 (AMD64_R12);
-				else
-					add_general (&gr, &stack_size, ainfo);
+				add_general (&gr, &stack_size, ainfo);
 				ainfo->storage = ArgSwiftError;
 				cinfo->swift_error_index = i;
 				continue;
@@ -1363,6 +1360,16 @@ mono_arch_get_native_call_context_args (CallContext *ccontext, gpointer frame, M
 		} else {
 			storage = arg_get_storage (ccontext, ainfo);
 		}
+
+#ifdef MONO_ARCH_HAVE_SWIFTCALL
+		if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL)) {
+			MonoClass *swift_self = mono_class_try_get_swift_self_class ();
+			MonoClass *klass = mono_class_from_mono_type_internal (sig->params [i]);
+			if (klass == swift_self) {
+				storage = &ccontext->gregs [AMD64_R13];
+			}
+		}
+#endif
 
 		interp_cb->data_to_frame_arg ((MonoInterpFrameHandle)frame, sig, i, storage);
 	}
@@ -2000,7 +2007,8 @@ mono_arch_allocate_vars (MonoCompile *cfg)
 					offset += sizeof (target_mgreg_t);;
 
 					cfg->arch.swift_error_var = ins;
-					cfg->used_int_regs |= (size_t)(1 << AMD64_R12);
+					if (cfg->method->wrapper_type == MONO_WRAPPER_MANAGED_TO_NATIVE)
+						cfg->used_int_regs |= (size_t)(1 << AMD64_R12);
 				}
 				break;
 			default:
@@ -2445,7 +2453,7 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 			break;
 		}
 		case ArgSwiftError: {
-			MONO_EMIT_NEW_I8CONST (cfg, ainfo->reg, 0);
+			MONO_EMIT_NEW_I8CONST (cfg, AMD64_R12, 0);
 			break;
 		}
 		default:
@@ -4285,8 +4293,12 @@ emit_move_return_value (MonoCompile *cfg, MonoInst *ins, guint8 *code)
 	guint32 quad;
 
 	if (cfg->arch.swift_error_var) {
-		amd64_mov_reg_membase (code, AMD64_R11, cfg->arch.swift_error_var->inst_basereg, cfg->arch.swift_error_var->inst_offset, sizeof (target_mgreg_t));
-		amd64_mov_membase_reg (code, AMD64_R11, 0, AMD64_R12, sizeof (target_mgreg_t));
+		if (cfg->method->wrapper_type == MONO_WRAPPER_MANAGED_TO_NATIVE) {
+			amd64_mov_reg_membase (code, AMD64_R11, cfg->arch.swift_error_var->inst_basereg, cfg->arch.swift_error_var->inst_offset, sizeof (target_mgreg_t));
+			amd64_mov_membase_reg (code, AMD64_R11, 0, AMD64_R12, sizeof (target_mgreg_t));
+		} else if (cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
+			amd64_mov_reg_membase (code, AMD64_R12, cfg->arch.swift_error_var->inst_basereg, cfg->arch.swift_error_var->inst_offset, sizeof (target_mgreg_t));
+		}
 	}
 
 	/* Move return value to the target register */
@@ -8447,21 +8459,6 @@ mono_arch_emit_epilog (MonoCompile *cfg)
 				async_exc_point (code);
 			}
 			save_area_offset += 8;
-		}
-	}
-
-	if (cfg->method->wrapper_type == MONO_WRAPPER_NATIVE_TO_MANAGED) {
-		for (int i = 0; i < cinfo->nargs; ++i) {
-			ArgInfo* ainfo = cinfo->args + i;
-			MonoInst* arg = cfg->args [i];
-			switch (ainfo->storage) {
-			case ArgSwiftError:
-				amd64_mov_reg_membase (code, AMD64_R12, arg->inst_basereg, arg->inst_offset, 8);
-				amd64_mov_reg_membase (code, AMD64_R12, AMD64_R12, 0, 8);
-				break;
-			default:
-				break;
-			}
 		}
 	}
 

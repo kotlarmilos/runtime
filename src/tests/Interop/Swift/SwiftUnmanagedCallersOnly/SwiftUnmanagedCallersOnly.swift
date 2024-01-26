@@ -2,14 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 import Foundation
 
-public func nativeFunctionWithCallback(callback: (UnsafeMutableRawPointer) -> Void, expectedValue: Int) {
-    // FIXME: expectedValue is not set correctly in Interpreter
-    let pointer = UnsafeMutableRawPointer(bitPattern: UInt(bitPattern: 42))
-    if let unwrappedPointer = pointer {
-        callback(unwrappedPointer)
-    } else {
-        fatalError("Failed to unwrap pointer")
-    }
+public func nativeFunctionWithCallback(callback: (Int32) -> Void, expectedValue: Int32) {
+    callback(expectedValue)
 }
 
 public enum MyError: Error {
