@@ -4609,3 +4609,39 @@ mini_get_simd_type_info (MonoClass *klass, guint32 *nelems)
 	}
 }
 
+#ifdef MONO_ARCH_HAVE_SWIFTCALL
+SwiftLoweredType
+mono_swift_get_lowered_type (MonoType *type, int offset)
+{
+	g_assert (sizeof (target_mgreg_t) == 8); // Swift struct lowering is only supported on 64-bit architectures.
+	g_assert (mono_type_is_primitive (type)); // Swift struct lowering is only supported on primitive types.
+	// Comments here are from the Swift Calling Convention document:
+	// If any range is mapped as a non-empty, non-opaque type, but its start
+	// offset is not a multiple of its natural alignment, remap it as opaque.
+	// For these purposes, the natural alignment of an integer type is the
+	// minimum of its size and the maximum voluntary integer size; the
+	// natural alignment of any other type is its C ABI type.
+
+	int align;
+	int size = mono_type_size(type, &align);
+	align = MIN (sizeof (target_mgreg_t), align);
+	if (offset % align != 0)
+		return SwiftLoweredOpaque;
+
+	if (type->type == MONO_TYPE_R4)
+		return SwiftLoweredFloat;
+	if (type->type == MONO_TYPE_R8)
+		return SwiftLoweredDouble;
+	if (type->type == MONO_TYPE_U8 || type->type == MONO_TYPE_I8)
+		return SwiftLoweredInt64;
+	if (type->type == MONO_TYPE_U || type->type == MONO_TYPE_I || 
+		type->type == MONO_TYPE_PTR || type->type == MONO_TYPE_FNPTR)
+		return SwiftLoweredInt64;
+
+	// If any range is mapped as an integer type that is not larger than the
+	// maximum voluntary size, remap it as opaque.
+	return SwiftLoweredOpaque;
+}
+
+#endif /* MONO_ARCH_HAVE_SWIFTCALL */
+

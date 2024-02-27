@@ -3015,4 +3015,19 @@ MonoMemoryManager* mini_get_default_mem_manager (void);
 MONO_COMPONENT_API int
 mono_wasm_get_debug_level (void);
 
+#ifdef MONO_ARCH_HAVE_SWIFTCALL
+typedef enum {
+	SwiftLoweredEmpty,
+	SwiftLoweredOpaque,
+	SwiftLoweredFloat,
+	SwiftLoweredDouble,
+	SwiftLoweredInt64
+	//SwiftLoweredInt32 TODO: add Int32 if supported on 32-bit platforms
+} SwiftLoweredType;
+
+SwiftLoweredType
+mono_swift_get_lowered_type (MonoType *type, int offset);
+
+#endif /* MONO_ARCH_HAVE_SWIFTCALL */
+
 #endif /* __MONO_MINI_H__ */
