@@ -4611,7 +4611,7 @@ mini_get_simd_type_info (MonoClass *klass, guint32 *nelems)
 
 #ifdef MONO_ARCH_HAVE_SWIFTCALL
 SwiftLoweredType
-mono_swift_get_lowered_type (MonoType *type, int offset)
+mono_get_swift_lowered_type (MonoType *type, int offset)
 {
 	g_assert (sizeof (target_mgreg_t) == 8); // Swift struct lowering is only supported on 64-bit architectures.
 	g_assert (mono_type_is_primitive (type)); // Swift struct lowering is only supported on primitive types.
@@ -4624,7 +4624,7 @@ mono_swift_get_lowered_type (MonoType *type, int offset)
 
 	int align;
 	int size = mono_type_size(type, &align);
-	align = MIN (sizeof (target_mgreg_t), align);
+	align = MIN (sizeof (target_mgreg_t), size);
 	if (offset % align != 0)
 		return SwiftLoweredOpaque;
 
@@ -4632,11 +4632,11 @@ mono_swift_get_lowered_type (MonoType *type, int offset)
 		return SwiftLoweredFloat;
 	if (type->type == MONO_TYPE_R8)
 		return SwiftLoweredDouble;
-	if (type->type == MONO_TYPE_U8 || type->type == MONO_TYPE_I8)
-		return SwiftLoweredInt64;
-	if (type->type == MONO_TYPE_U || type->type == MONO_TYPE_I || 
-		type->type == MONO_TYPE_PTR || type->type == MONO_TYPE_FNPTR)
-		return SwiftLoweredInt64;
+	// if (type->type == MONO_TYPE_U8 || type->type == MONO_TYPE_I8)
+	// 	return SwiftLoweredInt64;
+	// if (type->type == MONO_TYPE_U || type->type == MONO_TYPE_I || 
+	// 	type->type == MONO_TYPE_PTR || type->type == MONO_TYPE_FNPTR)
+	// 	return SwiftLoweredInt64;
 
 	// If any range is mapped as an integer type that is not larger than the
 	// maximum voluntary size, remap it as opaque.

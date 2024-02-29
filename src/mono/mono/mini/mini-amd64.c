@@ -661,6 +661,100 @@ add_valuetype (MonoMethodSignature *sig, ArgInfo *ainfo, MonoType *type,
 	fields = (StructFieldInfo*)fields_array->data;
 	nfields = fields_array->len;
 
+#ifdef MONO_ARCH_HAVE_SWIFTCALL
+	if (mono_method_signature_has_ext_callconv (sig, MONO_EXT_CALLCONV_SWIFTCALL) && sig->pinvoke) {
+		SwiftStructLoweringInfo lowering_info = {
+			.byref = FALSE,
+			.num_lowered_fields = 0,
+		};
+		// TODO: check if this returns correct number of elements for nested structs
+		int num_fields = mono_class_get_field_count(klass);	// we can't use nfields as it contains trailing elements
+
+		g_print("Lowering struct %s of %d fields:\n", mono_type_get_name(type), num_fields);
+
+		GArray *lowered_fields = g_array_sized_new (FALSE, TRUE, sizeof (SwiftLoweredType), num_fields);
+		// TODO: try to do swift lowering in a single loop
+		for (int j = 0; j < num_fields; ++j) {
+			int offset = fields [j].offset;
+			int size = fields [j].size;
+			// Print StructFieldInfo
+			g_print("Type: %s", mono_type_get_name (fields [j].type));
+			g_print(" | Offset: %d", offset);
+			g_print(" | Size: %d\n", size);
+			SwiftLoweredType lowered_type = mono_get_swift_lowered_type (fields [j].type, offset);
+			g_array_append_val (lowered_fields, lowered_type);
+			//g_print("Lowered type: %s\n", lowered_type);
+		}
+
+		SwiftLoweredType *swift_lowered_fields = (SwiftLoweredType *)lowered_fields->data;
+		for (int j = 0; j < num_fields; ++j) {
+			int offset = fields [j].offset;
+			int size = fields [j].size;
+			//MonoType *field_type = fields [j].type;
+			SwiftLoweredType lowered_type = swift_lowered_fields[j];
+
+			if (lowering_info.num_lowered_fields >= 4) {
+				lowering_info.byref = TRUE;
+				g_print("Lowered struct has more than 4 fields, passing by reference\n");
+				break;
+			}
+
+			if (lowered_type == SwiftLoweredOpaque) {
+				int aligned_unit_size = size;
+				while (aligned_unit_size < sizeof (target_mgreg_t) && j < num_fields - 1) {
+					if (swift_lowered_fields[j + 1] == SwiftLoweredOpaque && fields[j + 1].offset - offset < sizeof (target_mgreg_t)) {
+						j++;
+						aligned_unit_size += fields[j].size;
+					} else {
+						break;
+					}
+				}
+				if (aligned_unit_size > 4)
+					lowering_info.lowered_fields[lowering_info.num_lowered_fields] = MONO_TYPE_I8;
+				else if (aligned_unit_size > 2)
+					lowering_info.lowered_fields[lowering_info.num_lowered_fields] = MONO_TYPE_I4;
+				else if (aligned_unit_size > 1)
+					lowering_info.lowered_fields[lowering_info.num_lowered_fields] = MONO_TYPE_I2;
+				else if (aligned_unit_size == 1)
+					lowering_info.lowered_fields[lowering_info.num_lowered_fields] = MONO_TYPE_I1;
+				else
+					g_assert_not_reached();
+			} else {
+				if (lowered_type == SwiftLoweredDouble)
+					lowering_info.lowered_fields[lowering_info.num_lowered_fields] = MONO_TYPE_R8;
+				else if (lowered_type == SwiftLoweredFloat)
+					lowering_info.lowered_fields[lowering_info.num_lowered_fields] = MONO_TYPE_R4;
+				//else if (lowered_type == SwiftLoweredInt64)
+				//	lowering_info.lowered_fields[lowering_info.num_lowered_fields] = MONO_TYPE_I8;
+				else
+					g_assert_not_reached();
+			}
+			++lowering_info.num_lowered_fields;
+
+			g_print("");
+		}
+
+		if (lowering_info.byref) {
+			NOT_IMPLEMENTED; // TODO: Pass struct by ref
+			ainfo->storage = ArgValuetypeAddrInIReg;
+		} else {
+			// TODO: Pass lowered fields inside registers
+			// Perhaps use similar logic that is used currently for passing structs using quads
+			// Maybe increase "pair_storage" (ArgInfo) to allow 4 fields
+			// for (int j = 0; j < lowering_info.num_lowered_fields; ++j) {
+			// 	if (lowering_info.lowered_fields[j] == MONO_TYPE_R4)
+			// 		add_float (fr, stack_size, ainfo, FALSE);
+			// 	else if (lowering_info.lowered_fields[j] == MONO_TYPE_R8)
+			// 		add_float (fr, stack_size, ainfo, TRUE);
+			// 	else
+			// 		add_general (gr, stack_size, ainfo);
+			// }
+
+		}
+		 g_print("");
+	}
+#endif
+
 	for (i = 0; i < nfields; ++i) {
 		if ((fields [i].offset < 8) && (fields [i].offset + fields [i].size) > 8) {
 			pass_on_stack = TRUE;

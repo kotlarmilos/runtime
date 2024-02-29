@@ -3022,11 +3022,19 @@ typedef enum {
 	SwiftLoweredFloat,
 	SwiftLoweredDouble,
 	SwiftLoweredInt64
-	//SwiftLoweredInt32 TODO: add Int32 if supported on 32-bit platforms
+	//SwiftLoweredInt32 TODO: add Int32 if supported on 32-bit architectures
 } SwiftLoweredType;
 
+typedef struct {
+	MonoTypeEnum lowered_fields[4];
+	gboolean byref;
+	int num_lowered_fields;
+} SwiftStructLoweringInfo;
+
+
+
 SwiftLoweredType
-mono_swift_get_lowered_type (MonoType *type, int offset);
+mono_get_swift_lowered_type (MonoType *type, int offset);
 
 #endif /* MONO_ARCH_HAVE_SWIFTCALL */
 
