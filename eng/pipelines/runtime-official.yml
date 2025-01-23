@@ -248,7 +248,7 @@ extends:
             value: $(crossDacArtifactsBasePath)/$(crossDacArtifactsContainer)
 
       #
-      # Build All runtime packs for mobile platforms
+      # Build All Mono nruntime packs for mobile platforms
       #
       - template: /eng/pipelines/common/platform-matrix.yml
         parameters:
@@ -273,7 +273,38 @@ extends:
           jobParameters:
             templatePath: 'templates-official'
             buildArgs: -c $(_BuildConfig) /p:BuildMonoAOTCrossCompiler=false /p:DotNetBuildAllRuntimePacks=true
-            nameSuffix: AllRuntimes
+            nameSuffix: AllRuntimesMono
+            isOfficialBuild: ${{ variables.isOfficialBuild }}
+            postBuildSteps:
+              # delete duplicate RIDless packages to prevent upload conflict
+              - task: DeleteFiles@1
+                displayName: 'Delete Microsoft.NETCore.App.Ref and Microsoft.NETCore.App.HostModel package'
+                inputs:
+                  SourceFolder: $(Build.SourcesDirectory)/artifacts/packages/$(_BuildConfig)/Shipping
+                  Contents: |
+                    'Microsoft.NETCore.App.Ref.*.nupkg'
+                    'Microsoft.NET.HostModel.*.nupkg'
+              - template: /eng/pipelines/common/upload-intermediate-artifacts-step.yml
+                parameters:
+                  name: MobileRuntimePacks
+
+      #
+      # Build All NativeAOT runtime packs for mobile platforms
+      #
+      - template: /eng/pipelines/common/platform-matrix.yml
+        parameters:
+          jobTemplate: /eng/pipelines/common/global-build-job.yml
+          buildConfig: release
+          platforms:
+          - android_x64
+          - android_x86
+          - android_arm
+          - android_arm64
+          # TODO: Add AppleMobile
+          jobParameters:
+            templatePath: 'templates-official'
+            buildArgs: -s clr.runtime+clr.alljits+clr.corelib+clr.nativecorelib+clr.tools+clr.packages+libs+host+packs -c $(_BuildConfig) --cross /p:DotNetBuildAllRuntimePacks=true
+            nameSuffix: AllRuntimesCoreCLR
             isOfficialBuild: ${{ variables.isOfficialBuild }}
             postBuildSteps:
               # delete duplicate RIDless packages to prevent upload conflict
