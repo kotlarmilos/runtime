@@ -273,7 +273,7 @@ extends:
           jobParameters:
             templatePath: 'templates-official'
             buildArgs: -c $(_BuildConfig) /p:BuildMonoAOTCrossCompiler=false /p:DotNetBuildAllRuntimePacks=true
-            nameSuffix: AllRuntimesMono
+            nameSuffix: AllRuntimes
             isOfficialBuild: ${{ variables.isOfficialBuild }}
             postBuildSteps:
               # delete duplicate RIDless packages to prevent upload conflict
