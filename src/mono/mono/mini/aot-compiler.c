@@ -284,7 +284,7 @@ typedef struct MonoAotStats {
 	int method_categories [METHOD_CAT_NUM];
 	int got_slot_types [MONO_PATCH_INFO_NUM];
 	int got_slot_info_sizes [MONO_PATCH_INFO_NUM];
-	int jit_time, gen_time, link_time;
+	int jit_time, gen_time, link_time, collect_time, emit_time;
 	int method_ref_count, method_ref_size;
 	int class_ref_count, class_ref_size;
 	int ginst_count, ginst_size;
@@ -10815,8 +10815,17 @@ compile_llvm_file (MonoAotCompile *acfg)
 
 	command = g_strdup_printf ("\"%s" OPT_NAME "\" -f %s -o \"%s\" \"%s\"", acfg->aot_opts.llvm_path, opts, optbc, tempbc);
 	aot_printf (acfg, "Executing opt: %s\n", command);
+
+	TV_DECLARE (aot_opt_time_start);
+	TV_DECLARE (aot_opt_time_end);
+
+	TV_GETTIME (aot_opt_time_start);
+
 	if (execute_system (command) != 0)
 		return FALSE;
+
+	TV_GETTIME (aot_opt_time_end);
+	aot_printf (acfg, "opt time: %lld ms \n", TV_ELAPSED (aot_opt_time_start, aot_opt_time_end) / 1000);
 	g_free (opts);
 
 	if (acfg->aot_opts.llvm_only && acfg->aot_opts.asm_only)
@@ -10892,9 +10901,14 @@ compile_llvm_file (MonoAotCompile *acfg)
 	g_free (output_fname);
 
 	aot_printf (acfg, "Executing llc: %s\n", command);
+	
+	TV_GETTIME (aot_opt_time_start);
 
 	if (execute_system (command) != 0)
 		return FALSE;
+	
+	TV_GETTIME (aot_opt_time_end);
+	aot_printf (acfg, "llc time: %lld ms \n", TV_ELAPSED (aot_opt_time_start, aot_opt_time_end) / 1000);
 	return TRUE;
 }
 #endif
@@ -14931,6 +14945,10 @@ aot_assembly (MonoAssembly *ass, guint32 jit_opts, MonoAotOptions *aot_options)
 	int res;
 	TV_DECLARE (atv);
 	TV_DECLARE (btv);
+	TV_DECLARE (dedup_collect_time_start);
+	TV_DECLARE (dedup_collect_time_end);
+	TV_DECLARE (dedup_emit_time_start);
+	TV_DECLARE (dedup_emit_time_end);
 
 	acfg = acfg_create (ass, jit_opts);
 	memcpy (&acfg->aot_opts, aot_options, sizeof (MonoAotOptions));
@@ -14938,9 +14956,16 @@ aot_assembly (MonoAssembly *ass, guint32 jit_opts, MonoAotOptions *aot_options)
 		if (acfg->aot_opts.dedup_skip)
 			dedup_change_phase (acfg, DEDUP_SKIP);
 		else if (acfg->aot_opts.dedup_include && ass != dedup_assembly)
+		{
 			dedup_change_phase (acfg, DEDUP_COLLECT);
+			TV_GETTIME (dedup_collect_time_start);
+		}
 		else
+		{
 			dedup_change_phase (acfg, DEDUP_EMIT);
+			TV_GETTIME (dedup_collect_time_start);
+			TV_GETTIME (dedup_emit_time_start);
+		}
 	}
 
 	if (acfg->aot_opts.logfile) {
@@ -15310,8 +15335,17 @@ aot_assembly (MonoAssembly *ass, guint32 jit_opts, MonoAotOptions *aot_options)
 	acfg->stats.jit_time = GINT64_TO_INT (TV_ELAPSED (atv, btv));
 	if (acfg->dedup_phase == DEDUP_COLLECT) {
 		/* We only collected methods from this assembly */
+		TV_GETTIME (dedup_collect_time_end);
+		acfg->stats.collect_time = GINT64_TO_INT (TV_ELAPSED (dedup_collect_time_start, dedup_collect_time_end));
+		aot_printf (acfg, "Collect time for assemly %s: %d ms\n", acfg->image->name, acfg->stats.collect_time / 1000);
 		acfg_free (acfg);
 		return 0;
+	}
+
+	if (acfg->dedup_phase == DEDUP_EMIT) {
+		TV_GETTIME (dedup_collect_time_end);
+		acfg->stats.collect_time = GINT64_TO_INT (TV_ELAPSED (dedup_collect_time_start, dedup_collect_time_end));
+		aot_printf (acfg, "Collect time for assemly %s: %d ms\n", acfg->image->name, acfg->stats.collect_time / 1000);
 	}
 
 	current_acfg = NULL;
@@ -15320,7 +15354,14 @@ aot_assembly (MonoAssembly *ass, guint32 jit_opts, MonoAotOptions *aot_options)
 		fclose (acfg->trimming_eligible_methods_outfile);
 	}
 
-	return emit_aot_image (acfg);
+	int result = emit_aot_image (acfg);
+	if (acfg->dedup_phase == DEDUP_EMIT) {
+		TV_GETTIME (dedup_emit_time_end);
+		acfg->stats.emit_time = GINT64_TO_INT (TV_ELAPSED (dedup_emit_time_start, dedup_emit_time_end));
+		aot_printf (acfg, "Emit time for assemly %s: %d ms\n", acfg->image->name, acfg->stats.emit_time / 1000);
+	}
+
+	return result;
 }
 
 static void
@@ -15664,8 +15705,12 @@ emit_aot_image (MonoAotCompile *acfg)
 
 	acfg->stats.gen_time = GINT64_TO_INT (TV_ELAPSED (atv, btv));
 
+	aot_printf (acfg, "Generation time for assembly %s: %d ms\n", acfg->image->name, acfg->stats.gen_time / 1000);
+
 	if (!acfg->aot_opts.stats)
 		aot_printf (acfg, "Compiled: %d/%d\n", acfg->stats.ccount, acfg->stats.mcount);
+
+	TV_GETTIME (atv);
 
 	if (acfg->w) {
 		res = mono_img_writer_emit_writeout (acfg->w);
@@ -15675,24 +15720,42 @@ emit_aot_image (MonoAotCompile *acfg)
 		}
 	}
 
+	TV_GETTIME (btv);
+	aot_printf( acfg, "Writeout time for assembly %s: %d ms\n", acfg->image->name, GINT64_TO_INT (TV_ELAPSED (atv, btv)) / 1000);
+	TV_GETTIME (atv);
+
 	if (acfg->aot_opts.depfile)
 		create_depfile (acfg);
 
+	TV_GETTIME (btv);
+	aot_printf( acfg, "Depfile time for assembly %s: %d ms\n", acfg->image->name, GINT64_TO_INT (TV_ELAPSED (atv, btv)) / 1000);
+	TV_GETTIME (atv);
+
 	if (acfg->aot_opts.dump_json)
 		aot_dump (acfg);
+
+	TV_GETTIME (btv);
+	aot_printf( acfg, "Dump time for assembly %s: %d ms\n", acfg->image->name, GINT64_TO_INT (TV_ELAPSED (atv, btv)) / 1000);
 
 	if (acfg->aot_opts.child)
 		/* The rest is done in the parent */
 		return 0;
 
+	TV_GETTIME (atv);
+
 	res = assemble_link (acfg);
 	if (res)
 		return res;
+	
+	TV_GETTIME (btv);
+	aot_printf( acfg, "Assemble+Link time for assembly %s: %d ms\n", acfg->image->name, GINT64_TO_INT (TV_ELAPSED (atv, btv)) / 1000);
 
 	if (acfg->aot_opts.stats)
 		print_stats (acfg);
 
 	aot_printf (acfg, "JIT time: %d ms, Generation time: %d ms, Assembly+Link time: %d ms.\n", acfg->stats.jit_time / 1000, acfg->stats.gen_time / 1000, acfg->stats.link_time / 1000);
+
+	TV_GETTIME (atv);
 
 	if (!acfg->aot_opts.save_temps && acfg->temp_dir_to_delete) {
 		char *command = g_strdup_printf ("rm -r %s", acfg->temp_dir_to_delete);
@@ -15701,6 +15764,9 @@ emit_aot_image (MonoAotCompile *acfg)
 	}
 
 	acfg_free (acfg);
+
+	TV_GETTIME (btv);
+	aot_printf( acfg, "Cleanup time for assembly %s: %d ms\n", acfg->image->name, GINT64_TO_INT (TV_ELAPSED (atv, btv)) / 1000);
 
 	return 0;
 }
@@ -15855,7 +15921,11 @@ mono_aot_assemblies (MonoAssembly **assemblies, int nassemblies, guint32 jit_opt
 			exit (1);
 		}
 	}
+	
+	TV_DECLARE (total_aot_time_start);
+	TV_DECLARE (total_aot_time_end);
 
+	TV_GETTIME (total_aot_time_start);
 	for (int i = 0; i < nassemblies; ++i) {
 		res = aot_assembly (assemblies [i], jit_opts, &aot_opts);
 		if (res != 0) {
@@ -15864,6 +15934,9 @@ mono_aot_assemblies (MonoAssembly **assemblies, int nassemblies, guint32 jit_opt
 			goto early_exit;
 		}
 	}
+
+	TV_GETTIME (total_aot_time_end);
+	printf ("Total AOT time: %d ms\n", GINT64_TO_INT (TV_ELAPSED (total_aot_time_start, total_aot_time_end)) / 1000);
 
 early_exit:
 	aot_opts_free (&aot_opts);
