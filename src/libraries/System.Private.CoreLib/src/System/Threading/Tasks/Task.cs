@@ -3444,10 +3444,16 @@ namespace System.Threading.Tasks
             // result in the continuations being run/launched directly rather than being added to the continuation list.
             // Then if we grabbed any continuations, run them.
             object? continuationObject = Interlocked.Exchange(ref m_continuationObject, s_taskCompletionSentinel);
-            if (continuationObject != null)
-            {
-                RunContinuations(continuationObject);
-            }
+
+            // If continuationObject is null, then we are already in the process of completing
+            // the task, and we don't need to do anything
+
+            // If continuationObject is s_taskCompletionSentinel,
+            // then we are already in the process of running the continuations
+            if (continuationObject == null) || continuationObject == s_taskCompletionSentinel)
+                return;
+
+            RunContinuations(continuationObject);
         }
 
         private void RunContinuations(object continuationObject) // separated out of FinishContinuations to enable it to be inlined
