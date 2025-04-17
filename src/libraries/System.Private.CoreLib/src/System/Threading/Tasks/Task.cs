@@ -3447,12 +3447,11 @@ namespace System.Threading.Tasks
 
             // If continuationObject is null, then we are already in the process of completing
             // the task, and we don't need to do anything
-
-            // If continuationObject is s_taskCompletionSentinel,
-            // then we are already in the process of running the continuations
             if (continuationObject == null)
                 return;
 
+            // If continuationObject is s_taskCompletionSentinel,
+            // then we are already in the process of running the continuations
             if (continuationObject == s_taskCompletionSentinel)
                 ThrowHelper.ThrowInvalidOperationException(ExceptionResource.InvalidOperation_TaskCompletionSentinel);
 
@@ -4579,7 +4578,7 @@ namespace System.Threading.Tasks
 
                 // We might be racing against another thread converting the single into
                 // a list, or we might be racing against task completion, so recheck for list again.
-                list = m_continuationObject as List<object?>;
+                list = oldValue as List<object?>;
                 if (list is null)
                 {
                     Debug.Assert(oldValue == s_taskCompletionSentinel, "Expected m_continuationObject to be list or sentinel");
