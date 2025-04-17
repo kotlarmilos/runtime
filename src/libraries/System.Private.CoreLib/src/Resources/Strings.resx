@@ -238,6 +238,9 @@
   <data name="InvalidOperation_IncompatibleComparer" xml:space="preserve">
     <value>The collection's comparer does not support the requested operation.</value>
   </data>
+  <data name="InvalidOperation_TaskCompletionSentinel" xml:space="preserve">
+    <value>The task completion sentiel was already set.</value>
+  </data>
   <data name="InvalidOperation_TypeMapMissingEntryAssembly" xml:space="preserve">
     <value>Entry assembly is required but was not found.</value>
   </data>

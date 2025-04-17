@@ -1084,7 +1084,7 @@ namespace System.Threading.Tasks
                     // to the guideline that an exception implies that no state change took place),
                     // so it is safe to catch the exception and move the task to a final state.  The
                     // same cannot be said for Wait()/WaitAll()/FastWaitAll().
-                    if (!scheduler.TryRunInline(this, false))
+                    if (!(taskQueued = scheduler.TryRunInline(this, false)))
                     {
                         scheduler.InternalQueueTask(this);
                         taskQueued = true; // only mark this after successfully queuing the task.
@@ -3450,8 +3450,11 @@ namespace System.Threading.Tasks
 
             // If continuationObject is s_taskCompletionSentinel,
             // then we are already in the process of running the continuations
-            if (continuationObject == null || continuationObject == s_taskCompletionSentinel)
+            if (continuationObject == null)
                 return;
+
+            if (continuationObject == s_taskCompletionSentinel)
+                ThrowHelper.ThrowInvalidOperationException(ExceptionResource.InvalidOperation_TaskCompletionSentinel);
 
             RunContinuations(continuationObject);
         }
@@ -4576,7 +4579,7 @@ namespace System.Threading.Tasks
 
                 // We might be racing against another thread converting the single into
                 // a list, or we might be racing against task completion, so recheck for list again.
-                list = oldValue as List<object?>;
+                list = m_continuationObject as List<object?>;
                 if (list is null)
                 {
                     Debug.Assert(oldValue == s_taskCompletionSentinel, "Expected m_continuationObject to be list or sentinel");

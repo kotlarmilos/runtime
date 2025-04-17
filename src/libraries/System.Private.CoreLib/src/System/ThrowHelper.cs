@@ -1240,6 +1240,8 @@ namespace System
                     return SR.Argument_HasToBeArrayClass;
                 case ExceptionResource.InvalidOperation_IncompatibleComparer:
                     return SR.InvalidOperation_IncompatibleComparer;
+                case ExceptionResource.InvalidOperation_TaskCompletionSentinel:
+                    return SR.InvalidOperation_TaskCompletionSentinel;
                 default:
                     Debug.Fail("The enum value is not defined, please check the ExceptionResource Enum.");
                     return "";
@@ -1438,5 +1440,6 @@ namespace System
         Format_ExpectedAsciiDigit,
         Argument_HasToBeArrayClass,
         InvalidOperation_IncompatibleComparer,
+        InvalidOperation_TaskCompletionSentinel,
     }
 }
