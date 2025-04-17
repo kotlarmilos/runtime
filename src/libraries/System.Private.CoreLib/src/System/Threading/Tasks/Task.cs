@@ -3450,7 +3450,7 @@ namespace System.Threading.Tasks
 
             // If continuationObject is s_taskCompletionSentinel,
             // then we are already in the process of running the continuations
-            if (continuationObject == null) || continuationObject == s_taskCompletionSentinel)
+            if (continuationObject == null || continuationObject == s_taskCompletionSentinel)
                 return;
 
             RunContinuations(continuationObject);
