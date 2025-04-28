@@ -307,10 +307,6 @@ DEFINE_METHOD(ENVIRONMENT,       INITIALIZE_COMMAND_LINE_ARGS, InitializeCommand
 
 DEFINE_CLASS(EVENT,                 Reflection,             RuntimeEventInfo)
 
-DEFINE_CLASS(EVENT_ARGS,            System,                 EventArgs)
-
-DEFINE_CLASS(EVENT_HANDLERGENERIC,  System,                 EventHandler`1)
-
 DEFINE_CLASS(EVENT_INFO,            Reflection,             EventInfo)
 
 DEFINE_CLASS_U(System,                 Exception,      ExceptionObject)
@@ -1149,9 +1145,6 @@ DEFINE_FIELD_U(_userMessage,        ContractExceptionObject,    _UserMessage)
 DEFINE_FIELD_U(_condition,          ContractExceptionObject,    _Condition)
 
 DEFINE_CLASS(MODULEBASE,        Reflection,         Module)
-
-DEFINE_CLASS(STACKALLOCATEDBOX,   CompilerServices,     StackAllocatedBox`1)
-DEFINE_FIELD(STACKALLOCATEDBOX,   VALUE,                _value)
 
 DEFINE_CLASS(UTF8STRINGMARSHALLER, Marshalling, Utf8StringMarshaller)
 DEFINE_METHOD(UTF8STRINGMARSHALLER, CONVERT_TO_MANAGED, ConvertToManaged, SM_PtrByte_RetStr)

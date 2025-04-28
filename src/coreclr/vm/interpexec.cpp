@@ -1,10 +1,10 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-#include <math.h>
-
 #ifdef FEATURE_INTERPRETER
 
+#include "threads.h"
+#include "gcenv.h"
 #include "interpexec.h"
 
 typedef void* (*HELPER_FTN_PP)(void*);
@@ -54,6 +54,7 @@ void InterpExecMethod(InterpreterFrame *pInterpreterFrame, InterpMethodContextFr
     stack = pFrame->pStack;
 
     int32_t returnOffset, callArgsOffset, methodSlot;
+    const int32_t *targetIp;
 
 MAIN_LOOP:
     while (true)
@@ -972,6 +973,35 @@ MAIN_LOOP:
                 ip += 5;
                 break;
             }
+            case INTOP_CALLVIRT:
+            {
+                returnOffset = ip[1];
+                callArgsOffset = ip[2];
+                methodSlot = ip[3];
+
+                MethodDesc *pMD = (MethodDesc*)pMethod->pDataItems[methodSlot];
+
+                OBJECTREF *pThisArg = LOCAL_VAR_ADDR(callArgsOffset, OBJECTREF);
+                NULL_CHECK(*pThisArg);
+
+                // Interpreter-TODO
+                // This needs to be optimized, not operating at MethodDesc level, rather with ftnptr
+                // slots containing the interpreter IR pointer
+                pMD = pMD->GetMethodDescOfVirtualizedCode(pThisArg, pMD->GetMethodTable());
+
+                PCODE code = pMD->GetNativeCode();
+                if (!code)
+                {
+                    pInterpreterFrame->SetTopInterpMethodContextFrame(pFrame);
+                    GCX_PREEMP();
+                    pMD->PrepareInitialCode(CallerGCMode::Coop);
+                    code = pMD->GetNativeCode();
+                }
+                targetIp = (const int32_t*)code;
+                ip += 4;
+                // Interpreter-TODO unbox if target method class is valuetype
+                goto CALL_TARGET_IP;
+            }
 
             case INTOP_CALL:
             {
@@ -981,7 +1011,7 @@ MAIN_LOOP:
 
                 ip += 4;
 CALL_INTERP_SLOT:
-                const int32_t *targetIp;
+                {
                 size_t targetMethod = (size_t)pMethod->pDataItems[methodSlot];
                 if (targetMethod & INTERP_METHOD_DESC_TAG)
                 {
@@ -1012,7 +1042,8 @@ CALL_INTERP_SLOT:
                     // for interpreter call or normal pointer for JIT/R2R call.
                     targetIp = (const int32_t*)targetMethod;
                 }
-
+                }
+CALL_TARGET_IP:
                 // Save current execution state for when we return from called method
                 pFrame->ip = ip;
 
@@ -1074,6 +1105,17 @@ CALL_INTERP_SLOT:
                 memset(LOCAL_VAR(ip[1], void*), 0, ip[2]);
                 ip += 3;
                 break;
+            case INTOP_GC_COLLECT: {
+                // HACK: blocking gc of all generations to enable early stackwalk testing
+                // Interpreter-TODO: Remove this
+                {
+                    pInterpreterFrame->SetTopInterpMethodContextFrame(pFrame);
+                    GCX_COOP();
+                    GCHeapUtilities::GetGCHeap()->GarbageCollect(-1, false, 0x00000002);
+                }
+                ip++;
+                break;
+            }
             case INTOP_FAILFAST:
                 assert(0);
                 break;

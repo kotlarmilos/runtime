@@ -4,6 +4,33 @@
 using System;
 using System.Runtime.CompilerServices;
 
+public interface ITest
+{
+    public int VirtualMethod();
+}
+
+public class BaseClass : ITest
+{
+    public int NonVirtualMethod()
+    {
+        return 0xbaba;
+    }
+
+    public virtual int VirtualMethod()
+    {
+        return 0xbebe;
+    }
+}
+
+public class DerivedClass : BaseClass
+{
+    public override int VirtualMethod()
+    {
+        return 0xdede;
+    }
+
+}
+
 public struct MyStruct
 {
     public int a;
@@ -51,7 +78,7 @@ public class InterpreterTest
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static void RunInterpreterTests()
     {
-//      Console.WriteLine("Run interp tests");
+        // Console.WriteLine("Run interp tests");
         if (SumN(50) != 1275)
             Environment.FailFast(null);
         if (Mul4(53, 24, 13, 131) != 2166216)
@@ -61,6 +88,7 @@ public class InterpreterTest
 
         if (!PowLoop(20, 10, 1661992960))
             Environment.FailFast(null);
+
         if (!TestJitFields())
             Environment.FailFast(null);
         // Disable below tests because they are potentially unstable since they do allocation
@@ -71,6 +99,11 @@ public class InterpreterTest
 //            Environment.FailFast(null);
         if (!TestFloat())
             Environment.FailFast(null);
+//        if (!TestVirtual())
+//          Environment.FailFast(null);
+
+        // For stackwalking validation
+        System.GC.Collect();
     }
 
     public static int Mul4(int a, int b, int c, int d)
@@ -207,6 +240,28 @@ public class InterpreterTest
         if ((diff - 2011.5) > 0.001 || (diff - 2011.5) < -0.001)
             return false;
 
+        return true;
+    }
+
+    public static bool TestVirtual()
+    {
+        BaseClass bc = new DerivedClass();
+        ITest itest = bc;
+
+        if (bc.NonVirtualMethod() != 0xbaba)
+            return false;
+        if (bc.VirtualMethod() != 0xdede)
+            return false;
+        if (itest.VirtualMethod() != 0xdede)
+            return false;
+        bc = new BaseClass();
+        itest = bc;
+        if (bc.NonVirtualMethod() != 0xbaba)
+            return false;
+        if (bc.VirtualMethod() != 0xbebe)
+            return false;
+        if (itest.VirtualMethod() != 0xbebe)
+            return false;
         return true;
     }
 }
