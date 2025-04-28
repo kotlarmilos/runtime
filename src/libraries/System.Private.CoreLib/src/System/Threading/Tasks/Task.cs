@@ -3453,7 +3453,10 @@ namespace System.Threading.Tasks
             // If continuationObject is s_taskCompletionSentinel,
             // then we are already in the process of running the continuations
             if (continuationObject == s_taskCompletionSentinel)
-                ThrowHelper.ThrowInvalidOperationException(ExceptionResource.InvalidOperation_TaskCompletionSentinel);
+            {
+                // ThrowHelper.ThrowInvalidOperationException(ExceptionResource.InvalidOperation_TaskCompletionSentinel);
+                return;
+            }
 
             RunContinuations(continuationObject);
         }
