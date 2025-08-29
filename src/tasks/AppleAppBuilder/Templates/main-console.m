@@ -76,7 +76,7 @@ UITextView* logLabel;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 #if !USE_LIBRARY_MODE
 #if !USE_NATIVE_AOT
-        mono_ios_runtime_init ();
+        ios_runtime_init ();
 #else
 #if INVARIANT_GLOBALIZATION
         setenv ("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "1", TRUE);
@@ -106,7 +106,7 @@ invoke_external_native_api (void (*callback)(void))
 
 // can be called from C# to update UI
 void
-mono_ios_set_summary (const char* value)
+ios_set_summary (const char* value)
 {
     NSString* nsstr = [NSString stringWithUTF8String:value];
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -116,7 +116,7 @@ mono_ios_set_summary (const char* value)
 
 // can be called from C# to update UI
 void
-mono_ios_append_output (const char* value)
+ios_append_output (const char* value)
 {
     NSString* nsstr = [NSString stringWithUTF8String:value];
     dispatch_async(dispatch_get_main_queue(), ^{

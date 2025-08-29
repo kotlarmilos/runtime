@@ -13,7 +13,7 @@
 
 #import "util.h"
 
-#define APPLE_RUNTIME_IDENTIFIER "iossimulator-arm64"
+#define APPLE_RUNTIME_IDENTIFIER "//%APPLE_RUNTIME_IDENTIFIER%"
 
 const char *
 get_bundle_path (void)
@@ -79,7 +79,7 @@ pinvoke_override (const char *libraryName, const char *entrypointName)
 }
 
 void
-mono_ios_runtime_init (void)
+ios_runtime_init (void)
 {
 #if INVARIANT_GLOBALIZATION
     setenv ("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "1", TRUE);

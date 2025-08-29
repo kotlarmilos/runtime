@@ -10,7 +10,7 @@ using System.Linq;
 public static class Program
 {
     [DllImport("__Internal")]
-    public static extern void mono_ios_set_summary (string value);
+    public static extern void ios_set_summary (string value);
 
     private static async Task GitHubIssue_114262_Async()
     {
@@ -36,10 +36,10 @@ public static class Program
             });
         }
     }
-    
+
     public static async Task<int> Main(string[] args)
     {
-        mono_ios_set_summary($"Starting functional test");
+        ios_set_summary($"Starting functional test");
 
         await GitHubIssue_114262_Async();
 

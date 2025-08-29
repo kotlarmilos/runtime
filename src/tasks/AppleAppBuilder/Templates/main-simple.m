@@ -35,7 +35,7 @@ void (*clickHandlerPtr)(void);
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
     label = [[UILabel alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     label.textColor = [UIColor greenColor];
     label.font = [UIFont boldSystemFontOfSize: 30];
@@ -43,7 +43,7 @@ void (*clickHandlerPtr)(void);
     label.textAlignment = NSTextAlignmentCenter;
     label.text = @"Hello, wire me up!\n(dllimport ios_set_text)";
     [self.view addSubview:label];
-    
+
     UIButton *button = [UIButton buttonWithType:UIButtonTypeInfoDark];
     [button addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
     [button setFrame:CGRectMake(50, 300, 200, 50)];
@@ -52,7 +52,7 @@ void (*clickHandlerPtr)(void);
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 #if !USE_NATIVE_AOT
-        mono_ios_runtime_init ();
+        ios_runtime_init ();
 #else
 #if INVARIANT_GLOBALIZATION
         setenv ("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "1", TRUE);

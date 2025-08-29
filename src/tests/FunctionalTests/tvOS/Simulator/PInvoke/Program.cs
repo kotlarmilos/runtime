@@ -17,14 +17,14 @@ public static class Program
     private static void Callback()
     {
         counter = 42;
-    }    
-    
+    }
+
     [DllImport("__Internal")]
-    public static extern void mono_ios_set_summary (string value);
-    
+    public static extern void ios_set_summary (string value);
+
     public static async Task<int> Main(string[] args)
     {
-        mono_ios_set_summary($"Starting functional test");
+        ios_set_summary($"Starting functional test");
         unsafe {
             delegate* unmanaged<void> unmanagedPtr = &Callback;
             invoke_external_native_api(unmanagedPtr);

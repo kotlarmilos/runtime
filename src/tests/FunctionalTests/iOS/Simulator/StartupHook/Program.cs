@@ -11,12 +11,12 @@ using System.Threading.Tasks;
 public static class Program
 {
     [DllImport("__Internal")]
-    public static extern void mono_ios_set_summary (string value);
+    public static extern void ios_set_summary (string value);
 
     public static async Task<int> Main(string[] args)
     {
         string appContextKey = "Test.StartupHookForFunctionalTest.DidRun";
-        mono_ios_set_summary($"Starting functional test");
+        ios_set_summary($"Starting functional test");
 
         await Task.Delay(10);
 
@@ -24,7 +24,7 @@ public static class Program
 
         if (data != "Yes") {
             string msg = $"Expected startup hook to set {appContextKey} to 'Yes', got '{data}'";
-            mono_ios_set_summary(msg);
+            ios_set_summary(msg);
             Console.Error.WriteLine(msg);
             return 104;
         }

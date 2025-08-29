@@ -12,11 +12,11 @@ using System.Xml;
 public static class Program
 {
     [DllImport("__Internal")]
-    public static extern void mono_ios_set_summary (string value);
+    public static extern void ios_set_summary (string value);
 
     public static async Task<int> Main(string[] args)
     {
-        mono_ios_set_summary($"Starting functional test");
+        ios_set_summary($"Starting functional test");
 
         var ds = new DataContractSerializer (typeof (IEnumerable<int>));
         using (var xw = XmlWriter.Create (System.IO.Stream.Null))
