@@ -993,12 +993,9 @@ if(CLR_CMAKE_TARGET_ARCH_I386)
             gcdecode.cpp
         )
     endif()
-    # Only include gcdecode.cpp in VM when JIT is not included or when both JIT and interpreter are not enabled
-    if(NOT FEATURE_JIT OR NOT FEATURE_INTERPRETER)
-        list(APPEND VM_SOURCES_WKS_SPECIAL
-            gcdecode.cpp
-        )
-    endif()
+    list(APPEND VM_SOURCES_WKS_SPECIAL
+        gcdecode.cpp
+    )
 endif()
 
 convert_to_absolute_path(VM_SOURCES_WKS ${VM_SOURCES_WKS})
