@@ -1,8 +1,5 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# So simdhash will build correctly without a dn-config.h
-add_compile_definitions(NO_CONFIG_H)
-
 set(INTERPRETER_SOURCES
   compiler.cpp
   compileropt.cpp
@@ -12,10 +9,7 @@ set(INTERPRETER_SOURCES
   stackmap.cpp
   naming.cpp
   methodset.cpp
-  intrinsics.cpp
-  ../../native/containers/dn-simdhash.c
-  ../../native/containers/dn-simdhash-ght-compatible.c
-  ../../native/containers/dn-simdhash-ptr-ptr.c)
+  intrinsics.cpp)
 
 set(INTERPRETER_LINK_LIBRARIES
   gcinfo
@@ -54,7 +48,8 @@ if(NOT CLR_CMAKE_HOST_WIN32)
     set_property(TARGET clrinterpreter_objects APPEND_STRING PROPERTY LINK_FLAGS ${EXPORTS_LINKER_OPTION})
 endif()
 
-add_library_clr(clrinterpreter SHARED $<TARGET_OBJECTS:clrinterpreter_objects>)
+add_library_clr(clrinterpreter SHARED $<TARGET_OBJECTS:clrinterpreter_objects> $<TARGET_OBJECTS:dn-containers>)
+add_dependencies(clrinterpreter dn-containers)
 
 target_link_libraries(clrinterpreter
         PRIVATE

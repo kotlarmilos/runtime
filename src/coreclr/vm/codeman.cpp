@@ -1602,6 +1602,7 @@ CORINFO_OS getClrVmOs();
     LOG((LF_JIT, LL_FATALERROR, __VA_ARGS__)); \
     LogErrorToHost(__VA_ARGS__);
 
+#if defined(FEATURE_JIT)
 // LoadAndInitializeJIT: load the JIT dll into the process, and initialize it (call the UtilCode initialization function,
 // check the JIT-EE interface GUID, etc.)
 //
@@ -1765,6 +1766,7 @@ static void LoadAndInitializeJIT(LPCWSTR pwzJitName DEBUGARG(LPCWSTR pwzJitPath)
         LogJITInitializationError("LoadAndInitializeJIT: failed to load %s, hr=0x%08X", utf8JitName, hr);
     }
 }
+#endif // defined(FEATURE_JIT)
 
 #if defined(FEATURE_INTERPRETER) && !defined(FEATURE_JIT)
 static ICorJitCompiler* InitializeStaticJIT()
@@ -5212,6 +5214,7 @@ BOOL ExecutionManager::IsReadyToRunCode(PCODE currentPC)
     return FALSE;
 }
 
+#ifdef FEATURE_JIT
 /*********************************************************************/
 // This static method returns the name of the jit dll
 //
@@ -5231,6 +5234,7 @@ LPCWSTR ExecutionManager::GetJitName()
 
     return pwzJitName;
 }
+#endif // FEATURE_JIT
 
 #ifdef FEATURE_INTERPRETER
 
