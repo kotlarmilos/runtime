@@ -115,6 +115,9 @@ endif (CLR_CMAKE_TARGET_WIN32 AND (CLR_CMAKE_TARGET_ARCH_AMD64 OR CLR_CMAKE_TARG
 
 add_compile_definitions($<${FEATURE_JIT}:FEATURE_JIT>)
 add_compile_definitions($<${FEATURE_INTERPRETER}:FEATURE_INTERPRETER>)
+if (FEATURE_PORTABLE_ENTRYPOINTS)
+  add_compile_definitions(FEATURE_PORTABLE_ENTRYPOINTS)
+endif()
 
 if (CLR_CMAKE_TARGET_WIN32)
     add_definitions(-DFEATURE_ISYM_READER)
@@ -154,7 +157,9 @@ add_definitions(-DFEATURE_READYTORUN)
 
 set(FEATURE_READYTORUN 1)
 
-add_compile_definitions(FEATURE_REJIT)
+if(FEATURE_REJIT)
+  add_compile_definitions(FEATURE_REJIT)
+endif()
 
 if (CLR_CMAKE_HOST_UNIX AND CLR_CMAKE_TARGET_UNIX)
   add_definitions(-DFEATURE_REMOTE_PROC_MEM)
@@ -168,7 +173,11 @@ if (NOT CLR_CMAKE_HOST_ANDROID)
   add_definitions(-DFEATURE_SVR_GC)
 endif(NOT CLR_CMAKE_HOST_ANDROID)
 add_definitions(-DFEATURE_SYMDIFF)
-add_compile_definitions(FEATURE_TIERED_COMPILATION)
+
+if (FEATURE_TIERED_COMPILATION)
+  add_compile_definitions(FEATURE_TIERED_COMPILATION)
+endif(FEATURE_TIERED_COMPILATION)
+
 add_compile_definitions(FEATURE_PGO)
 if (CLR_CMAKE_TARGET_ARCH_AMD64)
   # Enable the AMD64 Unix struct passing JIT-EE interface for all AMD64 platforms, to enable altjit.
