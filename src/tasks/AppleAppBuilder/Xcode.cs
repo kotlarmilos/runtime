@@ -187,6 +187,7 @@ internal sealed class Xcode
         bool optimized,
         bool enableRuntimeLogging,
         bool enableAppSandbox,
+        bool staticLinkedRuntime,
         string? diagnosticPorts,
         IEnumerable<string> runtimeComponents,
         IEnumerable<string> environmentVariables,
@@ -194,7 +195,7 @@ internal sealed class Xcode
         TargetRuntime targetRuntime = TargetRuntime.MonoVM,
         bool isLibraryMode = false)
     {
-        var cmakeDirectoryPath = GenerateCMake(projectName, entryPointLib, asmFiles, asmDataFiles, asmLinkFiles, extraLinkerArgs, excludes, workspace, binDir, monoInclude, preferDylibs, useConsoleUiTemplate, forceAOT, forceInterpreter, invariantGlobalization, hybridGlobalization, optimized, enableRuntimeLogging, enableAppSandbox, diagnosticPorts, runtimeComponents, environmentVariables, nativeMainSource, targetRuntime, isLibraryMode);
+        var cmakeDirectoryPath = GenerateCMake(projectName, entryPointLib, asmFiles, asmDataFiles, asmLinkFiles, extraLinkerArgs, excludes, workspace, binDir, monoInclude, preferDylibs, useConsoleUiTemplate, forceAOT, forceInterpreter, invariantGlobalization, hybridGlobalization, optimized, enableRuntimeLogging, enableAppSandbox, staticLinkedRuntime, diagnosticPorts, runtimeComponents, environmentVariables, nativeMainSource, targetRuntime, isLibraryMode);
         CreateXcodeProject(projectName, cmakeDirectoryPath);
         return Path.Combine(binDir, projectName, projectName + ".xcodeproj");
     }
@@ -261,6 +262,7 @@ internal sealed class Xcode
         bool optimized,
         bool enableRuntimeLogging,
         bool enableAppSandbox,
+        bool staticLinkedRuntime,
         string? diagnosticPorts,
         IEnumerable<string> runtimeComponents,
         IEnumerable<string> environmentVariables,
@@ -416,13 +418,22 @@ internal sealed class Xcode
 
             if (targetRuntime == TargetRuntime.CoreCLR)
             {
-                // Interpreter-FIXME: CoreCLR on iOS currently supports only static linking.
-                // The build system needs to be updated to conditionally initialize the compiler at runtime based on an environment variable.
-                // Tracking issue: https://github.com/dotnet/runtime/issues/119006
-                string[] staticLibs = Directory.GetFiles(workspace, "*.a");
-                foreach (string lib in staticLibs)
+
+                if (staticLinkedRuntime == true)
                 {
-                    toLink += $"    \"{lib}\"{Environment.NewLine}";
+                    string[] staticLibs = Directory.GetFiles(workspace, "*.a");
+                    foreach (string lib in staticLibs)
+                    {
+                        toLink += $"    \"{lib}\"{Environment.NewLine}";
+                    }
+                }
+                else
+                {
+                    string[] dylibs = Directory.GetFiles(workspace, "*.dylib");
+                    foreach (string lib in dylibs)
+                    {
+                        toLink += $"    \"{lib}\"{Environment.NewLine}";
+                    }
                 }
             }
             else

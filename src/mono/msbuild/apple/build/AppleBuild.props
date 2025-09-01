@@ -23,6 +23,8 @@
     <_IsLibraryMode Condition="('$(UseNativeAOTRuntime)' != 'true' and '$(NativeLib)' != '') or ('$(UseNativeAOTRuntime)' == 'true' and '$(NativeLib)' == 'Shared')">true</_IsLibraryMode>
     <ShouldILStrip Condition="'$(ShouldILStrip)' == '' and '$(RunAOTCompilation)' == 'true' and '$(MonoForceInterpreter)' != 'true' and '$(_IsLibraryMode)' != 'true'">true</ShouldILStrip>
 
+    <StaticLinkedRuntime Condition="'$(RuntimeFlavor)' == 'coreclr' and '$(StaticLinkedRuntime)' == ''">false</StaticLinkedRuntime>
+
     <_AotCompileTargetName Condition="'$(UseNativeAOTRuntime)' == 'true'">_AppleNativeAotCompile</_AotCompileTargetName>
     <_AotCompileTargetName Condition="'$(UseNativeAOTRuntime)' != 'true'">_AppleAotCompile</_AotCompileTargetName>
     <IlcCompileDependsOn>ComputeIlcCompileInputs;SetupOSSpecificProps;PrepareForILLink</IlcCompileDependsOn>
