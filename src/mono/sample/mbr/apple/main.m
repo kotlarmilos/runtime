@@ -32,7 +32,7 @@ void (*clickHandlerApplyUpdatePtr)(void);
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
     label = [[UILabel alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     label.textColor = [UIColor greenColor];
     label.font = [UIFont boldSystemFontOfSize: 30];
@@ -40,7 +40,7 @@ void (*clickHandlerApplyUpdatePtr)(void);
     label.textAlignment = NSTextAlignmentCenter;
     label.text = @"Hello, wire me up!\n(dllimport ios_set_text)";
     [self.view addSubview:label];
-    
+
     UIButton *button = [UIButton buttonWithType:UIButtonTypeInfoDark];
     [button addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
     [button setFrame:CGRectMake(50, 250, 200, 50)];
@@ -56,7 +56,7 @@ void (*clickHandlerApplyUpdatePtr)(void);
     [self.view addSubview:apply_button];
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        mono_ios_runtime_init ();
+        ios_runtime_init ();
     });
 }
 -(void) buttonClicked:(UIButton*)sender

@@ -255,7 +255,7 @@ void register_aot_modules (void);
 #endif
 
 void
-mono_ios_runtime_init (void)
+ios_runtime_init (void)
 {
 #if INVARIANT_GLOBALIZATION
     setenv ("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "1", TRUE);
