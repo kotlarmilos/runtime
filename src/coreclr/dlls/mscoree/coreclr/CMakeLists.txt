@@ -191,7 +191,7 @@ if (FEATURE_JIT AND FEATURE_INTERPRETER)
 elseif (FEATURE_JIT)
     set(CLR_JIT clrjit_static gcinfo)
 elseif (FEATURE_INTERPRETER)
-    set(CLR_JIT clrinterpreter_objects)
+    set(CLR_JIT clrinterpreter_objects gcinfo)
 endif()
 
 if(NOT CLR_CMAKE_HOST_ARCH_WASM)
