@@ -1581,14 +1581,12 @@ struct JIT_LOAD_DATA
                                         //   Otherwise, this will be S_OK (which is zero).
 };
 
-#ifdef FEATURE_STATICALLY_LINKED
+#if !defined(FEATURE_JIT) && defined(FEATURE_INTERPRETER)
 
 EXTERN_C void jitStartup(ICorJitHost* host);
 EXTERN_C ICorJitCompiler* getJit();
 
-#endif // FEATURE_STATICALLY_LINKED
-
-#if !defined(FEATURE_STATICALLY_LINKED) || defined(FEATURE_JIT)
+#endif // !FEATURE_JIT && FEATURE_INTERPRETER
 
 #ifdef FEATURE_JIT
 JIT_LOAD_DATA g_JitLoadData;
@@ -1597,6 +1595,8 @@ JIT_LOAD_DATA g_JitLoadData;
 #ifdef FEATURE_INTERPRETER
 JIT_LOAD_DATA g_interpreterLoadData;
 #endif // FEATURE_INTERPRETER
+
+#if !defined(FEATURE_JIT) && defined(FEATURE_INTERPRETER)
 
 CORINFO_OS getClrVmOs();
 
@@ -1767,9 +1767,7 @@ static void LoadAndInitializeJIT(LPCWSTR pwzJitName DEBUGARG(LPCWSTR pwzJitPath)
         LogJITInitializationError("LoadAndInitializeJIT: failed to load %s, hr=0x%08X", utf8JitName, hr);
     }
 }
-#endif // !FEATURE_STATICALLY_LINKED || FEATURE_JIT
 
-#ifdef FEATURE_STATICALLY_LINKED
 static ICorJitCompiler* InitializeStaticJIT()
 {
     ICorJitCompiler* newJitCompiler = NULL;
@@ -1788,8 +1786,7 @@ static ICorJitCompiler* InitializeStaticJIT()
 
     return newJitCompiler;
 }
-#endif // FEATURE_STATICALLY_LINKED
-
+#endif // !FEATURE_JIT && FEATURE_INTERPRETER
 #ifdef FEATURE_JIT
 BOOL EEJitManager::LoadJIT()
 {
@@ -1810,10 +1807,6 @@ BOOL EEJitManager::LoadJIT()
 
     ICorJitCompiler* newJitCompiler = NULL;
 
-#ifdef FEATURE_STATICALLY_LINKED
-    newJitCompiler = InitializeStaticJIT();
-#else // !FEATURE_STATICALLY_LINKED
-
     m_JITCompiler = NULL;
 #if defined(TARGET_X86) || defined(TARGET_AMD64)
     m_JITCompilerOther = NULL;
@@ -1825,7 +1818,6 @@ BOOL EEJitManager::LoadJIT()
     IfFailThrow(CLRConfig::GetConfigValue(CLRConfig::INTERNAL_JitPath, &mainJitPath));
 #endif
     LoadAndInitializeJIT(ExecutionManager::GetJitName() DEBUGARG(mainJitPath), &m_JITCompiler, &newJitCompiler, &g_JitLoadData, getClrVmOs());
-#endif // !FEATURE_STATICALLY_LINKED
 
 #ifdef ALLOW_SXS_JIT
 
@@ -3403,7 +3395,7 @@ TypeHandle InterpreterJitManager::ResolveEHClause(EE_ILEXCEPTION_CLAUSE* pEHClau
             _ASSERTE(!declaringType.IsNull());
 
             SigTypeContext typeContext(pMD, declaringType);
-            
+
             Module* pModule = pMD->GetModule();
 
             thResolved = ClassLoader::LoadTypeDefOrRefOrSpecThrowing(pModule, pEHClause->ClassToken, &typeContext,
@@ -3642,9 +3634,9 @@ BOOL InterpreterJitManager::LoadInterpreter()
 
 // If both JIT and interpret are available, statically link the JIT. Interpreter can be loaded dynamically
 // via config switch for testing purposes.
-#if defined(FEATURE_STATICALLY_LINKED) && !defined(FEATURE_JIT)
+#if !defined(FEATURE_JIT)
     newInterpreter = InitializeStaticJIT();
-#else // FEATURE_STATICALLY_LINKED && !FEATURE_JIT
+#else // !FEATURE_JIT
     g_interpreterLoadData.jld_id = JIT_LOAD_INTERPRETER;
 
     LPWSTR interpreterPath = NULL;
@@ -3652,7 +3644,7 @@ BOOL InterpreterJitManager::LoadInterpreter()
     IfFailThrow(CLRConfig::GetConfigValue(CLRConfig::INTERNAL_InterpreterPath, &interpreterPath));
 #endif
     LoadAndInitializeJIT(ExecutionManager::GetInterpreterName() DEBUGARG(interpreterPath), &m_interpreterHandle, &newInterpreter, &g_interpreterLoadData, getClrVmOs());
-#endif // FEATURE_STATICALLY_LINKED && !FEATURE_JIT
+#endif // !FEATURE_JIT
 
     // Publish the interpreter.
     m_interpreter = newInterpreter;
@@ -5282,7 +5274,7 @@ BOOL ExecutionManager::IsReadyToRunCode(PCODE currentPC)
     return FALSE;
 }
 
-#ifndef FEATURE_STATICALLY_LINKED
+#if defined(FEATURE_JIT) && !defined(FEATURE_INTERPRETER)
 /*********************************************************************/
 // This static method returns the name of the jit dll
 //
@@ -5303,7 +5295,7 @@ LPCWSTR ExecutionManager::GetJitName()
     return pwzJitName;
 }
 
-#endif // !FEATURE_STATICALLY_LINKED
+#endif // FEATURE_JIT && !FEATURE_INTERPRETER
 
 #ifdef FEATURE_INTERPRETER
 
