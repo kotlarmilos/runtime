@@ -1596,8 +1596,6 @@ JIT_LOAD_DATA g_JitLoadData;
 JIT_LOAD_DATA g_interpreterLoadData;
 #endif // FEATURE_INTERPRETER
 
-#if !defined(FEATURE_JIT) && defined(FEATURE_INTERPRETER)
-
 CORINFO_OS getClrVmOs();
 
 #define LogJITInitializationError(...) \
@@ -1768,6 +1766,7 @@ static void LoadAndInitializeJIT(LPCWSTR pwzJitName DEBUGARG(LPCWSTR pwzJitPath)
     }
 }
 
+#if !defined(FEATURE_JIT) && defined(FEATURE_INTERPRETER)
 static ICorJitCompiler* InitializeStaticJIT()
 {
     ICorJitCompiler* newJitCompiler = NULL;

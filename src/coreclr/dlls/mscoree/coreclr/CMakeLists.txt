@@ -186,7 +186,7 @@ if (FEATURE_JIT)
     set(CLRJIT_STATIC clrjit_static)
 elseif (FEATURE_INTERPRETER)
     set(CLRJIT_STATIC clrinterpreter_objects dn-containers)
-endif(FEATURE_INTERPRETER)
+endif(FEATURE_JIT)
 
 if(NOT CLR_CMAKE_HOST_ARCH_WASM)
     set(CEE_WKS_STATIC cee_wks_mergeable)
