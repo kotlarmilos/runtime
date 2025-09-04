@@ -185,7 +185,7 @@ endif(FEATURE_PERFTRACING)
 if (FEATURE_JIT)
     set(CLRJIT_STATIC clrjit_static)
 elseif (FEATURE_INTERPRETER)
-    set(CLRJIT_STATIC clrinterpreter_objects dn-containers)
+    set(CLRJIT_STATIC clrinterpreter_objects dn-containers gcinfo)
 endif(FEATURE_JIT)
 
 if(NOT CLR_CMAKE_HOST_ARCH_WASM)
@@ -199,7 +199,7 @@ if (CLR_CMAKE_TARGET_OSX)
 endif()
 
 if(NOT CLR_CMAKE_HOST_ARCH_WASM)
-    target_link_libraries(coreclr PUBLIC ${CORECLR_LIBRARIES} ${CLRJIT_STATIC} gcinfo cee_wks_core cee_wks ${FOUNDATION})
+    target_link_libraries(coreclr PUBLIC ${CORECLR_LIBRARIES} ${CLRJIT_STATIC} cee_wks_core cee_wks ${FOUNDATION})
 endif(NOT CLR_CMAKE_HOST_ARCH_WASM)
 
 target_link_libraries(coreclr_static PUBLIC ${CORECLR_LIBRARIES}  ${CLRJIT_STATIC} cee_wks_core ${CEE_WKS_STATIC} ${FOUNDATION})
