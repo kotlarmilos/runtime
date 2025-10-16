@@ -320,7 +320,7 @@ MethodDescVersioningState* NativeCodeVersion::GetMethodDescVersioningState()
     CodeVersionManager* pCodeVersionManager = pMethodDesc->GetCodeVersionManager();
     return pCodeVersionManager->GetMethodDescVersioningState(pMethodDesc);
 }
-#endif // !DACCESS_COMPILE
+#endif
 
 bool NativeCodeVersion::IsFinalTier() const
 {
@@ -1737,7 +1737,7 @@ PCODE CodeVersionManager::PublishVersionableCodeIfNecessary(
             break;
         }
 
-        if (!pMethodDesc->ShouldCallPrestub())
+        if (!pMethodDesc->IsPointingToPrestub())
         {
             *doFullBackpatchRef = true;
             return (PCODE)NULL;

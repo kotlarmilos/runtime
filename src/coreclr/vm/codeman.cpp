@@ -3407,7 +3407,7 @@ TypeHandle InterpreterJitManager::ResolveEHClause(EE_ILEXCEPTION_CLAUSE* pEHClau
             _ASSERTE(!declaringType.IsNull());
 
             SigTypeContext typeContext(pMD, declaringType);
-
+            
             Module* pModule = pMD->GetModule();
 
             thResolved = ClassLoader::LoadTypeDefOrRefOrSpecThrowing(pModule, pEHClause->ClassToken, &typeContext,
@@ -5127,7 +5127,7 @@ MethodDesc * ExecutionManager::GetCodeMethodDesc(PCODE currentPC)
     CONTRACTL_END
 
     ExecutionManager::ScanFlag scanFlag = ExecutionManager::GetScanFlags();
-#if defined(FEATURE_INTERPRETER) && !defined(FEATURE_PORTABLE_ENTRYPOINTS)
+#ifdef FEATURE_INTERPRETER
     RangeSection * pRS = ExecutionManager::FindCodeRange(currentPC, scanFlag);
     if (pRS == NULL)
         return NULL;
@@ -5143,7 +5143,7 @@ MethodDesc * ExecutionManager::GetCodeMethodDesc(PCODE currentPC)
             }
         }
     }
-#endif // FEATURE_INTERPRETER && !FEATURE_PORTABLE_ENTRYPOINTS
+#endif // FEATURE_INTERPRETER
 
     EECodeInfo codeInfo(currentPC, scanFlag);
     if (!codeInfo.IsValid())
