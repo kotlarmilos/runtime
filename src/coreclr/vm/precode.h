@@ -633,8 +633,6 @@ private:
 #endif
     }
 
-    BOOL IsPointingToPrestub(PCODE target);
-
 public:
     PrecodeType GetType()
     {
@@ -686,7 +684,7 @@ public:
     // Note: This is immediate target of the precode. It does not follow jump stub if there is one.
     PCODE GetTarget();
 
-    static BOOL IsPointingTo(PCODE target, PCODE addr)
+    BOOL IsPointingTo(PCODE target, PCODE addr)
     {
         WRAPPER_NO_CONTRACT;
         SUPPORTS_DAC;
@@ -714,7 +712,13 @@ public:
         return IsPointingTo(GetTarget(), pNativeCode);
     }
 
-    BOOL IsPointingToPrestub();
+    BOOL IsPointingToPrestub(PCODE target);
+
+    BOOL IsPointingToPrestub()
+    {
+        WRAPPER_NO_CONTRACT;
+        return IsPointingToPrestub(GetTarget());
+    }
 
     PCODE GetEntryPoint()
     {

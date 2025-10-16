@@ -703,7 +703,9 @@ static void CallPreStub(MethodDesc *pMD)
     STATIC_STANDARD_VM_CONTRACT;
     _ASSERTE(pMD != NULL);
 
-    if (!pMD->ShouldCallPrestub())
+    if (!pMD->IsPointingToPrestub() &&
+        pMD->GetTemporaryEntryPoint() && // The prestub may not yet be ready to be used, so force temporary entry point creation, and check again.
+        !pMD->IsPointingToPrestub())
         return;
 
     struct Param
@@ -730,6 +732,8 @@ static void CallPreStub(MethodDesc *pMD)
     }
     PAL_ENDTRY
 }
+
+UMEntryThunkData * GetMostRecentUMEntryThunkData();
 
 void InterpExecMethod(InterpreterFrame *pInterpreterFrame, InterpMethodContextFrame *pFrame, InterpThreadContext *pThreadContext, ExceptionClauseArgs *pExceptionClauseArgs)
 {
@@ -814,16 +818,14 @@ MAIN_LOOP:
                     MemoryBarrier();
                     ip++;
                     break;
-#ifndef FEATURE_PORTABLE_ENTRYPOINTS
                 case INTOP_STORESTUBCONTEXT:
                 {
-                    UMEntryThunkData* thunkData = GetMostRecentUMEntryThunkData();
+                    void *thunkData = GetMostRecentUMEntryThunkData();
                     assert(thunkData);
                     LOCAL_VAR(ip[1], void*) = thunkData;
                     ip += 2;
                     break;
                 }
-#endif // !FEATURE_PORTABLE_ENTRYPOINTS
                 case INTOP_LDC_I4:
                     LOCAL_VAR(ip[1], int32_t) = ip[2];
                     ip += 3;
@@ -2616,10 +2618,10 @@ MAIN_LOOP:
                             break;
                         }
                     }
-
+                    
                     OBJECTREF targetMethodObj = (*delegateObj)->GetTarget();
                     LOCAL_VAR(callArgsOffset, OBJECTREF) = targetMethodObj;
-
+                    
                     if ((targetMethod = NonVirtualEntry2MethodDesc(targetAddress)) != NULL)
                     {
                         // In this case targetMethod holds a pointer to the MethodDesc that will be called by using targetMethodObj as

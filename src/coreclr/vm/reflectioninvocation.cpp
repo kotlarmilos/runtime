@@ -1221,7 +1221,7 @@ extern "C" void QCALLTYPE ReflectionInvocation_CompileMethod(MethodDesc * pMD)
     // Argument is checked on the managed side
     PRECONDITION(pMD != NULL);
 
-    if (!pMD->ShouldCallPrestub())
+    if (!pMD->IsPointingToPrestub())
         return;
 
     BEGIN_QCALL;
@@ -1270,13 +1270,13 @@ static void PrepareMethodHelper(MethodDesc * pMD)
 
     pMD->EnsureActive();
 
-    if (pMD->ShouldCallPrestub())
+    if (pMD->IsPointingToPrestub())
         pMD->DoPrestub(NULL);
 
     if (pMD->IsWrapperStub())
     {
         pMD = pMD->GetWrappedMethodDesc();
-        if (pMD->ShouldCallPrestub())
+        if (pMD->IsPointingToPrestub())
             pMD->DoPrestub(NULL);
     }
 }

@@ -64,12 +64,9 @@ InteropSyncBlockInfo::~InteropSyncBlockInfo()
     }
     CONTRACTL_END;
 
-#ifndef FEATURE_PORTABLE_ENTRYPOINTS
     FreeUMEntryThunk();
-#endif // !FEATURE_PORTABLE_ENTRYPOINTS
 }
 
-#ifndef FEATURE_PORTABLE_ENTRYPOINTS
 void InteropSyncBlockInfo::FreeUMEntryThunk()
 {
     CONTRACTL
@@ -88,7 +85,6 @@ void InteropSyncBlockInfo::FreeUMEntryThunk()
         m_pUMEntryThunk = NULL;
     }
 }
-#endif // !FEATURE_PORTABLE_ENTRYPOINTS
 
 #ifdef FEATURE_COMINTEROP
 // Returns either NULL or an RCW on which AcquireLock has been called.
