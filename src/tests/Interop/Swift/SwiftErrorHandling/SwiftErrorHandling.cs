@@ -73,6 +73,7 @@ public class ErrorHandlingTests
 
         // This will throw an error
         conditionallyThrowError(1, ref error);
+        Console.WriteLine($"Swift error: 0x{(long)error.Value:X}");
         Assert.True(error.Value != null, "A Swift error was expected to be thrown.");
 
         string errorMessage = GetErrorMessageFromSwift(error);

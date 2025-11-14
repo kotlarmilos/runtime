@@ -1295,6 +1295,13 @@ ALTERNATE_ENTRY Store_X7
     EPILOG_BRANCH_REG x11
 LEAF_END Store_X1_X2_X3_X4_X5_X6_X7
 
+// Store routine for Swift self parameter passed in X20
+LEAF_ENTRY Store_X20
+    str x20, [x9], #8
+    ldr x11, [x10], #8
+    EPILOG_BRANCH_REG x11
+LEAF_END Store_X20
+
 // Floating point stores for S registers using stp wherever possible
 // Due to the need to alignment, we need to add interpreter stack slot size alignment
 // to stores of odd numbers of registers
@@ -1927,6 +1934,20 @@ ALTERNATE_ENTRY Load_X7
     EPILOG_BRANCH_REG x11
 LEAF_END Load_X1_X2_X3_X4_X5_X6_X7
 
+// Routine for Swift self parameter passed in X20
+LEAF_ENTRY Load_X20
+    ldr x20, [x9], #8
+    ldr x11, [x10], #8
+    EPILOG_BRANCH_REG x11
+LEAF_END Load_X20
+
+LEAF_ENTRY Load_SwiftError
+    ldr x12, [x10], #8              // Load Swift error argument offset
+    str x12, [fp, #24]              // Save Swift error offset to stack
+    ldr x11, [x10], #8
+    EPILOG_BRANCH_REG x11
+LEAF_END Load_SwiftError
+
 // Routines for passing arguments in floating point registers S0..S7
 // Due to the need to alignment, we need to add interpreter stack slot size alignment
 // to stores of odd numbers of registers
@@ -2346,6 +2367,31 @@ NESTED_ENTRY CallJittedMethodRetI8, _TEXT, NoHandler
     EPILOG_RESTORE_REG_PAIR_INDEXED fp, lr, 32
     EPILOG_RETURN
 NESTED_END CallJittedMethodRetI8, _TEXT
+
+// X0 - routines array
+// X1 - interpreter stack args location
+// X2 - interpreter stack return value location
+// X3 - stack arguments size (properly aligned)
+NESTED_ENTRY CallJittedMethodRetSwiftErrorI8, _TEXT, NoHandler
+    PROLOG_SAVE_REG_PAIR_INDEXED fp, lr, -48
+    str x2, [fp, #16]
+    sub sp, sp, x3
+    mov x10, x0
+    mov x9, x1
+    str x1, [fp, #32]               // Save original args location (x1) to stack
+    ldr x11, [x10], #8              // Load function pointer
+    blr x11
+    ldr x12, [fp, #24]              // Restore Swift error offset from stack
+    ldr x11, [fp, #32]              // Restore original args location from stack
+    add x11, x11, x12               // Calculate pArgs + offset (using saved offset)
+    ldr x11, [x11]                  // Load the pointer from the byref parameter location
+    str x21, [x11]                  // Store Swift error (x21) to the address pointed to by the pointer
+    ldr x2, [fp, #16]
+    str x0, [x2]
+    EPILOG_STACK_RESTORE
+    EPILOG_RESTORE_REG_PAIR_INDEXED fp, lr, 48
+    EPILOG_RETURN
+NESTED_END CallJittedMethodRetSwiftErrorI8, _TEXT
 
 // X0 - routines array
 // X1 - interpreter stack args location

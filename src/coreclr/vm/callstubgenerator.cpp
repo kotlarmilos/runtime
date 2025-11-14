@@ -5,6 +5,7 @@
 
 #include "callstubgenerator.h"
 #include "ecall.h"
+#include "dllimport.h"
 
 extern "C" void InjectInterpStackAlign();
 extern "C" void Load_Stack();
@@ -607,6 +608,11 @@ extern "C" void Store_Ref_X4();
 extern "C" void Store_Ref_X5();
 extern "C" void Store_Ref_X6();
 extern "C" void Store_Ref_X7();
+
+// Swift self parameter functions for X20
+extern "C" void Load_X20();
+extern "C" void Store_X20();
+extern "C" void Load_SwiftError();
 
 PCODE GPRegsRoutines[] =
 {
@@ -1966,11 +1972,28 @@ PCODE CallStubGenerator::GetFPReg32RangeRoutine(int x1, int x2)
     int index = x1 * NUM_FLOAT_ARGUMENT_REGISTERS + x2;
     return m_interpreterToNative ? FPRegs32LoadRoutines[index] : FPRegs32StoreRoutines[index];
 }
+
+PCODE CallStubGenerator::GetSwiftSelfRoutine()
+{
+#if LOG_COMPUTE_CALL_STUB
+    printf("GetSwiftSelfRoutine\n");
+#endif
+    return m_interpreterToNative ? (PCODE)Load_X20 : (PCODE)Store_X20;
+}
+
+PCODE CallStubGenerator::GetSwiftErrorRoutine()
+{
+#if LOG_COMPUTE_CALL_STUB
+    printf("GetSwiftErrorRoutine\n");
+#endif
+    return (PCODE)Load_SwiftError;
+}
 #endif // TARGET_ARM64
 
 extern "C" void CallJittedMethodRetVoid(PCODE *routines, int8_t*pArgs, int8_t*pRet, int totalStackSize);
 extern "C" void CallJittedMethodRetDouble(PCODE *routines, int8_t*pArgs, int8_t*pRet, int totalStackSize);
 extern "C" void CallJittedMethodRetI8(PCODE *routines, int8_t*pArgs, int8_t*pRet, int totalStackSize);
+extern "C" void CallJittedMethodRetSwiftErrorI8(PCODE *routines, int8_t*pArgs, int8_t*pRet, int totalStackSize);
 extern "C" void InterpreterStubRetVoid();
 extern "C" void InterpreterStubRetDouble();
 extern "C" void InterpreterStubRetI8();
@@ -2048,7 +2071,7 @@ extern "C" void InterpreterStubRetIntFloat();
 #define INVOKE_FUNCTION_PTR(functionPtrName) return functionPtrName
 #endif
 
-CallStubHeader::InvokeFunctionPtr CallStubGenerator::GetInvokeFunctionPtr(CallStubGenerator::ReturnType returnType)
+CallStubHeader::InvokeFunctionPtr CallStubGenerator::GetInvokeFunctionPtr(CallStubGenerator::ReturnType returnType, bool hasSwiftError = false)
 {
     STANDARD_VM_CONTRACT;
 
@@ -2059,7 +2082,14 @@ CallStubHeader::InvokeFunctionPtr CallStubGenerator::GetInvokeFunctionPtr(CallSt
         case ReturnTypeDouble:
             INVOKE_FUNCTION_PTR(CallJittedMethodRetDouble);
         case ReturnTypeI8:
-            INVOKE_FUNCTION_PTR(CallJittedMethodRetI8);
+            if (hasSwiftError)
+            {
+                INVOKE_FUNCTION_PTR(CallJittedMethodRetSwiftErrorI8);
+            }
+            else
+            {
+                INVOKE_FUNCTION_PTR(CallJittedMethodRetI8);
+            }
 #if defined(TARGET_WINDOWS) && defined(TARGET_AMD64)
         case ReturnTypeBuffArg1:
             INVOKE_FUNCTION_PTR(CallJittedMethodRetBuffRCX);
@@ -2245,7 +2275,7 @@ CallStubHeader *CallStubGenerator::GenerateCallStub(MethodDesc *pMD, AllocMemTra
     PCODE *pRoutines = (PCODE*)alloca(tempStorageSize);
     memset(pRoutines, 0, tempStorageSize);
 
-    ComputeCallStub(sig, pRoutines);
+    ComputeCallStub(sig, pRoutines, pMD);
 
     LoaderAllocator *pLoaderAllocator = pMD->GetLoaderAllocator();
     S_SIZE_T finalStubSize(sizeof(CallStubHeader) + m_routineIndex * sizeof(PCODE));
@@ -2425,7 +2455,7 @@ void CallStubGenerator::TerminateCurrentRoutineIfNotOfNewType(RoutineType type, 
     return;
 }
 
-void CallStubGenerator::ComputeCallStub(MetaSig &sig, PCODE *pRoutines)
+void CallStubGenerator::ComputeCallStub(MetaSig &sig, PCODE *pRoutines, MethodDesc *pMD)
 {
     ArgIterator argIt(&sig);
     int32_t interpreterStackOffset = 0;
@@ -2439,10 +2469,25 @@ void CallStubGenerator::ComputeCallStub(MetaSig &sig, PCODE *pRoutines)
     m_s2 = 0;
     m_routineIndex = 0;
     m_totalStackSize = argIt.SizeOfArgStack();
+    m_swiftErrorArgLocationOffset = 0;
 #if LOG_COMPUTE_CALL_STUB
     printf("ComputeCallStub\n");
 #endif
     int numArgs = sig.NumFixedArgs() + (sig.HasThis() ? 1 : 0);
+
+    // Check if this method uses Swift calling convention
+    bool isSwiftMethod = false;
+    bool hasSwiftErrorParam = false;
+    if (pMD != NULL && pMD->IsPInvoke())
+    {
+        CorInfoCallConvExtension callConv;
+        PInvoke::GetCallingConvention_IgnoreErrors(pMD, &callConv, NULL);
+        isSwiftMethod = (callConv == CorInfoCallConvExtension::Swift);
+#if LOG_COMPUTE_CALL_STUB
+        if (isSwiftMethod)
+            printf("Swift calling convention detected\n");
+#endif
+    }
 
     if (argIt.HasThis())
     {
@@ -2483,7 +2528,8 @@ void CallStubGenerator::ComputeCallStub(MetaSig &sig, PCODE *pRoutines)
 
         // Each entry on the interpreter stack is always aligned to at least 8 bytes, but some arguments are 16 byte aligned
         TypeHandle thArgTypeHandle;
-        if ((argIt.GetArgType(&thArgTypeHandle) == ELEMENT_TYPE_VALUETYPE) && thArgTypeHandle.GetSize() > 8)
+        CorElementType elementType = argIt.GetArgType(&thArgTypeHandle);
+        if ((elementType == ELEMENT_TYPE_VALUETYPE) && !thArgTypeHandle.IsNull() && thArgTypeHandle.GetSize() > 8)
         {
             unsigned align = CEEInfo::getClassAlignmentRequirementStatic(thArgTypeHandle);
             if (align < INTERP_STACK_SLOT_SIZE)
@@ -2510,6 +2556,9 @@ void CallStubGenerator::ComputeCallStub(MetaSig &sig, PCODE *pRoutines)
 
             interpStackSlotSize = ALIGN_UP(thArgTypeHandle.GetSize(), align);
         }
+
+        // Store the current interpreter stack offset before incrementing for Swift error detection
+        int currentArgOffset = interpreterStackOffset;
         interpreterStackOffset += interpStackSlotSize;
 
 #ifdef UNIX_AMD64_ABI
@@ -2570,7 +2619,68 @@ void CallStubGenerator::ComputeCallStub(MetaSig &sig, PCODE *pRoutines)
         else
 #endif // UNIX_AMD64_ABI
         {
-            ProcessArgument(&argIt, argLocDesc, pRoutines);
+            // Check if this argument is SwiftSelf or SwiftError for Swift calling convention
+            bool isSwiftSelfArg = false;
+            if (isSwiftMethod)
+            {
+                if (elementType == ELEMENT_TYPE_VALUETYPE && !thArgTypeHandle.IsNull())
+                {
+                    // Check for SwiftSelf (passed by value)
+                    MethodTable* pMT = thArgTypeHandle.AsMethodTable();
+                    if (pMT != NULL)
+                    {
+                        LPCUTF8 className, namespaceName;
+                        if (SUCCEEDED(pMT->GetMDImport()->GetNameOfTypeDef(pMT->GetCl(), &className, &namespaceName)))
+                        {
+                            if ((strcmp(className, "SwiftSelf") == 0 || strncmp(className, "SwiftSelf`1", 11) == 0) &&
+                                (strcmp(namespaceName, "System.Runtime.InteropServices.Swift") == 0))
+                            {
+                                isSwiftSelfArg = true;
+#if LOG_COMPUTE_CALL_STUB
+                                printf("SwiftSelf parameter detected\n");
+#endif
+                            }
+                        }
+                    }
+                }
+                else if (elementType == ELEMENT_TYPE_BYREF)
+                {
+                    // Check for SwiftError (passed by reference)
+                    // For BYREF parameters, we need to get the underlying type using the MetaSig
+                    TypeHandle elemTypeHandle;
+                    MetaSig* pSig = argIt.GetSig();
+                    CorElementType underlyingType = pSig->GetByRefType(&elemTypeHandle);
+
+                    if (!elemTypeHandle.IsNull())
+                    {
+                        MethodTable* pMT = elemTypeHandle.AsMethodTable();
+                        if (pMT != NULL)
+                        {
+                            LPCUTF8 className, namespaceName;
+                            if (SUCCEEDED(pMT->GetMDImport()->GetNameOfTypeDef(pMT->GetCl(), &className, &namespaceName)))
+                            {
+                                if (strcmp(className, "SwiftError") == 0 && strcmp(namespaceName, "System.Runtime.InteropServices.Swift") == 0)
+                                {
+                                    hasSwiftErrorParam = true;
+                                    m_swiftErrorArgLocationOffset = currentArgOffset;
+#if LOG_COMPUTE_CALL_STUB
+                                    printf("SwiftError parameter detected at stack offset %d (will be handled post-call)\n", interpreterStackOffset);
+#endif
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (isSwiftSelfArg)
+            {
+                pRoutines[m_routineIndex++] = GetSwiftSelfRoutine();
+            }
+            else
+            {
+                ProcessArgument(&argIt, argLocDesc, pRoutines);
+            }
         }
     }
 
@@ -2582,7 +2692,16 @@ void CallStubGenerator::ComputeCallStub(MetaSig &sig, PCODE *pRoutines)
 
     if (m_interpreterToNative)
     {
-        m_pInvokeFunction = GetInvokeFunctionPtr(returnType);
+        m_pInvokeFunction = GetInvokeFunctionPtr(returnType, hasSwiftErrorParam);
+        if (hasSwiftErrorParam)
+        {
+            pRoutines[m_routineIndex++] = GetSwiftErrorRoutine();
+            pRoutines[m_routineIndex++] = (PCODE)m_swiftErrorArgLocationOffset;
+#if LOG_COMPUTE_CALL_STUB
+            printf("Stored Swift error argument offset: %d\n", m_swiftErrorArgLocationOffset);
+#endif
+        }
+
         m_routineIndex++; // Reserve one extra slot for the target method pointer
     }
     else
@@ -2623,7 +2742,7 @@ void CallStubGenerator::ProcessArgument(ArgIterator *pArgIt, ArgLocDesc& argLocD
     {
         argType = RoutineType::Stack;
     }
-    
+
     TerminateCurrentRoutineIfNotOfNewType(argType, pRoutines);
 
     if (argLocDesc.m_cGenReg != 0)
@@ -2694,7 +2813,7 @@ void CallStubGenerator::ProcessArgument(ArgIterator *pArgIt, ArgLocDesc& argLocD
         {
             // HFA Arguments using odd number of 32 bit FP registers cannot be merged with further ranges due to the
             // interpreter stack slot size alignment needs. The range copy routines for these registers
-            // ensure that the interpreter stack is properly aligned after the odd number of registers are 
+            // ensure that the interpreter stack is properly aligned after the odd number of registers are
             // loaded / stored.
             pRoutines[m_routineIndex++] = GetFPReg32RangeRoutine(m_x1, m_x2);
             argType = RoutineType::None;

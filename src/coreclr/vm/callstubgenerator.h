@@ -116,6 +116,7 @@ class CallStubGenerator
 #ifdef TARGET_ARM64
         FPReg32,
         FPReg128,
+        SwiftSelf,
 #endif
         Stack
     };
@@ -141,6 +142,7 @@ class CallStubGenerator
 
     CallStubHeader::InvokeFunctionPtr m_pInvokeFunction = NULL;
     bool m_interpreterToNative = false;
+    int m_swiftErrorArgLocationOffset = 0;
 
 #ifndef UNIX_AMD64_ABI
     PCODE GetGPRegRefRoutine(int r);
@@ -156,10 +158,12 @@ class CallStubGenerator
 #ifdef TARGET_ARM64
     PCODE GetFPReg128RangeRoutine(int x1, int x2);
     PCODE GetFPReg32RangeRoutine(int x1, int x2);
-#endif    
+    PCODE GetSwiftSelfRoutine();
+    PCODE GetSwiftErrorRoutine();
+#endif
     PCODE GetGPRegRangeRoutine(int r1, int r2);
     ReturnType GetReturnType(ArgIterator *pArgIt);
-    CallStubHeader::InvokeFunctionPtr GetInvokeFunctionPtr(ReturnType returnType);
+    CallStubHeader::InvokeFunctionPtr GetInvokeFunctionPtr(ReturnType returnType, bool hasSwiftError);
     PCODE GetInterpreterReturnTypeHandler(ReturnType returnType);
 
     // Process the argument described by argLocDesc. This function is called for each argument in the method signature.
@@ -178,7 +182,7 @@ private:
         // The size of the routines array is three times the number of arguments plus one slot for the target method pointer.
         return sizeof(CallStubHeader) + ((numArgs + 1) * 3 + 1) * sizeof(PCODE);
     }
-    void ComputeCallStub(MetaSig &sig, PCODE *pRoutines);
+    void ComputeCallStub(MetaSig &sig, PCODE *pRoutines, MethodDesc *pMD = NULL);
 
     void TerminateCurrentRoutineIfNotOfNewType(RoutineType type, PCODE *pRoutines);
 };
