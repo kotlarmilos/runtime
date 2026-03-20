@@ -129,6 +129,23 @@ void DebuggerJitInfo::InitFuncletAddress()
     }
     CONTRACTL_END;
 
+#ifdef FEATURE_INTERPRETER
+    // Interpreter methods have no native funclets; skip GetFuncletStartOffsets to avoid NULL m_pJM crash.
+    if (m_addrOfCode == 0)
+    {
+        m_funcletCount = 0;
+        return;
+    }
+    {
+        EECodeInfo codeInfo((PCODE)m_addrOfCode);
+        if (!codeInfo.IsValid())
+        {
+            m_funcletCount = 0;
+            return;
+        }
+    }
+#endif // FEATURE_INTERPRETER
+
     m_funcletCount = (int)g_pEEInterface->GetFuncletStartOffsets((const BYTE*)m_addrOfCode, NULL, 0);
 
     if (m_funcletCount == 0)

@@ -15558,12 +15558,21 @@ DebuggerHeapExecutableMemoryPage* DebuggerHeapExecutableMemoryAllocator::AddNewP
 {
     void* newPageAddr = VirtualAlloc(NULL, sizeof(DebuggerHeapExecutableMemoryPage), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 
+    // RWX allocation fails on iOS devices; return NULL so FuncEval fails gracefully.
+    if (newPageAddr == NULL)
+    {
+        return NULL;
+    }
+
+    // JitWriteProtect toggle only works on simulators (no-op on device via PAL macro).
+    PAL_JitWriteProtect(true);
     DebuggerHeapExecutableMemoryPage *newPage = new (newPageAddr) DebuggerHeapExecutableMemoryPage;
     CrstHolder execMemAllocCrstHolder(&m_execMemAllocMutex);
     newPage->SetNextPage(m_pages);
 
     // Add the new page to the linked list of pages
     m_pages = newPage;
+    PAL_JitWriteProtect(false);
     return newPage;
 }
 
@@ -15608,7 +15617,9 @@ void* DebuggerHeapExecutableMemoryAllocator::GetPointerToChunkWithUsageUpdate(De
     CrstHolder execMemAllocCrstHolder(&m_execMemAllocMutex);
     uint64_t prevOccupancy = page->GetPageOccupancy();
     uint64_t newOccupancy = (action == ChangePageUsageAction::ALLOCATE) ? (prevOccupancy | mask) : (prevOccupancy ^ mask);
+    PAL_JitWriteProtect(true);
     page->SetPageOccupancy(newOccupancy);
+    PAL_JitWriteProtect(false);
 
     return page->GetPointerToChunk(chunkNumber);
 }
