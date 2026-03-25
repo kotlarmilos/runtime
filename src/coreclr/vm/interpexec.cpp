@@ -16,6 +16,10 @@
 #include <limits>
 #include <functional>
 
+#ifdef HOST_APPLE
+#include <os/log.h>
+#endif
+
 struct InterpDispatchCacheEntry
 {
     // MethodTable of the calling object
@@ -1257,14 +1261,21 @@ SWITCH_OPCODE:
                 case INTOP_BREAKPOINT:
                 {
                     LOG((LF_CORDB, LL_INFO10000, "InterpExecMethod: Hit breakpoint at IP %p\n", ip));
+#ifdef HOST_APPLE
+                    os_log(OS_LOG_DEFAULT, "INTERP_DBG: Hit INTOP_BREAKPOINT at ip=%p method=%s",
+                        ip, pMethod ? pMethod->methodHnd->GetName() : "unknown");
+#endif
                     InterpBreakpoint(ip, pFrame, stack, pInterpreterFrame);
 
                     int32_t bypassOpcode = 0;
-                    
+
                     // After debugger callback, check if bypass was set on the thread context
                     if (pThreadContext->HasBypass(ip, &bypassOpcode))
                     {
                         LOG((LF_CORDB, LL_INFO10000, "InterpExecMethod: Post-callback bypass at IP %p with opcode 0x%x\n", ip, bypassOpcode));
+#ifdef HOST_APPLE
+                        os_log(OS_LOG_DEFAULT, "INTERP_DBG: Bypass SET at ip=%p opcode=0x%x", ip, bypassOpcode);
+#endif
                         pThreadContext->ClearBypass();
                         opcode = bypassOpcode;
                         goto SWITCH_OPCODE;
@@ -1272,6 +1283,9 @@ SWITCH_OPCODE:
 
                     // No bypass
                     LOG((LF_CORDB, LL_INFO10000, "InterpExecMethod: No bypass after callback at IP %p - staying on breakpoint\n", ip));
+#ifdef HOST_APPLE
+                    os_log(OS_LOG_DEFAULT, "INTERP_DBG: Bypass NOT SET at ip=%p opcode=0x%x", ip, bypassOpcode);
+#endif
                     break;
                 }
                 case INTOP_DEBUG_METHOD_ENTER:

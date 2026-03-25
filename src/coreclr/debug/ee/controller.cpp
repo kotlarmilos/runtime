@@ -19,6 +19,10 @@
 #include "../../vm/methoditer.h"
 #include "../../vm/tailcallhelp.h"
 
+#ifdef HOST_APPLE
+#include <os/log.h>
+#endif
+
 const char *GetTType( TraceType tt);
 
 #define IsSingleStep(exception) ((exception) == EXCEPTION_SINGLE_STEP)
@@ -2784,6 +2788,9 @@ DebuggerPatchSkip *DebuggerController::ActivatePatchSkip(Thread *thread,
 
             pExecControl->BypassPatch(patch, thread);
             LOG((LF_CORDB,LL_INFO10000, "DC::APS: Interpreter patch at PC=0x%p - bypass via ExecutionControl with opcode 0x%x\n", PC, patch->opcode));
+#ifdef HOST_APPLE
+            os_log(OS_LOG_DEFAULT, "INTERP_DBG: ActivatePatchSkip at PC=%p isInterpreted=%d patchFound=%d", (void*)PC, (int)codeInfo.IsInterpretedCode(), patch != NULL);
+#endif
             return NULL;
         }
 #endif // FEATURE_INTERPRETER

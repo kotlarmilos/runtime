@@ -17,6 +17,10 @@
 #include "../../vm/interpexec.h"
 #endif
 
+#ifdef HOST_APPLE
+#include <os/log.h>
+#endif
+
 #if !defined(DACCESS_COMPILE)
 #ifdef FEATURE_INTERPRETER
 
@@ -54,6 +58,9 @@ bool InterpreterExecutionControl::ApplyPatch(DebuggerControllerPatch* patch)
     *(uint32_t*)patch->address = INTOP_BREAKPOINT;
     LOG((LF_CORDB, LL_INFO10000, "InterpreterEC::ApplyPatch Breakpoint inserted at %p, saved opcode 0x%x\n",
         patch->address, patch->opcode));
+#ifdef HOST_APPLE
+    os_log(OS_LOG_DEFAULT, "INTERP_DBG: ApplyPatch at addr=%p savedOpcode=0x%x", (void*)patch->address, currentOpcode);
+#endif
 
     return true;
 }
@@ -68,6 +75,9 @@ bool InterpreterExecutionControl::UnapplyPatch(DebuggerControllerPatch* patch)
         patch, patch->address, patch->opcode));
 
     // Restore the original opcode
+#ifdef HOST_APPLE
+    os_log(OS_LOG_DEFAULT, "INTERP_DBG: UnapplyPatch at addr=%p restoringOpcode=0x%x", (void*)patch->address, (unsigned)patch->opcode);
+#endif
     *(uint32_t*)patch->address = (uint32_t)patch->opcode; // Opcodes are stored in uint32_t slots
     InitializePRD(&(patch->opcode));
     patch->m_interpActivated = false; // Clear activation flag
@@ -90,6 +100,9 @@ void InterpreterExecutionControl::BypassPatch(DebuggerControllerPatch* patch, Th
 
     LOG((LF_CORDB, LL_INFO10000, "InterpreterEC::BypassPatch at %p, opcode 0x%x\n",
         patch->address, patch->opcode));
+#ifdef HOST_APPLE
+    os_log(OS_LOG_DEFAULT, "INTERP_DBG: BypassPatch at addr=%p opcode=0x%x thread=%p", (void*)patch->address, (unsigned)patch->opcode, (void*)pThread);
+#endif
 }
 
 #endif // FEATURE_INTERPRETER

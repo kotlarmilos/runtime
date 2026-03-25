@@ -18,6 +18,10 @@
 
 #include "exinfo.h"
 
+#ifdef HOST_APPLE
+#include <os/log.h>
+#endif
+
 // Get a frame pointer from a RegDisplay.
 // This is mostly used for chains and stub frames (i.e. internal frames), where we don't need an exact
 // frame pointer.  This is why it is okay to use the current SP instead of the caller SP on IA64.
@@ -1706,6 +1710,13 @@ StackWalkAction DebuggerWalkStackProc(CrawlFrame *pCF, void *data)
             // Avoid treating interpreter frame as a managed frame
             else if (frame->GetFrameIdentifier() == FrameIdentifier::InterpreterFrame)
             {
+#ifdef HOST_APPLE
+                if (md != NULL)
+                {
+                    os_log(OS_LOG_DEFAULT, "INTERP_DBG: WalkStack frame md=%p ip=%p method=%s",
+                        (void*)md, (void*)GetControlPC(pCF->GetRegisterSet()), md->GetName());
+                }
+#endif
                 use = false;
             }
 #endif // FEATURE_INTERPRETER
