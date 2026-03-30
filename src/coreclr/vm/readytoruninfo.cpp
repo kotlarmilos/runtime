@@ -631,7 +631,6 @@ PTR_ReadyToRunInfo ReadyToRunInfo::Initialize(Module * pModule, AllocMemTracker 
     {
         DoLog("Ready to Run load failed - stripped IL bodies are not supported with dynamic code compilation");
         COMPlusThrowHR(COR_E_BADIMAGEFORMAT);
-        return NULL;
     }
 
     if ((pHeader->CoreHeader.Flags & (READYTORUN_FLAG_STRIPPED_INLINING_INFO | READYTORUN_FLAG_STRIPPED_DEBUG_INFO)) != 0)
