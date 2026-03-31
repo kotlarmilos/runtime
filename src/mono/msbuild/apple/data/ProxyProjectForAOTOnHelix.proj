@@ -30,6 +30,16 @@
     <CustomNativeMain>true</CustomNativeMain>
     <NativeCompilationDuringPublish>false</NativeCompilationDuringPublish>
   </PropertyGroup>
+
+  <!-- For NativeAOT library tests, match the desktop NativeAOT test settings from
+       eng/testing/tests.singlefile.targets. Without TrimMode=partial the linker
+       aggressively trims test assemblies and framework code that xunit needs for
+       reflection-based test discovery and parameter conversion. -->
+  <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IncludesTestRunner)' == 'true'">
+    <TrimMode>partial</TrimMode>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+  </PropertyGroup>
   <!-- In library mode we depend on NativeAOT publish integration targets -->
   <PropertyGroup Condition="'$(_UseNativeAOTLibraryModeBundling)' == 'true'">
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
@@ -112,12 +122,17 @@
       <!-- Root the test assembly so all test types are preserved through trimming -->
       <TrimmerRootAssembly Include="$(AssemblyName)" />
       <TrimmerRootAssembly Include="AppleTestRunner" />
+      <TrimmerRootAssembly Include="TestUtilities" />
 
       <!-- Root xunit framework assemblies required for reflection-based test discovery -->
       <TrimmerRootAssembly Include="xunit.execution.dotnet" />
       <TrimmerRootAssembly Include="xunit.core" />
       <TrimmerRootAssembly Include="xunit.runner.utility.netcoreapp10" />
       <TrimmerRootAssembly Include="Microsoft.DotNet.XUnitExtensions" />
+
+      <!-- default.rd.xml provides generic instantiations (e.g., Enumerable.Cast<char>)
+           that xunit needs at runtime for InlineData parameter conversion -->
+      <RdXmlFile Include="$(OriginalPublishDir)default.rd.xml" Condition="Exists('$(OriginalPublishDir)default.rd.xml')" />
     </ItemGroup>
   </Target>
 

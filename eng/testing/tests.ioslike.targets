@@ -76,6 +76,10 @@
       <BundleFiles Include="$(RuntimeConfigFilePath)"           TargetDir="publish" />
 
       <BundleFiles Include="$(MonoProjectRoot)\msbuild\apple\data\*" TargetDir="publish" />
+      <!-- Bundle default.rd.xml for NativeAOT library tests: provides generic instantiations
+           (e.g., Enumerable.Cast<char>/ToArray<char>) required by xunit for parameter conversion -->
+      <BundleFiles Condition="'$(UseNativeAOTRuntime)' == 'true'"
+                   Include="$(MSBuildThisFileDirectory)default.rd.xml" TargetDir="publish" />
       <ExtraFiles Condition="'%(AppleAssembliesToBundle._IsNative)' == 'true'"
                    Include="@(AppleAssembliesToBundle)"          TargetDir="extraFiles\%(AppleAssembliesToBundle.RecursiveDir)" />
     </ItemGroup>
