@@ -3208,20 +3208,29 @@ SWITCH_OPCODE:
                             pThreadContext->pStackPointer = stack + pMethod->allocaSize;
                             break;
                         }
+                        else if (isOpenVirtual)
+                        {
+                            // For open virtual delegates with compiled target, dispatch through the delegate's
+                            // Invoke method which uses the shuffle thunk to correctly handle argument shifting.
+                            goto CALL_DELEGATE_INVOKE;
+                        }
                     }
 
-                    OBJECTREF targetMethodObj = (*delegateObj)->GetTarget();
-                    LOCAL_VAR(callArgsOffset, OBJECTREF) = targetMethodObj;
-
-                    if ((targetMethod = NonVirtualEntry2MethodDesc(targetAddress)) != NULL)
                     {
-                        // In this case targetMethod holds a pointer to the MethodDesc that will be called by using targetMethodObj as
-                        // the this pointer. This may be the final method (in the case of instance method delegates), or it may be a
-                        // shuffle thunk, or multicast invoke method.
-                        goto CALL_INTERP_METHOD;
+                        OBJECTREF targetMethodObj = (*delegateObj)->GetTarget();
+                        LOCAL_VAR(callArgsOffset, OBJECTREF) = targetMethodObj;
+
+                        if ((targetMethod = NonVirtualEntry2MethodDesc(targetAddress)) != NULL)
+                        {
+                            // In this case targetMethod holds a pointer to the MethodDesc that will be called by using targetMethodObj as
+                            // the this pointer. This may be the final method (in the case of instance method delegates), or it may be a
+                            // shuffle thunk, or multicast invoke method.
+                            goto CALL_INTERP_METHOD;
+                        }
                     }
 
                     // targetMethod holds a pointer to the Invoke method of the delegate, not the final actual target.
+CALL_DELEGATE_INVOKE:
                     targetMethod = (MethodDesc*)pMethod->pDataItems[methodSlot];
                     int8_t* callArgsAddress = LOCAL_VAR_ADDR(callArgsOffset, int8_t);
 
