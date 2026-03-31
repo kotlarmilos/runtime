@@ -619,13 +619,6 @@ PTR_ReadyToRunInfo ReadyToRunInfo::Initialize(Module * pModule, AllocMemTracker 
 
     READYTORUN_HEADER * pHeader = pLayout->GetReadyToRunHeader();
 
-    // Ignore the content if the image major version is higher or lower than the major version currently supported by the runtime
-    if (pHeader->MajorVersion < MINIMUM_READYTORUN_MAJOR_VERSION || pHeader->MajorVersion > READYTORUN_MAJOR_VERSION)
-    {
-        DoLog("Ready to Run disabled - unsupported header version");
-        return NULL;
-    }
-
 #ifdef FEATURE_DYNAMIC_CODE_COMPILED
     if ((pHeader->CoreHeader.Flags & READYTORUN_FLAG_STRIPPED_IL_BODIES) != 0)
     {
@@ -639,6 +632,13 @@ PTR_ReadyToRunInfo ReadyToRunInfo::Initialize(Module * pModule, AllocMemTracker 
         return NULL;
     }
 #endif // FEATURE_DYNAMIC_CODE_COMPILED
+
+    // Ignore the content if the image major version is higher or lower than the major version currently supported by the runtime
+    if (pHeader->MajorVersion < MINIMUM_READYTORUN_MAJOR_VERSION || pHeader->MajorVersion > READYTORUN_MAJOR_VERSION)
+    {
+        DoLog("Ready to Run disabled - unsupported header version");
+        return NULL;
+    }
 
     LoaderHeap *pHeap = pModule->GetLoaderAllocator()->GetHighFrequencyHeap();
 
