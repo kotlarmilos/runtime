@@ -166,6 +166,10 @@
     <Compile Include="System\UnitTesting\RetryMode.cs" />
     <Compile Include="System\UnitTesting\TestServices.cs" />
   </ItemGroup>
+  <ItemGroup Condition="'$(EnableAggressiveTrimming)' == 'true' and '$(TargetsAppleMobile)' == 'true' and '$(UseNativeAOTRuntime)' != 'true'">
+    <TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
+    <TrimmerRootAssembly Include="mscorlib" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="System.ComponentModel.Composition.Noop.Assembly/System.ComponentModel.Composition.Noop.Assembly.csproj"
                       ReferenceOutputAssembly="false"

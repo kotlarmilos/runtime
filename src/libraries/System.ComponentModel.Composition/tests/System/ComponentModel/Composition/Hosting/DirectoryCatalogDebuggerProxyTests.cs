@@ -23,6 +23,7 @@ namespace System.ComponentModel.Composition.Primitives
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/124344", TestPlatforms.iOS | TestPlatforms.tvOS | TestPlatforms.MacCatalyst)]
         public void Constructor_ValueAsCatalogArgument_ShouldSetPartsProperty()
         {
             var expectations = Expectations.GetAssemblies();

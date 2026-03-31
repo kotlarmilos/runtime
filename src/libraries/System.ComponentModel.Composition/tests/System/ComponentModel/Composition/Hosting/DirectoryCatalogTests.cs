@@ -339,6 +339,7 @@ namespace System.ComponentModel.Composition
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/124344", TestPlatforms.iOS | TestPlatforms.tvOS | TestPlatforms.MacCatalyst)]
         public void LoadedFiles_NonStaticallyReferencedAssembly()
         {
             string testAssembly = "System.ComponentModel.Composition.Noop.Assembly.dll";
