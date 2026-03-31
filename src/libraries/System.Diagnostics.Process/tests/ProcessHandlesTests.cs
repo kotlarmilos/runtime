@@ -9,7 +9,6 @@ using Xunit;
 namespace System.Diagnostics.Tests
 {
     [SkipOnPlatform(TestPlatforms.Android, "sh is not available on Android")]
-    [SkipOnPlatform(TestPlatforms.iOS | TestPlatforms.tvOS | TestPlatforms.MacCatalyst, "Process.Start is not supported on Apple mobile platforms")]
     public class ProcessHandlesTests : ProcessTestBase
     {
         [Theory]

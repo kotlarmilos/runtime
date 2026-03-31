@@ -1809,7 +1809,7 @@ namespace System.IO.Tests
             await ReadWrite_Success(mode, writeSize, startWithFlush);
 
         [Theory]
-        [MemberData(nameof(ReadWrite_Success_MemberData), MemberType = typeof(StreamConformanceTests))]
+        [MemberData(nameof(ReadWrite_Success_MemberData))]
         [SkipOnPlatform(TestPlatforms.LinuxBionic, "SElinux blocks UNIX sockets in our CI environment")]
         [SkipOnPlatform(TestPlatforms.iOS | TestPlatforms.tvOS, "iOS/tvOS blocks binding to UNIX sockets")]
         [ActiveIssue("https://github.com/dotnet/runtime/issues/107981", TestPlatforms.Wasi)]
@@ -2526,7 +2526,7 @@ namespace System.IO.Tests
             await CopyToAsync_AllDataCopied(1024 * 1024, useAsync);
 
         [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsMultithreadingSupported))]
-        [MemberData(nameof(CopyToAsync_AllDataCopied_MemberData), MemberType = typeof(StreamConformanceTests))]
+        [MemberData(nameof(CopyToAsync_AllDataCopied_MemberData))]
         [SkipOnPlatform(TestPlatforms.LinuxBionic, "SElinux blocks UNIX sockets in our CI environment")]
         [SkipOnPlatform(TestPlatforms.iOS | TestPlatforms.tvOS, "iOS/tvOS blocks binding to UNIX sockets")]
         public virtual async Task CopyToAsync_AllDataCopied(int byteCount, bool useAsync)
