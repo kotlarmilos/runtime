@@ -3106,10 +3106,12 @@ SWITCH_OPCODE:
 
                     // Used only for INTOP_CALLDELEGATE to allow removal of the delegate object from the argument list
                     int32_t sizeOfArgsUpto16ByteAlignment = 0;
+                    int32_t targetArgsSize = 0;
                     if (opcode == INTOP_CALLDELEGATE)
                     {
                         sizeOfArgsUpto16ByteAlignment = ip[4];
-                        ip += 5;
+                        targetArgsSize = ip[5];
+                        ip += 6;
                     }
                     else
                     {
@@ -3210,8 +3212,23 @@ SWITCH_OPCODE:
                         }
                         else if (isOpenVirtual)
                         {
-                            callArgsOffset += INTERP_STACK_SLOT_SIZE;
-                            goto CALL_INTERP_METHOD;
+                            pFrame->ip = ip;
+                            if (sizeOfArgsUpto16ByteAlignment != 0)
+                            {
+                                memmove(LOCAL_VAR_ADDR(callArgsOffset, int8_t), LOCAL_VAR_ADDR(callArgsOffset + INTERP_STACK_SLOT_SIZE, int8_t), sizeOfArgsUpto16ByteAlignment);
+                            }
+
+                            if (sizeOfArgsUpto16ByteAlignment != targetArgsSize)
+                            {
+                                size_t firstAlignedTargetArgDstOffset = ALIGN_UP(sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
+                                size_t firstAlignedTargetArgSrcOffset = ALIGN_UP(INTERP_STACK_SLOT_SIZE + sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
+                                memmove(LOCAL_VAR_ADDR(callArgsOffset + firstAlignedTargetArgDstOffset, int8_t), LOCAL_VAR_ADDR(callArgsOffset + firstAlignedTargetArgSrcOffset, int8_t), targetArgsSize - sizeOfArgsUpto16ByteAlignment);
+                            }
+
+                            int8_t* callArgsAddress = LOCAL_VAR_ADDR(callArgsOffset, int8_t);
+                            ManagedMethodParam param = { targetMethod, callArgsAddress, returnValueAddress, (PCODE)NULL, pInterpreterFrame->GetContinuationPtr() };
+                            InvokeManagedMethod(&param);
+                            break;
                         }
                     }
 

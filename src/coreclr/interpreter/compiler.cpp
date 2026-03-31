@@ -5432,19 +5432,34 @@ void InterpCompiler::EmitCall(CORINFO_RESOLVED_TOKEN* pConstrainedToken, bool re
                 else if (opcode == INTOP_CALLDELEGATE)
                 {
                     int32_t sizeOfArgsUpto16ByteAlignment = 0;
+                    int32_t targetArgsSize = 0;
+                    bool found16ByteAligned = false;
                     for (int argIndex = 1; argIndex < numArgs; argIndex++)
                     {
                         int32_t argAlignment = INTERP_STACK_SLOT_SIZE;
                         int32_t size = GetInterpTypeStackSize(m_pVars[callArgs[argIndex]].clsHnd, m_pVars[callArgs[argIndex]].interpType, &argAlignment);
                         size = ALIGN_UP_TO(size, INTERP_STACK_SLOT_SIZE);
-                        if (argAlignment == INTERP_STACK_ALIGNMENT)
+                        if (!found16ByteAligned)
                         {
-                            break;
+                            if (argAlignment == INTERP_STACK_ALIGNMENT)
+                            {
+                                found16ByteAligned = true;
+                            }
+                            else
+                            {
+                                sizeOfArgsUpto16ByteAlignment += size;
+                            }
                         }
-                        sizeOfArgsUpto16ByteAlignment += size;
+                        targetArgsSize = ALIGN_UP_TO(targetArgsSize, argAlignment);
+                        targetArgsSize += size;
+                    }
+                    if (!found16ByteAligned)
+                    {
+                        sizeOfArgsUpto16ByteAlignment = targetArgsSize;
                     }
 
                     m_pLastNewIns->data[1] = sizeOfArgsUpto16ByteAlignment;
+                    m_pLastNewIns->data[2] = targetArgsSize;
                 }
             }
             break;
