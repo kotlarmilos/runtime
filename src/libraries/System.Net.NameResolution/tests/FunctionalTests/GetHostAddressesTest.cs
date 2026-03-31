@@ -285,6 +285,7 @@ namespace System.Net.NameResolution.Tests
         // 3. Different systems configure localhost differently
         // The key requirement is that localhost subdomains return loopback addresses.
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/124344", TestPlatforms.iOS | TestPlatforms.tvOS | TestPlatforms.MacCatalyst)]
         public async Task DnsGetHostAddresses_LocalhostAndSubdomain_BothReturnLoopback()
         {
             IPAddress[] localhostAddresses = Dns.GetHostAddresses("localhost");

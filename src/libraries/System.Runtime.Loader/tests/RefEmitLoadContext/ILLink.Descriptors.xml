@@ -1,3 +1,8 @@
 <linker>
-  <assembly fullname="System.Reflection.Emit" />
+  <assembly fullname="System.Reflection.Emit" preserve="all" />
+  <assembly fullname="System.Private.CoreLib">
+    <type fullname="System.Reflection.Emit.ModuleBuilder" preserve="all" />
+    <type fullname="System.Reflection.Emit.AssemblyBuilder" preserve="all" />
+    <type fullname="System.Reflection.Emit.TypeBuilder" preserve="all" />
+  </assembly>
 </linker>
