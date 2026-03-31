@@ -130,9 +130,9 @@
       <TrimmerRootAssembly Include="xunit.runner.utility.netcoreapp10" />
       <TrimmerRootAssembly Include="Microsoft.DotNet.XUnitExtensions" />
 
-      <!-- default.rd.xml provides generic instantiations (e.g., Enumerable.Cast<char>)
-           that xunit needs at runtime for InlineData parameter conversion -->
-      <RdXmlFile Include="$(OriginalPublishDir)default.rd.xml" Condition="Exists('$(OriginalPublishDir)default.rd.xml')" />
+      <!-- Pick up all rd.xml files: common.rd.xml (shared xunit generic instantiations)
+           and any per-test default.rd.xml (test-specific generic instantiations) -->
+      <RdXmlFile Include="$(OriginalPublishDir)*.rd.xml" />
     </ItemGroup>
   </Target>
 
