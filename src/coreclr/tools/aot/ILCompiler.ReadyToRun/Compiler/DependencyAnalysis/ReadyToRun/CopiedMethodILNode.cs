@@ -55,7 +55,6 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
             }
 
             if (factory.OptimizationFlags.StripILBodies
-                && factory.OptimizationFlags.CompiledMethodDefs is not null
                 && factory.OptimizationFlags.CompiledMethodDefs.Contains(_method)
                 && !_method.HasInstantiation
                 && !_method.OwningType.HasInstantiation)
