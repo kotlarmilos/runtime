@@ -1141,8 +1141,9 @@ extends:
                     eq(variables['isRollingBuild'], true))
 
       #
-      # iOS/tvOS devices - Full AOT + AggressiveTrimming to reduce size
+      # iOSSimulator - Full AOT + AggressiveTrimming to reduce size
       # Build the whole product using Mono and run libraries tests
+      # Tracking issue: https://github.com/dotnet/runtime/issues/125522
       #
       - template: /eng/pipelines/common/platform-matrix.yml
         parameters:
@@ -1151,8 +1152,7 @@ extends:
           buildConfig: Release
           runtimeFlavor: mono
           platforms:
-            - ios_arm64
-            - tvos_arm64
+            - iossimulator_arm64
           variables:
             # map dependencies variables to local variables
             - name: librariesContainsChange
@@ -1164,7 +1164,7 @@ extends:
           jobParameters:
             testGroup: innerloop
             nameSuffix: AllSubsets_Mono_Smoke
-            buildArgs: -s mono+libs+libs.tests+host+packs -c $(_BuildConfig) /p:ArchiveTests=true /p:DevTeamProvisioning=- /p:RunAOTCompilation=true /p:RunSmokeTestsOnly=true /p:BuildTestsOnHelix=true /p:EnableAdditionalTimezoneChecks=true /p:UsePortableRuntimePack=false /p:EnableAggressiveTrimming=true
+            buildArgs: -s mono+libs+libs.tests+host+packs -c $(_BuildConfig) /p:ArchiveTests=true /p:RunAOTCompilation=true /p:RunSmokeTestsOnly=true /p:BuildTestsOnHelix=true /p:EnableAdditionalTimezoneChecks=true /p:EnableAggressiveTrimming=true
             timeoutInMinutes: 120
             condition: >-
               or(
@@ -1188,7 +1188,9 @@ extends:
                     eq(variables['isRollingBuild'], true))
 
       #
+      # iOSSimulator
       # Build the whole product using CoreCLR and run libraries tests
+      # Tracking issue: https://github.com/dotnet/runtime/issues/125522
       #
       - template: /eng/pipelines/common/platform-matrix.yml
         parameters:
@@ -1197,8 +1199,7 @@ extends:
           buildConfig: Release
           runtimeFlavor: coreclr
           platforms:
-            - ios_arm64
-            - tvos_arm64
+            - iossimulator_arm64
           variables:
             # map dependencies variables to local variables
             - name: librariesContainsChange
@@ -1210,7 +1211,7 @@ extends:
           jobParameters:
             testGroup: innerloop
             nameSuffix: AllSubsets_CoreCLR_Smoke
-            buildArgs: -s clr+clr.runtime+libs+packs+libs.tests -c $(_BuildConfig) /p:ArchiveTests=true /p:DevTeamProvisioning=- /p:UseMonoRuntime=false /p:UseNativeAOTRuntime=false /p:RunSmokeTestsOnly=true /p:BuildTestsOnHelix=true /p:UsePortableRuntimePack=false
+            buildArgs: -s clr+clr.runtime+libs+packs+libs.tests -c $(_BuildConfig) /p:ArchiveTests=true /p:UseMonoRuntime=false /p:UseNativeAOTRuntime=false /p:RunSmokeTestsOnly=true /p:BuildTestsOnHelix=true
             timeoutInMinutes: 120
             condition: >-
               or(
@@ -1233,8 +1234,9 @@ extends:
                     eq(variables['isRollingBuild'], true))
 
       #
-      # iOS/tvOS devices
+      # iOSSimulator
       # Build the whole product using Native AOT and run libraries tests
+      # Tracking issue: https://github.com/dotnet/runtime/issues/125522
       #
       - template: /eng/pipelines/common/platform-matrix.yml
         parameters:
@@ -1243,8 +1245,7 @@ extends:
           buildConfig: Release
           runtimeFlavor: coreclr
           platforms:
-            - ios_arm64
-            - tvos_arm64
+            - iossimulator_arm64
           variables:
             # map dependencies variables to local variables
             - name: librariesContainsChange
@@ -1254,7 +1255,7 @@ extends:
           jobParameters:
             testGroup: innerloop
             nameSuffix: AllSubsets_NativeAOT_Smoke
-            buildArgs: --cross -s clr.alljits+clr.tools+clr.nativeaotruntime+clr.nativeaotlibs+libs+libs.tests -c $(_BuildConfig) /p:ArchiveTests=true /p:RunSmokeTestsOnly=true /p:DevTeamProvisioning=- /p:BuildTestsOnHelix=true /p:UseNativeAOTRuntime=true /p:RunAOTCompilation=false /p:ContinuousIntegrationBuild=true
+            buildArgs: --cross -s clr.alljits+clr.tools+clr.nativeaotruntime+clr.nativeaotlibs+libs+libs.tests -c $(_BuildConfig) /p:ArchiveTests=true /p:RunSmokeTestsOnly=true /p:BuildTestsOnHelix=true /p:UseNativeAOTRuntime=true /p:RunAOTCompilation=false /p:ContinuousIntegrationBuild=true
             timeoutInMinutes: 180
             useNativeAOTRuntime: true
             condition: >-
