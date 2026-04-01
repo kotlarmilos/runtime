@@ -3212,7 +3212,6 @@ SWITCH_OPCODE:
                         }
                         else if (isOpenVirtual)
                         {
-                            pFrame->ip = ip;
                             if (sizeOfArgsUpto16ByteAlignment != 0)
                             {
                                 memmove(LOCAL_VAR_ADDR(callArgsOffset, int8_t), LOCAL_VAR_ADDR(callArgsOffset + INTERP_STACK_SLOT_SIZE, int8_t), sizeOfArgsUpto16ByteAlignment);
@@ -3225,10 +3224,7 @@ SWITCH_OPCODE:
                                 memmove(LOCAL_VAR_ADDR(callArgsOffset + firstAlignedTargetArgDstOffset, int8_t), LOCAL_VAR_ADDR(callArgsOffset + firstAlignedTargetArgSrcOffset, int8_t), targetArgsSize - sizeOfArgsUpto16ByteAlignment);
                             }
 
-                            int8_t* callArgsAddress = LOCAL_VAR_ADDR(callArgsOffset, int8_t);
-                            ManagedMethodParam param = { targetMethod, callArgsAddress, returnValueAddress, (PCODE)NULL, pInterpreterFrame->GetContinuationPtr() };
-                            InvokeManagedMethod(&param);
-                            break;
+                            goto CALL_INTERP_METHOD;
                         }
                     }
 
