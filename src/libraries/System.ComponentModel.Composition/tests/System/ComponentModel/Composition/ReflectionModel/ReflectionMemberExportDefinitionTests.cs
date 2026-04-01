@@ -129,6 +129,7 @@ namespace System.ComponentModel.Composition.ReflectionModel
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/124344", TestPlatforms.iOS | TestPlatforms.tvOS | TestPlatforms.MacCatalyst)]
         public void ICompositionElementDisplayName_ValueAsMember_ShouldIncludeMemberDisplayName()
         {
             var members = Expectations.GetMembers();
@@ -144,6 +145,7 @@ namespace System.ComponentModel.Composition.ReflectionModel
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/124344", TestPlatforms.iOS | TestPlatforms.tvOS | TestPlatforms.MacCatalyst)]
         public void ToString_ShouldReturnDisplayName()
         {
             var members = Expectations.GetMembers();
