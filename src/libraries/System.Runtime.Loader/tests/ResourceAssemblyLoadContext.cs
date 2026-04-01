@@ -46,7 +46,10 @@ namespace System.Runtime.Loader.Tests
                     }
                     else if (LoadBy == LoadBy.Stream)
                     {
-                        return LoadFromStream(File.OpenRead(basePath));
+                        using (FileStream stream = File.OpenRead(basePath))
+                        {
+                            return LoadFromStream(stream);
+                        }
                     }
                 }
 
