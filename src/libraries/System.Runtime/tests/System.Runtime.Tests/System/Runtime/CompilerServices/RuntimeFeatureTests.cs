@@ -19,6 +19,7 @@ namespace System.Runtime.CompilerServices.Tests
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/124344", typeof(PlatformDetection), nameof(PlatformDetection.IsAppleMobile), nameof(PlatformDetection.IsCoreCLR))]
         public static void DynamicCode()
         {
             Assert.Equal(RuntimeFeature.IsDynamicCodeSupported, RuntimeFeature.IsSupported("IsDynamicCodeSupported"));
@@ -39,11 +40,6 @@ namespace System.Runtime.CompilerServices.Tests
             if (PlatformDetection.IsNativeAot)
             {
                 Assert.False(RuntimeFeature.IsDynamicCodeSupported);
-                Assert.False(RuntimeFeature.IsDynamicCodeCompiled);
-            }
-            else if (PlatformDetection.IsAppleMobile)
-            {
-                Assert.True(RuntimeFeature.IsDynamicCodeSupported);
                 Assert.False(RuntimeFeature.IsDynamicCodeCompiled);
             }
             else
