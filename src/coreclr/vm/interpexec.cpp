@@ -1133,7 +1133,7 @@ static void ShiftDelegateCallArgs(int8_t* stack, int32_t callArgsOffset, int32_t
     {
         size_t firstAlignedDstOffset = ALIGN_UP(sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
         size_t firstAlignedSrcOffset = ALIGN_UP(INTERP_STACK_SLOT_SIZE + sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
-        memmove(argsBase + firstAlignedDstOffset, argsBase + firstAlignedSrcOffset, totalArgsSize - sizeOfArgsUpto16ByteAlignment);
+        memmove(argsBase + firstAlignedDstOffset, argsBase + firstAlignedSrcOffset, totalArgsSize - firstAlignedDstOffset);
     }
 }
 
@@ -3122,19 +3122,9 @@ SWITCH_OPCODE:
 
                     int8_t* returnValueAddress = LOCAL_VAR_ADDR(returnOffset, int8_t);
 
-                    // Used only for INTOP_CALLDELEGATE to allow removal of the delegate object from the argument list
-                    int32_t sizeOfArgsUpto16ByteAlignment = 0;
-                    int32_t targetArgsSize = 0;
-                    if (opcode == INTOP_CALLDELEGATE)
-                    {
-                        sizeOfArgsUpto16ByteAlignment = ip[4];
-                        targetArgsSize = ip[5];
-                        ip += 6;
-                    }
-                    else
-                    {
-                        ip += 4;
-                    }
+                    int32_t sizeOfArgsUpto16ByteAlignment = ip[4];
+                    int32_t targetArgsSize = ip[5];
+                    ip += 6;
 
                     DELEGATEREF* delegateObj = LOCAL_VAR_ADDR(callArgsOffset, DELEGATEREF);
                     NULL_CHECK(*delegateObj);

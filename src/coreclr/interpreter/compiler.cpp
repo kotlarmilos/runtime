@@ -5429,7 +5429,7 @@ void InterpCompiler::EmitCall(CORINFO_RESOLVED_TOKEN* pConstrainedToken, bool re
                         ((lookup.accessType == IAT_PVALUE) ? (int32_t)PInvokeCallFlags::Indirect : 0) |
                         (suppressGCTransition ? (int32_t)PInvokeCallFlags::SuppressGCTransition : 0);
                 }
-                else if (opcode == INTOP_CALLDELEGATE)
+                else if (opcode == INTOP_CALLDELEGATE || opcode == INTOP_CALLDELEGATE_TAIL)
                 {
                     int32_t sizeOfArgsUpto16ByteAlignment = 0;
                     int32_t targetArgsSize = 0;
