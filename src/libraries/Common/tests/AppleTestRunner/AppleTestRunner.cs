@@ -50,13 +50,7 @@ public class SimpleTestRunner : iOSApplicationEntryPoint, IDevice
             {
                 // NativeAOT: test assemblies are statically linked into the native binary,
                 // so there are no DLL files on disk. Discover them from loaded assemblies.
-                Console.WriteLine("NativeAOT mode: discovering test assemblies from loaded assemblies.");
                 Assembly[] allAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-                Console.WriteLine($"Loaded assemblies ({allAssemblies.Length}):");
-                foreach (Assembly a in allAssemblies)
-                {
-                    Console.WriteLine($"  {a.GetName().Name}");
-                }
 
                 s_testAssemblies = allAssemblies
                     .Where(a => a.GetName().Name?.EndsWith(".Tests") == true)
