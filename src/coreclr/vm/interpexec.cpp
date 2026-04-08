@@ -1119,6 +1119,24 @@ static void DECLSPEC_NORETURN HandleInterpreterStackOverflow(InterpreterFrame* p
     EEPolicy::HandleFatalStackOverflow(&exceptionInfo);
 }
 
+// Shifts delegate call arguments down by one slot to remove the delegate object pointer,
+// preserving 16-byte alignment for V128 arguments.
+static void ShiftDelegateCallArgs(int8_t *stack, int32_t callArgsOffset, int32_t sizeOfArgsUpto16ByteAlignment, int32_t totalArgsSize)
+{
+    int8_t *argsBase = stack + callArgsOffset;
+    if (sizeOfArgsUpto16ByteAlignment != 0)
+    {
+        memmove(argsBase, argsBase + INTERP_STACK_SLOT_SIZE, sizeOfArgsUpto16ByteAlignment);
+    }
+
+    if (sizeOfArgsUpto16ByteAlignment != totalArgsSize)
+    {
+        size_t firstAlignedDstOffset = ALIGN_UP(sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
+        size_t firstAlignedSrcOffset = ALIGN_UP(INTERP_STACK_SLOT_SIZE + sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
+        memmove(argsBase + firstAlignedDstOffset, argsBase + firstAlignedSrcOffset, totalArgsSize - sizeOfArgsUpto16ByteAlignment);
+    }
+}
+
 static void UpdateFrameForTailCall(InterpMethodContextFrame *pFrame, PTR_InterpByteCodeStart targetIp, int8_t *callArgsAddress)
 {
     InterpMethod *pTargetMethod = targetIp->Method;
@@ -3174,21 +3192,7 @@ SWITCH_OPCODE:
                             }
                             else
                             {
-                                // Shift args down by one slot to remove the delegate obj pointer.
-                                // We need to preserve alignment of arguments that require 16-byte alignment.
-                                // The sizeOfArgsUpto16ByteAlignment is the size of all the target method args starting at the first argument up to (but not including) the first argument that requires 16-byte alignment.
-                                if (sizeOfArgsUpto16ByteAlignment != 0)
-                                {
-                                    memmove(LOCAL_VAR_ADDR(callArgsOffset, int8_t), LOCAL_VAR_ADDR(callArgsOffset + INTERP_STACK_SLOT_SIZE, int8_t), sizeOfArgsUpto16ByteAlignment);
-                                }
-
-                                if (sizeOfArgsUpto16ByteAlignment != pTargetMethod->argsSize)
-                                {
-                                    // There are arguments that require 16-byte alignment
-                                    size_t firstAlignedTargetArgDstOffset = ALIGN_UP(sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
-                                    size_t firstAlignedTargetArgSrcOffset = ALIGN_UP(INTERP_STACK_SLOT_SIZE + sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
-                                    memmove(LOCAL_VAR_ADDR(callArgsOffset + firstAlignedTargetArgDstOffset, int8_t), LOCAL_VAR_ADDR(callArgsOffset + firstAlignedTargetArgSrcOffset, int8_t), pTargetMethod->argsSize - sizeOfArgsUpto16ByteAlignment);
-                                }
+                                ShiftDelegateCallArgs(stack, callArgsOffset, sizeOfArgsUpto16ByteAlignment, pTargetMethod->argsSize);
 
                                 // Allocate child frame.
                                 InterpMethodContextFrame *pChildFrame = pFrame->pNext;
@@ -3212,17 +3216,7 @@ SWITCH_OPCODE:
                         }
                         else if (isOpenVirtual)
                         {
-                            if (sizeOfArgsUpto16ByteAlignment != 0)
-                            {
-                                memmove(LOCAL_VAR_ADDR(callArgsOffset, int8_t), LOCAL_VAR_ADDR(callArgsOffset + INTERP_STACK_SLOT_SIZE, int8_t), sizeOfArgsUpto16ByteAlignment);
-                            }
-
-                            if (sizeOfArgsUpto16ByteAlignment != targetArgsSize)
-                            {
-                                size_t firstAlignedTargetArgDstOffset = ALIGN_UP(sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
-                                size_t firstAlignedTargetArgSrcOffset = ALIGN_UP(INTERP_STACK_SLOT_SIZE + sizeOfArgsUpto16ByteAlignment, INTERP_STACK_ALIGNMENT);
-                                memmove(LOCAL_VAR_ADDR(callArgsOffset + firstAlignedTargetArgDstOffset, int8_t), LOCAL_VAR_ADDR(callArgsOffset + firstAlignedTargetArgSrcOffset, int8_t), targetArgsSize - sizeOfArgsUpto16ByteAlignment);
-                            }
+                            ShiftDelegateCallArgs(stack, callArgsOffset, sizeOfArgsUpto16ByteAlignment, targetArgsSize);
 
                             goto CALL_INTERP_METHOD;
                         }
