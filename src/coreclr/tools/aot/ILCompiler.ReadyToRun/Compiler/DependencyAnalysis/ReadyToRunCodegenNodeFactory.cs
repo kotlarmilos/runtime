@@ -1147,7 +1147,7 @@ namespace ILCompiler.DependencyAnalysis
 
         public CopiedMethodILNode CopiedMethodIL(EcmaMethod method)
         {
-            byte[] bodyBytes = CopiedMethodILNode.ReadBodyBytes(method);
+            byte[] bodyBytes = CopiedMethodILNode.ReadBodyBytes(method, OptimizationFlags);
             return _copiedMethodIL.GetOrAdd(bodyBytes, _ => new CopiedMethodILNode(method));
         }
 

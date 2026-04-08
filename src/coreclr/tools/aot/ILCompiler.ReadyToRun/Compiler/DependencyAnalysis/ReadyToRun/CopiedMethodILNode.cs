@@ -55,31 +55,29 @@ namespace ILCompiler.DependencyAnalysis.ReadyToRun
                     definedSymbols: new ISymbolDefinitionNode[] { this });
             }
 
-            if (factory.OptimizationFlags.StripILBodies
-                && factory.OptimizationFlags.CompiledMethodDefs.Contains(_method)
-                && !_method.HasInstantiation
-                && !_method.OwningType.HasInstantiation)
-            {
-                return new ObjectData(s_minimalILBody, Array.Empty<Relocation>(), 4, new ISymbolDefinitionNode[] { this });
-            }
-
-            var rva = _method.MetadataReader.GetMethodDefinition(_method.Handle).RelativeVirtualAddress;
-            var peReader = _method.Module.PEReader;
-            var reader = peReader.GetSectionData(rva).GetReader();
-            int size = MethodBodyBlock.Create(reader).Size;
-            byte[] bodyBytes = peReader.GetSectionData(rva).GetReader().ReadBytes(size);
+            byte[] bodyBytes = ReadBodyBytes(_method, factory.OptimizationFlags);
 
             return new ObjectData(bodyBytes, Array.Empty<Relocation>(), 4, new ISymbolDefinitionNode[] { this });
         }
 
-        internal static byte[] ReadBodyBytes(EcmaMethod method)
+        internal static byte[] ReadBodyBytes(EcmaMethod method, NodeFactoryOptimizationFlags optimizationFlags)
         {
             method = (EcmaMethod)method.GetTypicalMethodDefinition();
+
+            if (optimizationFlags.StripILBodies
+                && optimizationFlags.CompiledMethodDefs?.Contains(method) == true
+                && !method.HasInstantiation
+                && !method.OwningType.HasInstantiation)
+            {
+                return s_minimalILBody;
+            }
+
             int rva = method.MetadataReader.GetMethodDefinition(method.Handle).RelativeVirtualAddress;
             if (rva == 0)
                 return Array.Empty<byte>();
             BlobReader reader = method.Module.PEReader.GetSectionData(rva).GetReader();
             int size = MethodBodyBlock.Create(reader).Size;
+
             return reader.ReadBytes(size);
         }
 
