@@ -1121,9 +1121,9 @@ static void DECLSPEC_NORETURN HandleInterpreterStackOverflow(InterpreterFrame* p
 
 // Shifts delegate call arguments down by one slot to remove the delegate object pointer,
 // preserving 16-byte alignment for V128 arguments.
-static void ShiftDelegateCallArgs(int8_t *stack, int32_t callArgsOffset, int32_t sizeOfArgsUpto16ByteAlignment, int32_t totalArgsSize)
+static void ShiftDelegateCallArgs(int8_t* stack, int32_t callArgsOffset, int32_t sizeOfArgsUpto16ByteAlignment, int32_t totalArgsSize)
 {
-    int8_t *argsBase = stack + callArgsOffset;
+    int8_t* argsBase = stack + callArgsOffset;
     if (sizeOfArgsUpto16ByteAlignment != 0)
     {
         memmove(argsBase, argsBase + INTERP_STACK_SLOT_SIZE, sizeOfArgsUpto16ByteAlignment);
