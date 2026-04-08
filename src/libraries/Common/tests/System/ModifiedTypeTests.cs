@@ -589,6 +589,7 @@ namespace System.Tests.Types
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static unsafe void MethodWithGenericParameterWithModifiers_Unmodified()
         {
             MethodInfo mi = typeof(GenericWithModifiers).Project().GetMethod(nameof(GenericWithModifiers.MethodWithGenericParameter), Bindings);
@@ -612,6 +613,7 @@ namespace System.Tests.Types
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static unsafe void MethodWithGenericParameterWithModifiers_Modified()
         {
             MethodInfo mi = typeof(GenericWithModifiers).Project().GetMethod(nameof(GenericWithModifiers.MethodWithGenericParameter), Bindings);
@@ -637,6 +639,7 @@ namespace System.Tests.Types
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static unsafe void GenericFieldWithModifiers_Unmodified()
         {
             FieldInfo fi = typeof(GenericWithModifiers).Project().GetField(nameof(GenericWithModifiers.GenericField), Bindings);
@@ -659,6 +662,7 @@ namespace System.Tests.Types
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static unsafe void GenericFieldWithModifiers_Modified()
         {
             FieldInfo fi = typeof(GenericWithModifiers).Project().GetField(nameof(GenericWithModifiers.GenericField), Bindings);
@@ -683,6 +687,7 @@ namespace System.Tests.Types
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static unsafe void GenericPropertyWithModifiers_Unmodified()
         {
             PropertyInfo pi = typeof(GenericWithModifiers).Project().GetProperty(nameof(GenericWithModifiers.GenericProperty), Bindings);
@@ -705,6 +710,7 @@ namespace System.Tests.Types
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static unsafe void GenericPropertyWithModifiers_Modified()
         {
             PropertyInfo pi = typeof(GenericWithModifiers).Project().GetProperty(nameof(GenericWithModifiers.GenericProperty), Bindings);
@@ -729,6 +735,7 @@ namespace System.Tests.Types
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static unsafe void GenericMethod_Unmodified()
         {
             MethodInfo mi = typeof(GenericWithModifiers).Project().GetMethod(nameof(GenericWithModifiers.GenericMethod), Bindings);
@@ -741,6 +748,7 @@ namespace System.Tests.Types
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static unsafe void GenericMethod_Modified()
         {
             MethodInfo mi = typeof(GenericWithModifiers).Project().GetMethod(nameof(GenericWithModifiers.GenericMethod), Bindings);

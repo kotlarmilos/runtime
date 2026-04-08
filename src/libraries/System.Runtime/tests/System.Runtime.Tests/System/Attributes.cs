@@ -334,6 +334,7 @@ namespace System.Tests
         [Fact]
         [ActiveIssue("https://github.com/dotnet/linker/issues/2078", typeof(PlatformDetection), nameof(PlatformDetection.IsTrimmedWithILLink))
             /* Stripping security attributes removes UnverifiableCodeAttribute */]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static void customAttributeCount()
         {
             List<CustomAttributeData> customAttributes = typeof(GetCustomAttribute).Module.CustomAttributes.ToList();
@@ -505,6 +506,7 @@ namespace System.Tests
         }
 
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static void PositiveTest5()
         {
             Type clsType = typeof(GetCustomAttribute);
@@ -537,6 +539,7 @@ namespace System.Tests
 
         }
         [Fact]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/67531", typeof(PlatformDetection), nameof(PlatformDetection.IsNativeAot), nameof(PlatformDetection.IsAppleMobile))]
         public static void PositiveTest6()
         {
             Type clsType = typeof(GetCustomAttribute);

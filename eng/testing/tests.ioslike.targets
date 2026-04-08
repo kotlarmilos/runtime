@@ -3,6 +3,10 @@
     <BundleTestAppTargets>$(BundleTestAppTargets);BundleTestAppleApp</BundleTestAppTargets>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IsFunctionalTest)' != 'true'">
+    <DefineConstants>$(DefineConstants);SINGLE_FILE_TEST_RUNNER</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup>
     <BuildTestsOn Condition="'$(ContinuousIntegrationBuild)' == 'true' and '$(Scenario)' == 'BuildAppleApps'">helix</BuildTestsOn>
     <BuildTestsOn Condition="'$(BuildTestsOnHelix)' == 'true'">helix</BuildTestsOn>
