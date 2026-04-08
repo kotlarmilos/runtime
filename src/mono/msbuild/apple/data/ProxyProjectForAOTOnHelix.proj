@@ -115,9 +115,9 @@
           AfterTargets="ComputeIlcCompileInputs"
           Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IncludesTestRunner)' == 'true'">
     <ItemGroup>
-      <IlcCompileInput Include="$(OriginalPublishDir)AppleTestRunner.dll" />
+      <IlcCompileInput Include="$(OriginalPublishDir)$(MainLibraryFileName)" />
       <IlcReference Include="$(OriginalPublishDir)*.dll"
-                    Exclude="$(OriginalPublishDir)AppleTestRunner.dll;$(OriginalPublishDir)$(AssemblyName).dll" />
+                    Exclude="$(OriginalPublishDir)$(MainLibraryFileName);$(OriginalPublishDir)$(AssemblyName).dll" />
 
       <!-- Root the test assembly so all test types are preserved through trimming -->
       <TrimmerRootAssembly Include="$(AssemblyName)" />
