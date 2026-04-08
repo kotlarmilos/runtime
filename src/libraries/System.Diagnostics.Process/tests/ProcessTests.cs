@@ -1792,7 +1792,7 @@ namespace System.Diagnostics.Tests
         }
 
         [Fact]
-        [SkipOnPlatform(TestPlatforms.iOS | TestPlatforms.tvOS | TestPlatforms.MacCatalyst, "Process.Start is not supported on iOS, tvOS, and MacCatalyst.")]
+        [SkipOnPlatform(TestPlatforms.iOS | TestPlatforms.tvOS, "Process.Start is not supported on iOS and tvOS.")]
         public void Start_Disposed_ThrowsObjectDisposedException()
         {
             var process = new Process();
