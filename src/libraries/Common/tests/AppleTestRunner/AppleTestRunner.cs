@@ -79,7 +79,9 @@ public class SimpleTestRunner : iOSApplicationEntryPoint, IDevice
             Console.WriteLine(testLib);
         }
         Console.WriteLine(".");
-        s_MainTestName = Path.GetFileNameWithoutExtension(s_testLibs[0]);
+        s_MainTestName = s_testAssemblies is not null
+            ? s_testAssemblies[0].GetName().Name
+            : Path.GetFileNameWithoutExtension(s_testLibs[0]);
 
         mono_ios_set_summary($"Starting tests...");
         var simpleTestRunner = new SimpleTestRunner(verbose);

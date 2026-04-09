@@ -107,9 +107,10 @@
           AfterTargets="ComputeIlcCompileInputs"
           Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IncludesTestRunner)' == 'true'">
     <ItemGroup>
+      <IlcCompileInput Remove="@(IlcCompileInput)" />
       <IlcCompileInput Include="$(OriginalPublishDir)$(MainLibraryFileName)" />
       <IlcReference Include="$(OriginalPublishDir)*.dll"
-                    Exclude="$(OriginalPublishDir)$(MainLibraryFileName);$(OriginalPublishDir)$(AssemblyName).dll" />
+                    Exclude="$(OriginalPublishDir)$(MainLibraryFileName)" />
 
       <TrimmerRootAssembly Include="$(AssemblyName)" />
       <TrimmerRootAssembly Include="AppleTestRunner" />
