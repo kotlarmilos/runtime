@@ -103,10 +103,6 @@
     <Copy SourceFiles="@(BundleFiles)"         DestinationFolder="$(BundleDir)%(TargetDir)" />
     <Copy SourceFiles="@(ExtraFiles)"          DestinationFolder="$(BundleDir)\%(TargetDir)" />
 
-    <!-- For NativeAOT library tests, bundle both the shared rd.xml (xunit generic
-         instantiations) and any per-test rd.xml files declared in the test csproj.
-         The shared file is renamed to common.rd.xml to avoid overwriting a per-test
-         default.rd.xml; ProxyProjectForAOTOnHelix.proj globs *.rd.xml to pick up both. -->
     <Copy Condition="'$(UseNativeAOTRuntime)' == 'true'"
           SourceFiles="$(MSBuildThisFileDirectory)default.rd.xml"
           DestinationFiles="$(BundleDir)publish/common.rd.xml" />
