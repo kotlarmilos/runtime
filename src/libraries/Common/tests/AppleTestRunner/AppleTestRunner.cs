@@ -48,18 +48,13 @@ public class SimpleTestRunner : iOSApplicationEntryPoint, IDevice
         {
             if (!RuntimeFeature.IsDynamicCodeSupported)
             {
-                // NativeAOT: test assemblies are statically linked into the native binary,
-                // so there are no DLL files on disk. Discover them from loaded assemblies.
-                Assembly[] allAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-                s_testAssemblies = allAssemblies
+                s_testAssemblies = AppDomain.CurrentDomain.GetAssemblies()
                     .Where(a => a.GetName().Name?.EndsWith(".Tests") == true)
                     .ToList();
                 s_testLibs = s_testAssemblies.Select(a => a.GetName().Name!).ToList();
             }
             else
             {
-                // Look for *.Tests.dll files if target test suites are not set via "testlib:" arguments
                 s_testLibs = Directory.GetFiles(Environment.CurrentDirectory, "*.Tests.dll").ToList();
             }
         }
@@ -162,8 +157,6 @@ public class SimpleTestRunner : iOSApplicationEntryPoint, IDevice
 
     protected override string? IgnoreFilesDirectory => null;
 
-    // NativeAOT excludes .txt files from the app bundle (Xcode.cs predefinedExcludes),
-    // so xunit-excludes.txt may not be present. Return empty string to skip trait filtering.
     protected override string IgnoredTraitsFilePath
     {
         get

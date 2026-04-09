@@ -24,22 +24,19 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(_UseNativeAOTLibraryModeBundling)' != 'true' and '$(UseNativeAOTRuntime)' == 'true'">
-    <!-- TODO: we probably want to recreate everything in the intermediate directory instead (see library mode bellow) -->
+    <!-- TODO: we probably want to recreate everything in the intermediate directory instead (see library mode below) -->
     <IntermediateOutputPath>$(OriginalPublishDir)</IntermediateOutputPath>
     <NativeLib>static</NativeLib>
     <CustomNativeMain>true</CustomNativeMain>
     <NativeCompilationDuringPublish>false</NativeCompilationDuringPublish>
   </PropertyGroup>
 
-  <!-- For NativeAOT library tests, match the desktop NativeAOT test settings from
-       eng/testing/tests.singlefile.targets. Without TrimMode=partial the linker
-       aggressively trims test assemblies and framework code that xunit needs for
-       reflection-based test discovery and parameter conversion. -->
   <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IncludesTestRunner)' == 'true'">
     <TrimMode>partial</TrimMode>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
   </PropertyGroup>
+
   <!-- In library mode we depend on NativeAOT publish integration targets -->
   <PropertyGroup Condition="'$(_UseNativeAOTLibraryModeBundling)' == 'true'">
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
@@ -106,11 +103,6 @@
     </ItemGroup>
   </Target>
 
-  <!-- For NativeAOT library tests, add the test runner as an ILC input to provide the managed
-       entrypoint required by splitinit, and add all published DLLs as ILC references so that
-       non-framework dependencies (xunit, test utilities, etc.) can be resolved.
-       Root the test assembly and xunit framework assemblies so ILC does not trim test
-       types that are only reachable via reflection-based xunit discovery. -->
   <Target Name="_SetupNativeAOTLibraryTestInputs"
           AfterTargets="ComputeIlcCompileInputs"
           Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IncludesTestRunner)' == 'true'">
@@ -119,19 +111,15 @@
       <IlcReference Include="$(OriginalPublishDir)*.dll"
                     Exclude="$(OriginalPublishDir)$(MainLibraryFileName);$(OriginalPublishDir)$(AssemblyName).dll" />
 
-      <!-- Root the test assembly so all test types are preserved through trimming -->
       <TrimmerRootAssembly Include="$(AssemblyName)" />
       <TrimmerRootAssembly Include="AppleTestRunner" />
       <TrimmerRootAssembly Include="TestUtilities" />
 
-      <!-- Root xunit framework assemblies required for reflection-based test discovery -->
       <TrimmerRootAssembly Include="xunit.execution.dotnet" />
       <TrimmerRootAssembly Include="xunit.core" />
       <TrimmerRootAssembly Include="xunit.runner.utility.netcoreapp10" />
       <TrimmerRootAssembly Include="Microsoft.DotNet.XUnitExtensions" />
 
-      <!-- Pick up all rd.xml files: common.rd.xml (shared xunit generic instantiations)
-           and any per-test default.rd.xml (test-specific generic instantiations) -->
       <RdXmlFile Include="$(OriginalPublishDir)*.rd.xml" />
     </ItemGroup>
   </Target>
