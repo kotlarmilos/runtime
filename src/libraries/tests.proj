@@ -684,7 +684,7 @@
     <ProjectExclusions Include="$(MSBuildThisFileDirectory)System.Diagnostics.StackTrace\tests\System.Diagnostics.StackTrace.Tests.csproj" />
     <ProjectExclusions Include="$(MSBuildThisFileDirectory)System.Private.Xml\tests\System.Private.Xml.Tests.csproj" />
 
-    <!-- https://github.com/dotnet/runtime/issues/124325 -->
+    <!-- https://github.com/dotnet/runtime/issues/124344 -->
     <ProjectExclusions Include="$(MSBuildThisFileDirectory)System.Runtime.Serialization.Xml\tests\System.Runtime.Serialization.Xml.Tests.csproj" />
 
     <!-- Timeouts -->
