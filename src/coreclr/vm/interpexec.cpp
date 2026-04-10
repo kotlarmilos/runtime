@@ -3124,18 +3124,9 @@ SWITCH_OPCODE:
 
                     // Argument sizes used for open virtual delegate dispatch to remove the delegate object
                     // from the argument list while preserving 16-byte alignment for V128 arguments.
-                    int32_t sizeOfArgsUpto16ByteAlignment = 0;
-                    int32_t targetArgsSize = 0;
-                    if (opcode == INTOP_CALLDELEGATE)
-                    {
-                        sizeOfArgsUpto16ByteAlignment = ip[4];
-                        targetArgsSize = ip[5];
-                        ip += 6;
-                    }
-                    else
-                    {
-                        ip += 4;
-                    }
+                    int32_t sizeOfArgsUpto16ByteAlignment = ip[4];
+                    int32_t targetArgsSize = ip[5];
+                    ip += 6;
 
                     DELEGATEREF* delegateObj = LOCAL_VAR_ADDR(callArgsOffset, DELEGATEREF);
                     NULL_CHECK(*delegateObj);
@@ -3188,7 +3179,8 @@ SWITCH_OPCODE:
                             InterpMethod* pTargetMethod = targetIp->Method;
                             if (frameNeedsTailcallUpdate)
                             {
-                                UpdateFrameForTailCall(pFrame, targetIp, LOCAL_VAR_ADDR(callArgsOffset + INTERP_STACK_SLOT_SIZE, int8_t));
+                                ShiftDelegateCallArgs(stack, callArgsOffset, sizeOfArgsUpto16ByteAlignment, pTargetMethod->argsSize);
+                                UpdateFrameForTailCall(pFrame, targetIp, LOCAL_VAR_ADDR(callArgsOffset, int8_t));
                                 frameNeedsTailcallUpdate = false;
                             }
                             else
@@ -3217,15 +3209,7 @@ SWITCH_OPCODE:
                         }
                         else if (isOpenVirtual)
                         {
-                            if (frameNeedsTailcallUpdate)
-                            {
-                                // For tail calls, skip the delegate slot; matches the interpreted tail path above.
-                                callArgsOffset += INTERP_STACK_SLOT_SIZE;
-                            }
-                            else
-                            {
-                                ShiftDelegateCallArgs(stack, callArgsOffset, sizeOfArgsUpto16ByteAlignment, targetArgsSize);
-                            }
+                            ShiftDelegateCallArgs(stack, callArgsOffset, sizeOfArgsUpto16ByteAlignment, targetArgsSize);
 
                             goto CALL_INTERP_METHOD;
                         }
