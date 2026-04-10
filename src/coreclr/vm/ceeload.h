@@ -839,12 +839,12 @@ private:
     PTR_NativeImage         m_pNativeImage;
 #endif
 
-#if defined(PROFILING_SUPPORTED) || defined(PROFILING_SUPPORTED_DATA) || defined(FEATURE_METADATA_UPDATER)
+#if PROFILING_SUPPORTED_DATA
 private:
     DWORD                   m_dwTypeCount;
     DWORD                   m_dwExportedTypeCount;
     DWORD                   m_dwCustomAttributeCount;
-#endif // PROFILING_SUPPORTED || PROFILING_SUPPORTED_DATA || FEATURE_METADATA_UPDATER
+#endif // PROFILING_SUPPORTED_DATA
 
 protected:
     void DoInit(AllocMemTracker *pamTracker, LPCWSTR szName);

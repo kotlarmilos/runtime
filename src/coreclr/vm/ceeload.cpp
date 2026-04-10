@@ -497,14 +497,13 @@ void Module::Initialize(AllocMemTracker *pamTracker, LPCWSTR szName)
         m_pInstMethodHashTable = InstMethodHashTable::Create(GetLoaderAllocator(), this, PARAMMETHODS_HASH_BUCKETS, pamTracker);
     }
 
-#if defined(PROFILING_SUPPORTED) || defined(PROFILING_SUPPORTED_DATA) || defined(FEATURE_METADATA_UPDATER)
-    // These counters are initialized in NotifyProfilerLoadFinished for profiling scenarios,
-    // but FEATURE_METADATA_UPDATER builds may execute this path without that callback, so
-    // give them a safe initial value here.
+#ifdef PROFILING_SUPPORTED_DATA
+    // These will be initialized in NotifyProfilerLoadFinished, set them to
+    // a safe initial value now.
     m_dwTypeCount = 0;
     m_dwExportedTypeCount = 0;
     m_dwCustomAttributeCount = 0;
-#endif // PROFILING_SUPPORTED || PROFILING_SUPPORTED_DATA || FEATURE_METADATA_UPDATER
+#endif // PROFILING_SUPPORTED_DATA
 
 #ifdef PROFILING_SUPPORTED
     // set profiler related JIT flags
