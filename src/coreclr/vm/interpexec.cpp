@@ -3122,9 +3122,20 @@ SWITCH_OPCODE:
 
                     int8_t* returnValueAddress = LOCAL_VAR_ADDR(returnOffset, int8_t);
 
-                    int32_t sizeOfArgsUpto16ByteAlignment = ip[4];
-                    int32_t targetArgsSize = ip[5];
-                    ip += 6;
+                    // Argument sizes used for open virtual delegate dispatch to remove the delegate object
+                    // from the argument list while preserving 16-byte alignment for V128 arguments.
+                    int32_t sizeOfArgsUpto16ByteAlignment = 0;
+                    int32_t targetArgsSize = 0;
+                    if (opcode == INTOP_CALLDELEGATE)
+                    {
+                        sizeOfArgsUpto16ByteAlignment = ip[4];
+                        targetArgsSize = ip[5];
+                        ip += 6;
+                    }
+                    else
+                    {
+                        ip += 4;
+                    }
 
                     DELEGATEREF* delegateObj = LOCAL_VAR_ADDR(callArgsOffset, DELEGATEREF);
                     NULL_CHECK(*delegateObj);
@@ -3206,7 +3217,15 @@ SWITCH_OPCODE:
                         }
                         else if (isOpenVirtual)
                         {
-                            ShiftDelegateCallArgs(stack, callArgsOffset, sizeOfArgsUpto16ByteAlignment, targetArgsSize);
+                            if (frameNeedsTailcallUpdate)
+                            {
+                                // For tail calls, skip the delegate slot; matches the interpreted tail path above.
+                                callArgsOffset += INTERP_STACK_SLOT_SIZE;
+                            }
+                            else
+                            {
+                                ShiftDelegateCallArgs(stack, callArgsOffset, sizeOfArgsUpto16ByteAlignment, targetArgsSize);
+                            }
 
                             goto CALL_INTERP_METHOD;
                         }

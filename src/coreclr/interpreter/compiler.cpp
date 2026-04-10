@@ -5429,7 +5429,7 @@ void InterpCompiler::EmitCall(CORINFO_RESOLVED_TOKEN* pConstrainedToken, bool re
                         ((lookup.accessType == IAT_PVALUE) ? (int32_t)PInvokeCallFlags::Indirect : 0) |
                         (suppressGCTransition ? (int32_t)PInvokeCallFlags::SuppressGCTransition : 0);
                 }
-                else if (opcode == INTOP_CALLDELEGATE || opcode == INTOP_CALLDELEGATE_TAIL)
+                else if (opcode == INTOP_CALLDELEGATE)
                 {
                     int32_t sizeOfArgsUpto16ByteAlignment = 0;
                     int32_t targetArgsSize = 0;
@@ -5453,11 +5453,6 @@ void InterpCompiler::EmitCall(CORINFO_RESOLVED_TOKEN* pConstrainedToken, bool re
                         targetArgsSize = ALIGN_UP_TO(targetArgsSize, argAlignment);
                         targetArgsSize += size;
                     }
-                    if (!found16ByteAligned)
-                    {
-                        sizeOfArgsUpto16ByteAlignment = targetArgsSize;
-                    }
-
                     m_pLastNewIns->data[1] = sizeOfArgsUpto16ByteAlignment;
                     m_pLastNewIns->data[2] = targetArgsSize;
                 }
