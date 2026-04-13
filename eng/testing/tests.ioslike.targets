@@ -22,6 +22,8 @@
     <!-- The command below sets default properties for runtime and library tests -->
     <_AOTBuildCommand>$(_AOTBuildCommand) /p:XHARNESS_EXECUTION_DIR=&quot;$XHARNESS_EXECUTION_DIR&quot; /p:RunAOTCompilation=$(RunAOTCompilation) /p:UseNativeAOTRuntime=$(UseNativeAOTRuntime) /p:TargetOS=$(TargetOS) /p:TargetArchitecture=$(TargetArchitecture) /p:UseMonoRuntime=$(UseMonoRuntime) /p:MonoForceInterpreter=$(MonoForceInterpreter) /p:MonoEnableLLVM=true /p:DevTeamProvisioning=$(DevTeamProvisioning) /p:UsePortableRuntimePack=$(UsePortableRuntimePack) /p:Configuration=$(Configuration)</_AOTBuildCommand>
     <_AOTBuildCommand Condition="'$(NativeLib)' != ''">$(_AOTBuildCommand) /p:NativeLib=$(NativeLib) /p:BundlesResources=$(BundlesResources) /p:ForceLibraryModeGenerateAppBundle=$(ForceLibraryModeGenerateAppBundle)</_AOTBuildCommand>
+    <!-- When NativeAOT compilation runs on the build machine, skip ILC on Helix -->
+    <_AOTBuildCommand Condition="'$(UseNativeAOTRuntime)' == 'true'">$(_AOTBuildCommand) /p:SkipIlcCompile=true</_AOTBuildCommand>
     <!-- Pass R2R properties for CoreCLR builds that are built on Helix -->
     <_AOTBuildCommand Condition="'$(UseMonoRuntime)' != 'true' and '$(UseNativeAOTRuntime)' != 'true'">$(_AOTBuildCommand) /p:PublishReadyToRun=true /p:PublishReadyToRunComposite=true /p:PublishReadyToRunContainerFormat=macho /p:StripSymbols=true</_AOTBuildCommand>
     <_AOTBuildCommand>$(_AOTBuildCommand) </_AOTBuildCommand>
@@ -53,7 +55,7 @@
     <AppleBuildDependsOn>PrepareForAppleBuildApp;$(AppleBuildDependsOn);_CopyTestArchive</AppleBuildDependsOn>
 
     <BundleTestAppleAppDependsOn Condition="'$(BuildTestsOn)' == 'local'">AppleBuild</BundleTestAppleAppDependsOn>
-    <BundleTestAppleAppDependsOn Condition="'$(BuildTestsOnHelix)' == 'true'">$(BundleTestAppleAppDependsOn);_BundleAOTTestAppleAppForHelix;_CopyTestArchive</BundleTestAppleAppDependsOn>
+    <BundleTestAppleAppDependsOn Condition="'$(BuildTestsOnHelix)' == 'true'">$(BundleTestAppleAppDependsOn);_BundleAOTTestAppleAppForHelix;_CompileNativeAOTOnBuildMachine;_CopyTestArchive</BundleTestAppleAppDependsOn>
   </PropertyGroup>
 
   <Target Name="BundleTestAppleApp" DependsOnTargets="$(BundleTestAppleAppDependsOn)" />
@@ -179,6 +181,17 @@
         Properties="@(_ApplePropertiesToPass)"
         Items="@(_AppleItemsToPass)"
         OutputFile="$(BundleDir)publish\ProxyProjectForAOTOnHelix.props" />
+  </Target>
+
+  <!-- Run NativeAOT trimming and ILC compilation on the build machine instead of Helix.
+       The produced .o file is included in the test archive sent to Helix,
+       where only app bundling and signing happen (with SkipIlcCompile=true). -->
+  <Target Name="_CompileNativeAOTOnBuildMachine"
+          Condition="'$(UseNativeAOTRuntime)' == 'true'">
+    <Message Importance="High" Text="** Compiling NativeAOT on build machine **" />
+    <MSBuild Projects="$(BundleDir)publish/ProxyProjectForAOTOnHelix.proj"
+             Targets="RunNativeAOTCompilation"
+             Properties="RuntimeSrcDir=$(RepoRoot);RuntimeConfig=$(Configuration);TargetOS=$(TargetOS);TargetArchitecture=$(TargetArchitecture);UseNativeAOTRuntime=true;Configuration=$(Configuration);NativeLib=$(NativeLib);IncludesTestRunner=$(IncludesTestRunner);IlcToolsPath=$(CoreCLRCrossILCompilerDir);IlcSdkPath=$(CoreCLRAotSdkDir);IlcFrameworkPath=$(IlcFrameworkPath);IlcFrameworkNativePath=$(IlcFrameworkNativePath);ILCompilerTargetsPath=$(CoreCLRBuildIntegrationDir)Microsoft.DotNet.ILCompiler.SingleEntry.targets" />
   </Target>
 
   <Target Name="PrepareForAppleBuildApp">
