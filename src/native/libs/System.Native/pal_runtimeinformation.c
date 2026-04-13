@@ -147,20 +147,6 @@ int32_t SystemNative_GetOSArchitecture(void)
         {
             result = ARCH_RISCV64;
         }
-#if defined(TARGET_IOS) || defined(TARGET_TVOS)
-        // On iOS/tvOS devices, utsname.machine returns the hardware model rather than the CPU architecture.
-        // Fall back to the compile-time target architecture.
-        if (result == -1)
-        {
-#if defined(TARGET_ARM64)
-            result = ARCH_ARM64;
-#elif defined(TARGET_AMD64)
-            result = ARCH_X64;
-#elif defined(TARGET_ARM)
-            result = ARCH_ARM;
-#endif
-        }
-#endif
     }
 
     // catch if we have missed a pattern above.
