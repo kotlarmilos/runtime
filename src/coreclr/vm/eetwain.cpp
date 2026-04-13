@@ -2106,6 +2106,9 @@ static void VirtualUnwindInterpreterCallFrame(TADDR sp, T_CONTEXT *pContext)
         SetIP(pContext, (TADDR)pFrame->ip);
         SetSP(pContext, dac_cast<TADDR>(pFrame));
         SetFP(pContext, (TADDR)pFrame->pStack);
+
+        // Interpreter ip points past the call instruction (like a return address).
+        pContext->ContextFlags = CONTEXT_FULL | CONTEXT_UNWOUND_TO_CALL;
     }
     else
     {
@@ -2118,8 +2121,8 @@ static void VirtualUnwindInterpreterCallFrame(TADDR sp, T_CONTEXT *pContext)
         SetIP(pContext, InterpreterFrame::DummyCallerIP);
         TADDR interpreterFrameAddress = GetFirstArgReg(pContext);
         SetSP(pContext, interpreterFrameAddress);
+        pContext->ContextFlags = CONTEXT_FULL;
     }
-    pContext->ContextFlags = CONTEXT_FULL;
 }
 
 bool InterpreterCodeManager::UnwindStackFrame(PREGDISPLAY     pRD,
