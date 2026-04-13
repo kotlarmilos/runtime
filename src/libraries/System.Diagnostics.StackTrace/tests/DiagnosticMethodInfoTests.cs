@@ -27,7 +27,8 @@ namespace System.Diagnostics.Tests
 
             const string TestNamespace = nameof(System) + "." + nameof(System.Diagnostics) + "." + nameof(System.Diagnostics.Tests) + ".";
 
-            // On Apple mobile CoreCLR, open delegates for interface methods are not supported
+            // On Apple mobile CoreCLR, open delegates for interface methods are not supported.
+            // Tracked in https://github.com/dotnet/runtime/issues/124344
             if (!PlatformDetection.IsAppleMobile)
             {
                 yield return new object[] {
