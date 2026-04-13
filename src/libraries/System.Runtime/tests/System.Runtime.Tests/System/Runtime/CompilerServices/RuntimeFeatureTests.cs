@@ -42,6 +42,11 @@ namespace System.Runtime.CompilerServices.Tests
                 Assert.False(RuntimeFeature.IsDynamicCodeSupported);
                 Assert.False(RuntimeFeature.IsDynamicCodeCompiled);
             }
+            else if (PlatformDetection.IsAppleMobile)
+            {
+                Assert.True(RuntimeFeature.IsDynamicCodeSupported);
+                Assert.False(RuntimeFeature.IsDynamicCodeCompiled);
+            }
             else
             {
                 Assert.True(RuntimeFeature.IsDynamicCodeSupported);
