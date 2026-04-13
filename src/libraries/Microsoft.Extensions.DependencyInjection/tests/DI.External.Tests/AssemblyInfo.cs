@@ -5,3 +5,4 @@ using System;
 using Xunit;
 
 [assembly: ActiveIssue("https://github.com/dotnet/runtime/issues/43411", typeof(PlatformDetection), nameof(PlatformDetection.IsBrowser))]
+[assembly: ActiveIssue("https://github.com/dotnet/runtime/issues/124344", typeof(PlatformDetection), nameof(PlatformDetection.IsAppleMobile), nameof(PlatformDetection.IsCoreCLR))]
