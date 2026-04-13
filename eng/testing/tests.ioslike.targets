@@ -5,6 +5,8 @@
 
   <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IsFunctionalTest)' != 'true'">
     <DefineConstants>$(DefineConstants);SINGLE_FILE_TEST_RUNNER</DefineConstants>
+    <TrimMode>partial</TrimMode>
+    <SkipConfigureTrimming>true</SkipConfigureTrimming>
   </PropertyGroup>
 
   <PropertyGroup>
