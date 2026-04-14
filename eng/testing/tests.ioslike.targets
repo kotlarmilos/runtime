@@ -3,10 +3,17 @@
     <BundleTestAppTargets>$(BundleTestAppTargets);BundleTestAppleApp</BundleTestAppTargets>
   </PropertyGroup>
 
+  <!-- Trimming + ILC run on the build machine via _CompileNativeAOTOnBuildMachine
+       (using ProxyProjectForAOTOnHelix.proj's RunNativeAOTCompilation target).
+       Disable the SDK's ILLink during the test project's own publish step. -->
+  <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true'">
+    <PublishTrimmed>false</PublishTrimmed>
+    <SkipConfigureTrimming>true</SkipConfigureTrimming>
+    <DynamicCodeSupport>false</DynamicCodeSupport>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IsFunctionalTest)' != 'true'">
     <DefineConstants>$(DefineConstants);SINGLE_FILE_TEST_RUNNER</DefineConstants>
-    <TrimMode>partial</TrimMode>
-    <SkipConfigureTrimming>true</SkipConfigureTrimming>
   </PropertyGroup>
 
   <PropertyGroup>
