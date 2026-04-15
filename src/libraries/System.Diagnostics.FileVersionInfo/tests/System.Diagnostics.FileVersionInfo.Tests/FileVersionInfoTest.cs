@@ -11,7 +11,7 @@ namespace System.Diagnostics.Tests
     {
         private const string TestAssemblyFileName = "System.Diagnostics.FileVersionInfo.TestAssembly.dll";
         // On Unix the internal name's extension is .exe if OutputType is exe even though the TargetExt is .dll.
-        private readonly string OriginalTestAssemblyInternalName = PlatformDetection.IsWindows || PlatformDetection.IsAppleMobile ?
+        private readonly string OriginalTestAssemblyInternalName = PlatformDetection.IsWindows ?
             "System.Diagnostics.FileVersionInfo.TestAssembly.dll" :
             "System.Diagnostics.FileVersionInfo.TestAssembly.exe";
         private const string TestCsFileName = "Assembly1.cs";
