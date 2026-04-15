@@ -23,43 +23,38 @@ namespace System.Diagnostics.Tests
         public static IEnumerable<object[]> Create_OpenDelegate_TestData()
         {
             // Tracked at https://github.com/dotnet/runtime/issues/100748
-            bool hasGvmOpenDelegateBug = !PlatformDetection.IsMonoRuntime && !PlatformDetection.IsNativeAot && !PlatformDetection.IsAppleMobile;
+            bool hasGvmOpenDelegateBug = !PlatformDetection.IsMonoRuntime && !PlatformDetection.IsNativeAot;
 
             const string TestNamespace = nameof(System) + "." + nameof(System.Diagnostics) + "." + nameof(System.Diagnostics.Tests) + ".";
 
-            // On Apple mobile CoreCLR, open delegates for interface methods are not supported.
-            // Tracked in https://github.com/dotnet/runtime/issues/124344
-            if (!PlatformDetection.IsAppleMobile)
+            yield return new object[] {
+                typeof(IInterfaceForDiagnosticMethodInfoTests).GetMethod(nameof(IInterfaceForDiagnosticMethodInfoTests.NonGenericMethod)).CreateDelegate<Action<IInterfaceForDiagnosticMethodInfoTests>>(),
+                nameof(IInterfaceForDiagnosticMethodInfoTests.NonGenericMethod),
+                TestNamespace + nameof(IInterfaceForDiagnosticMethodInfoTests)
+            };
+
+            if (!hasGvmOpenDelegateBug)
             {
                 yield return new object[] {
-                    typeof(IInterfaceForDiagnosticMethodInfoTests).GetMethod(nameof(IInterfaceForDiagnosticMethodInfoTests.NonGenericMethod)).CreateDelegate<Action<IInterfaceForDiagnosticMethodInfoTests>>(),
-                    nameof(IInterfaceForDiagnosticMethodInfoTests.NonGenericMethod),
-                    TestNamespace + nameof(IInterfaceForDiagnosticMethodInfoTests)
+                typeof(IInterfaceForDiagnosticMethodInfoTests).GetMethod(nameof(IInterfaceForDiagnosticMethodInfoTests.GenericMethod)).MakeGenericMethod(typeof(object)).CreateDelegate<Action<IInterfaceForDiagnosticMethodInfoTests>>(),
+                nameof(IInterfaceForDiagnosticMethodInfoTests.GenericMethod),
+                TestNamespace + nameof(IInterfaceForDiagnosticMethodInfoTests)
                 };
+            }
 
-                if (!hasGvmOpenDelegateBug)
-                {
-                    yield return new object[] {
-                    typeof(IInterfaceForDiagnosticMethodInfoTests).GetMethod(nameof(IInterfaceForDiagnosticMethodInfoTests.GenericMethod)).MakeGenericMethod(typeof(object)).CreateDelegate<Action<IInterfaceForDiagnosticMethodInfoTests>>(),
-                    nameof(IInterfaceForDiagnosticMethodInfoTests.GenericMethod),
-                    TestNamespace + nameof(IInterfaceForDiagnosticMethodInfoTests)
-                    };
-                }
+            yield return new object[] {
+                typeof(IGenericInterfaceForDiagnosticMethodInfoTests<object>).GetMethod(nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>.NonGenericMethod)).CreateDelegate<Action<IGenericInterfaceForDiagnosticMethodInfoTests<object>>>(),
+                nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>.NonGenericMethod),
+                TestNamespace + nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>) + "`1"
+            };
 
+            if (!hasGvmOpenDelegateBug)
+            {
                 yield return new object[] {
-                    typeof(IGenericInterfaceForDiagnosticMethodInfoTests<object>).GetMethod(nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>.NonGenericMethod)).CreateDelegate<Action<IGenericInterfaceForDiagnosticMethodInfoTests<object>>>(),
-                    nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>.NonGenericMethod),
-                    TestNamespace + nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>) + "`1"
+                typeof(IGenericInterfaceForDiagnosticMethodInfoTests<object>).GetMethod(nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>.GenericMethod)).MakeGenericMethod(typeof(object)).CreateDelegate<Action<IGenericInterfaceForDiagnosticMethodInfoTests<object>>>(),
+                nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>.GenericMethod),
+                TestNamespace + nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>) + "`1"
                 };
-
-                if (!hasGvmOpenDelegateBug)
-                {
-                    yield return new object[] {
-                    typeof(IGenericInterfaceForDiagnosticMethodInfoTests<object>).GetMethod(nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>.GenericMethod)).MakeGenericMethod(typeof(object)).CreateDelegate<Action<IGenericInterfaceForDiagnosticMethodInfoTests<object>>>(),
-                    nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>.GenericMethod),
-                    TestNamespace + nameof(IGenericInterfaceForDiagnosticMethodInfoTests<object>) + "`1"
-                    };
-                }
             }
 
             yield return new object[] {
@@ -76,6 +71,7 @@ namespace System.Diagnostics.Tests
         }
 
         [Theory]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/124344", typeof(PlatformDetection), nameof(PlatformDetection.IsAppleMobile), nameof(PlatformDetection.IsCoreCLR))]
         [MemberData(nameof(Create_OpenDelegate_TestData))]
         public void Create_OpenDelegate(Delegate del, string expectedName, string expectedTypeName)
         {

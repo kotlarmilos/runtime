@@ -3,6 +3,7 @@
 
 using Microsoft.VisualBasic.CompilerServices;
 using System;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace Microsoft.VisualBasic.Tests
@@ -31,6 +32,8 @@ namespace Microsoft.VisualBasic.Tests
             Assert.Equal("", errObj.Description);
             Assert.Null(errObj.GetException());
             Assert.Equal(0, Information.Erl());
+            Marshal.SetLastPInvokeError(42);
+            Assert.Equal(42, errObj.LastDllError);
         }
 
         [Fact]
