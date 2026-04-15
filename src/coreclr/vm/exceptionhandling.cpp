@@ -3415,6 +3415,7 @@ extern "C" CLR_BOOL QCALLTYPE EHEnumInitFromStackFrameIterator(StackFrameIterato
 
     pJitMan->JitTokenToMethodRegionInfo(MethToken, pMethodRegionInfo);
     pFrameIter->UpdateIsRuntimeWrappedExceptions();
+
     return TRUE;
 }
 
@@ -3832,10 +3833,16 @@ CLR_BOOL SfiInitWorker(StackFrameIterator* pThis, CONTEXT* pStackwalkCtx, CLR_BO
 
         if (!pThis->m_crawl.HasFaulted() && !pThis->m_crawl.IsIPadjusted())
         {
-            controlPC -= STACKWALK_CONTROLPC_ADJUST_OFFSET;
+#ifdef FEATURE_INTERPRETER
+            // Skip controlPC adjustment for interpreter methods — the bytecode IP
+            // already points to the correct instruction boundary for EH clause matching.
+            if (!pThis->m_crawl.GetCodeInfo()->IsInterpretedCode())
+#endif // FEATURE_INTERPRETER
+            {
+                controlPC -= STACKWALK_CONTROLPC_ADJUST_OFFSET;
+            }
         }
         pThis->SetAdjustedControlPC(controlPC);
-
         *pfIsExceptionIntercepted = CheckExceptionInterception(pThis, pExInfo);
         EH_LOG((LL_INFO100, "SfiInit (pass %d): Exception stack walking starting at IP=%p, SP=%p, method %s::%s\n",
             pExInfo->m_passNumber, controlPC, GetRegdisplaySP(pThis->m_crawl.GetRegisterSet()),
@@ -3992,11 +3999,28 @@ CLR_BOOL SfiNextWorker(StackFrameIterator* pThis, uint* uExCollideClauseIdx, CLR
                 EH_LOG((LL_INFO100, "SfiNext: current frame is filter funclet\n"));
                 isPropagatingToNativeCode = TRUE;
             }
+#ifdef FEATURE_INTERPRETER
+            // Detect interpreter-to-native transition past the last interpreted frame.
+            else if (codeInfo.IsInterpretedCode())
+            {
+                EH_LOG((LL_INFO100, "SfiNext: native transition past last interpreter frame\n"));
+                isPropagatingToNativeCode = TRUE;
+            }
+#endif // FEATURE_INTERPRETER
         }
 
         if (isPropagatingToNativeCode)
         {
             pFrame = pThis->m_crawl.GetFrame();
+
+#ifdef FEATURE_INTERPRETER
+            // Skip past InterpreterFrames so the unhandled-exception check
+            // reaches DebuggerU2MCatchHandlerFrame or FRAME_TOP.
+            while (pFrame != FRAME_TOP && pFrame->GetFrameIdentifier() == FrameIdentifier::InterpreterFrame)
+            {
+                pFrame = pFrame->PtrNextFrame();
+            }
+#endif // FEATURE_INTERPRETER
 
             // Check if there are any further managed frames on the stack or a catch for all exceptions in native code (marked by
             // DebuggerU2MCatchHandlerFrame with CatchesAllExceptions() returning true).
@@ -4134,7 +4158,12 @@ Exit:;
         TADDR controlPC = pThis->m_crawl.GetRegisterSet()->ControlPC;
         if (!pThis->m_crawl.HasFaulted() && !pThis->m_crawl.IsIPadjusted())
         {
-            controlPC -= STACKWALK_CONTROLPC_ADJUST_OFFSET;
+#ifdef FEATURE_INTERPRETER
+            if (!pThis->m_crawl.GetCodeInfo()->IsInterpretedCode())
+#endif // FEATURE_INTERPRETER
+            {
+                controlPC -= STACKWALK_CONTROLPC_ADJUST_OFFSET;
+            }
         }
         pThis->SetAdjustedControlPC(controlPC);
 
@@ -4301,6 +4330,7 @@ void DECLSPEC_NORETURN DispatchExSecondPass(ExInfo *pExInfo)
     pExInfo->m_passNumber = 2;
     uint startIdx = MaxTryRegionIdx;
     uint catchingTryRegionIdx = pExInfo->m_idxCurClause;
+
     CLR_BOOL unwoundReversePInvoke = false;
     CLR_BOOL isExceptionIntercepted = false;
     CLR_BOOL isValid = SfiInitWorker(pFrameIter, pExInfo->m_pExContext, ((uint8_t)pExInfo->m_kind & (uint8_t)ExKind::InstructionFaultFlag) != 0, &isExceptionIntercepted);
