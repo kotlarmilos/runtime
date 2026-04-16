@@ -128,10 +128,10 @@ Investigate code failures by checking `git log --oneline --since='3 days ago'` a
 
 ## Self-improvement
 
-When fix PRs get merged, update this document with what you learned. Open a separate PR for skill updates. Add findings to the relevant section above:
+When a mobile fix workflow requires updating this document, include the SKILL.md update in the same fix PR so the code change and the documented learning stay together. For standalone skill improvements, open a separate PR. Add findings to the relevant section above:
 - New failure patterns not yet documented
 - Code paths that turned out to be relevant
 - Recurring infrastructure issues and their workarounds
-- Knowledge discovered during investigation
+- Platform gotchas discovered during investigation
 
-Do not update this skill on PRs that already modify it or on changes unrelated to mobile platforms.
+Do not make unrelated edits to this skill on PRs that are not fixing or documenting mobile platform work.

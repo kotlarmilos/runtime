@@ -64,7 +64,7 @@ engine:
     COPILOT_GITHUB_TOKEN: ${{ case(needs.pre_activation.outputs.copilot_pat_number == '0', secrets.COPILOT_PAT_0, needs.pre_activation.outputs.copilot_pat_number == '1', secrets.COPILOT_PAT_1, needs.pre_activation.outputs.copilot_pat_number == '2', secrets.COPILOT_PAT_2, needs.pre_activation.outputs.copilot_pat_number == '3', secrets.COPILOT_PAT_3, needs.pre_activation.outputs.copilot_pat_number == '4', secrets.COPILOT_PAT_4, needs.pre_activation.outputs.copilot_pat_number == '5', secrets.COPILOT_PAT_5, needs.pre_activation.outputs.copilot_pat_number == '6', secrets.COPILOT_PAT_6, needs.pre_activation.outputs.copilot_pat_number == '7', secrets.COPILOT_PAT_7, needs.pre_activation.outputs.copilot_pat_number == '8', secrets.COPILOT_PAT_8, needs.pre_activation.outputs.copilot_pat_number == '9', secrets.COPILOT_PAT_9, secrets.COPILOT_GITHUB_TOKEN) }}
 
 concurrency:
-  group: "apple-mobile-scan"
+  group: "mobile-scan"
   cancel-in-progress: true
 
 tools:
@@ -89,6 +89,12 @@ safe-outputs:
     target: "*"
 
 timeout-minutes: 60
+
+network:
+  allowed:
+    - defaults
+    - dev.azure.com
+    - helix.dot.net
 ---
 
 # Mobile Platform Failure Scanner
@@ -104,15 +110,17 @@ Read `.github/skills/mobile-platforms/SKILL.md`.
 ## Step 2: Get the latest build
 
 ```bash
-curl -s "https://dev.azure.com/dnceng-public/public/_apis/build/builds?definitions=154&branchName=refs/heads/main&statusFilter=completed&\$top=1&api-version=7.1" | jq '.value[0] | {id, buildNumber, result}'
+BUILD_ID=$(curl -s "https://dev.azure.com/dnceng-public/public/_apis/build/builds?definitions=154&branchName=refs/heads/main&statusFilter=completed&\$top=1&api-version=7.1" | jq '.value[0].id')
+BUILD_RESULT=$(curl -s "https://dev.azure.com/dnceng-public/public/_apis/build/builds?definitions=154&branchName=refs/heads/main&statusFilter=completed&\$top=1&api-version=7.1" | jq -r '.value[0].result')
+echo "Build $BUILD_ID result: $BUILD_RESULT"
 ```
 
-If the result is `succeeded`, stop -- nothing to fix.
+If `BUILD_RESULT` is `succeeded`, stop -- nothing to fix.
 
 ## Step 3: Find failed mobile jobs
 
 ```bash
-curl -s "https://dev.azure.com/dnceng-public/public/_apis/build/timeline/$BUILD_ID?api-version=7.1" \
+curl -s "https://dev.azure.com/dnceng-public/public/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1" \
   | jq '[.records[] | select(.type == "Job" and .result == "failed") | select(.name | test("ios|tvos|maccatalyst|android"; "i")) | {name, id, log: .log.url}]'
 ```
 
@@ -132,12 +140,18 @@ Look for `error :` lines, stack traces, Helix test failure summaries, and non-ze
 
 Classify each failure as **infrastructure** or **code** using the criteria from the skill document.
 
+Before investigating, check if the failure matches a **known build error**. Search for open issues labeled `Known Build Error` in this repo. Known build error issues track recurring failures with error signatures in their body. If the failure matches a known build error, add a comment to the existing issue with the build details and skip the fix attempt.
+
+If the `ci-analysis` skill is available, use it to get structured failure data from AzDO and Helix before manual log reading.
+
 **Infrastructure failures:** Report them on existing tracking issues (with a machine/build table entry) or create a new issue if no similar one exists. Use appropriate labels: `area-Infrastructure` plus `os-ios`, `os-tvos`, `os-maccatalyst`, or `os-android`.
 
 **Code failures:** Check recent commits (`git log --oneline --since='3 days ago'`), trace the root cause, fix it, and create a draft PR.
 
 ## Step 6: Submit
 
+Before creating a PR, search for existing open PRs that already fix the same issue. If one exists, do not create a duplicate -- add a comment on the issue noting the existing PR instead.
+
 For each fix, create a draft PR referencing the issue. Post a comment on the issue with root cause analysis and a link to the PR.
 
-If you learned something new during investigation, update `.github/skills/mobile-platforms/SKILL.md` with the finding and include that change in the PR.
+If you learned something new during investigation that would help future triage, include an update to `.github/skills/mobile-platforms/SKILL.md` in the fix PR so the code change and the documented learning stay together.
