@@ -9,6 +9,7 @@ permissions:
 
 on:
   schedule: daily
+  workflow_dispatch:
   roles: [admin, maintainer, write]
 
   # ###############################################################
