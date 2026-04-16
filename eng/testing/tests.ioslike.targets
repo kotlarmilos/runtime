@@ -200,7 +200,20 @@
     <Message Importance="High" Text="** Compiling NativeAOT on build machine **" />
     <MSBuild Projects="$(BundleDir)publish/ProxyProjectForAOTOnHelix.proj"
              Targets="RunNativeAOTCompilation"
-             Properties="RuntimeSrcDir=$(RepoRoot);RuntimeConfig=$(Configuration);TargetOS=$(TargetOS);TargetArchitecture=$(TargetArchitecture);UseNativeAOTRuntime=true;Configuration=$(Configuration);NativeLib=$(NativeLib);IncludesTestRunner=$(IncludesTestRunner);IlcToolsPath=$(CoreCLRCrossILCompilerDir);IlcSdkPath=$(CoreCLRAotSdkDir);IlcFrameworkPath=$(IlcFrameworkPath);IlcFrameworkNativePath=$(IlcFrameworkNativePath);ILCompilerTargetsPath=$(CoreCLRBuildIntegrationDir)Microsoft.DotNet.ILCompiler.SingleEntry.targets" />
+             Properties="
+               RuntimeSrcDir=$(RepoRoot);
+               RuntimeConfig=$(Configuration);
+               TargetOS=$(TargetOS);
+               TargetArchitecture=$(TargetArchitecture);
+               UseNativeAOTRuntime=true;
+               Configuration=$(Configuration);
+               NativeLib=$(NativeLib);
+               IncludesTestRunner=$(IncludesTestRunner);
+               IlcToolsPath=$(CoreCLRCrossILCompilerDir);
+               IlcSdkPath=$(CoreCLRAotSdkDir);
+               IlcFrameworkPath=$(IlcFrameworkPath);
+               IlcFrameworkNativePath=$(IlcFrameworkNativePath);
+               ILCompilerTargetsPath=$(CoreCLRBuildIntegrationDir)Microsoft.DotNet.ILCompiler.SingleEntry.targets" />
   </Target>
 
   <Target Name="PrepareForAppleBuildApp">
