@@ -7,20 +7,22 @@ permissions:
   issues: read
   pull-requests: read
 
+if: "!github.event.repository.fork"
+
 on:
   schedule: daily
   workflow_dispatch:
   roles: [admin, maintainer, write]
 
-  # ###############################################################
-  # Override the COPILOT_GITHUB_TOKEN secret usage for the workflow
-  # with a randomly-selected token from a pool of secrets.
-  #
-  # As soon as organization-level billing is offered for Agentic
-  # Workflows, this stop-gap approach will be removed.
-  #
-  # See: /.github/actions/select-copilot-pat/README.md
-  # ###############################################################
+# ###############################################################
+# Override the COPILOT_GITHUB_TOKEN secret usage for the workflow
+# with a randomly-selected token from a pool of secrets.
+#
+# As soon as organization-level billing is offered for Agentic
+# Workflows, this stop-gap approach will be removed.
+#
+# See: /.github/actions/select-copilot-pat/README.md
+# ###############################################################
 
   # Add the pre-activation step of selecting a random PAT from the supplied secrets
   steps:
@@ -71,7 +73,7 @@ tools:
   github:
     toolsets: [pull_requests, repos, issues, search]
   edit:
-  bash: ["dotnet", "git", "find", "ls", "cat", "grep", "head", "tail", "wc", "curl", "jq"]
+  bash: ["dotnet", "git", "find", "ls", "cat", "grep", "head", "tail", "wc", "curl", "jq", "pwsh"]
 
 checkout:
   fetch-depth: 50
@@ -107,7 +109,7 @@ You scan the `runtime-extra-platforms` pipeline (AzDO definition 154, org `dncen
 
 Read `.github/skills/mobile-platforms/SKILL.md`.
 
-## Step 2: Get the latest build
+## Step 2: Get the latest build ID
 
 ```bash
 BUILD_ID=$(curl -s "https://dev.azure.com/dnceng-public/public/_apis/build/builds?definitions=154&branchName=refs/heads/main&statusFilter=completed&\$top=1&api-version=7.1" | jq '.value[0].id')
@@ -117,32 +119,30 @@ echo "Build $BUILD_ID result: $BUILD_RESULT"
 
 If `BUILD_RESULT` is `succeeded`, stop -- nothing to fix.
 
-## Step 3: Find failed mobile jobs
+## Step 3: Analyze failures with ci-analysis
+
+Use the ci-analysis skill script to get structured failure data:
 
 ```bash
-curl -s "https://dev.azure.com/dnceng-public/public/_apis/build/builds/$BUILD_ID/timeline?api-version=7.1" \
-  | jq '[.records[] | select(.type == "Job" and .result == "failed") | select(.name | test("ios|tvos|maccatalyst|android"; "i")) | {name, id, log: .log.url}]'
+pwsh .github/skills/ci-analysis/scripts/Get-CIStatus.ps1 -BuildId $BUILD_ID -ShowLogs
 ```
 
-If no mobile jobs failed, stop.
+The script fetches the build timeline, extracts failed jobs, retrieves Helix work item failures and console logs, checks for known build errors, and emits a `[CI_ANALYSIS_SUMMARY]` JSON block. Parse the JSON summary to get structured failure details including `errorCategory`, `errorSnippet`, and `helixWorkItems` for each failed job.
 
-## Step 4: Read failure logs
+## Step 4: Filter to mobile failures
 
-For each failed job, fetch its log and extract the error:
+From the ci-analysis output, keep only failures whose job names match mobile platforms:
 
-```bash
-curl -s "<log_url>" | tail -200
-```
+- Apple mobile: `ios`, `tvos`, `maccatalyst`, `ioslike`, `ioslikesimulator`
+- Android: `android`
 
-Look for `error :` lines, stack traces, Helix test failure summaries, and non-zero exit codes. Extract the machine name from the log if visible.
+Ignore failures in non-mobile jobs. If no mobile jobs failed, stop.
 
 ## Step 5: Triage each failure
 
-Classify each failure as **infrastructure** or **code** using the criteria from the skill document.
+Classify each mobile failure as **infrastructure** or **code** using the criteria from the skill document and the `errorCategory` from ci-analysis output.
 
-Before investigating, check if the failure matches a **known build error**. Search for open issues labeled `Known Build Error` in this repo. Known build error issues track recurring failures with error signatures in their body. If the failure matches a known build error, add a comment to the existing issue with the build details and skip the fix attempt.
-
-If the `ci-analysis` skill is available, use it to get structured failure data from AzDO and Helix before manual log reading.
+If ci-analysis already matched a failure to a **known build error** issue, add a comment to that issue with the build details and skip the fix attempt.
 
 **Infrastructure failures:** Report them on existing tracking issues (with a machine/build table entry) or create a new issue if no similar one exists. Use appropriate labels: `area-Infrastructure` plus `os-ios`, `os-tvos`, `os-maccatalyst`, or `os-android`.
 
@@ -154,4 +154,4 @@ Before creating a PR, search for existing open PRs that already fix the same iss
 
 For each fix, create a draft PR referencing the issue. Post a comment on the issue with root cause analysis and a link to the PR.
 
-If you learned something new during investigation that would help future triage, include an update to `.github/skills/mobile-platforms/SKILL.md` in the fix PR so the code change and the documented learning stay together.
+If you learned something new during investigation that would help future triage, record it as a comment on the issue (or create a new issue if none exists) so the team can later incorporate it into `.github/skills/mobile-platforms/SKILL.md`.

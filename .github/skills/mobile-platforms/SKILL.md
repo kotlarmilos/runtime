@@ -128,7 +128,7 @@ Investigate code failures by checking `git log --oneline --since='3 days ago'` a
 
 ## Self-improvement
 
-When a mobile fix workflow requires updating this document, include the SKILL.md update in the same fix PR so the code change and the documented learning stay together. For standalone skill improvements, open a separate PR. Add findings to the relevant section above:
+When a mobile fix workflow discovers new patterns or workarounds, record the finding as a comment on the tracking issue (or create a new issue labeled `area-Infrastructure-mono`) so the team can later incorporate it into this document. Add findings to the relevant section above:
 - New failure patterns not yet documented
 - Code paths that turned out to be relevant
 - Recurring infrastructure issues and their workarounds
