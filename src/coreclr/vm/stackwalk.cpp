@@ -2161,13 +2161,6 @@ StackWalkAction StackFrameIterator::NextRaw(void)
             PTR_InterpreterFrame pInterpreterFrame = dac_cast<PTR_InterpreterFrame>(GetSP(m_crawl.pRD->pCurrentContext));
             pInterpreterFrame->UpdateRegDisplay(m_crawl.pRD, m_flags & UNWIND_FLOATS);
             LOG((LF_GCROOTS, LL_INFO10000, "STACKWALK: Transitioning from last interpreted frame under InterpreterFrame %p to native frame (IP=%p, SP=%p)\n", pInterpreterFrame, GetControlPC(m_crawl.pRD), GetRegdisplaySP(m_crawl.pRD)));
-
-            // Advance past the InterpreterFrame to prevent re-entering the interpreter chain.
-            while (m_crawl.pFrame != FRAME_TOP &&
-                   dac_cast<TADDR>(m_crawl.pFrame) <= dac_cast<TADDR>(pInterpreterFrame))
-            {
-                m_crawl.GotoNextFrame();
-            }
         }
 #endif // FEATURE_INTERPRETER
 
@@ -2430,6 +2423,19 @@ void StackFrameIterator::ProcessCurrentFrame(void)
         {
             m_frameState = SFITER_INITIAL_NATIVE_CONTEXT;
             fDone = true;
+        }
+        else
+        {
+#ifdef FEATURE_INTERPRETER
+            if (m_crawl.pFrame != FRAME_TOP && m_crawl.pFrame->GetFrameIdentifier() == FrameIdentifier::InterpreterFrame)
+            {
+                // When stack walk starts on an explicit context in interpreted code, we need to skip the related interpreter
+                // frame, because the stack frame iterator assumes that when it is walking interpreted frames, it has
+                // already processed the interpreter frame. Without this skip, the stack walk would end up walking the
+                // interpreted frames twice.
+                m_crawl.GotoNextFrame();
+            }
+#endif // FEATURE_INTERPRETER
         }
     }
     else
