@@ -51,6 +51,9 @@
   <ItemGroup Condition="'$(TestNativeAot)' == 'true'">
     <RdXmlFile Include="$(MSBuildThisFileDirectory)default.rd.xml" />
     <TrimmerRootAssembly Include="TestUtilities" Condition="'$(SkipTestUtilitiesReference)' != 'true'" />
+    <!-- When OutputType is not Exe (Apple mobile NativeLib=Static case), ILLink doesn't
+         auto-root the main assembly. Root it explicitly so corelib is reachable. -->
+    <TrimmerRootAssembly Include="$(AssemblyName)" Condition="'$(TargetsAppleMobile)' == 'true'" />
   </ItemGroup>
 
   <ItemGroup>
