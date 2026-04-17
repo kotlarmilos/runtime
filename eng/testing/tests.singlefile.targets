@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <OutputType Condition="!('$(TargetOS)' == 'android' and '$(TestNativeAot)' == 'true') and !('$(TargetsAppleMobile)' == 'true' and '$(TestNativeAot)' == 'true')">Exe</OutputType>
+    <OutputType Condition="!('$(TargetOS)' == 'android' and '$(TestNativeAot)' == 'true')">Exe</OutputType>
 
     <BundleDir Condition="'$(BundleDir)' == ''">$([MSBuild]::NormalizeDirectory('$(OutDir)', 'publish'))</BundleDir>
     <RunScriptOutputPath>$([MSBuild]::NormalizePath('$(BundleDir)', '$(RunScriptOutputName)'))</RunScriptOutputPath>
@@ -51,9 +51,6 @@
   <ItemGroup Condition="'$(TestNativeAot)' == 'true'">
     <RdXmlFile Include="$(MSBuildThisFileDirectory)default.rd.xml" />
     <TrimmerRootAssembly Include="TestUtilities" Condition="'$(SkipTestUtilitiesReference)' != 'true'" />
-    <!-- When OutputType is not Exe (Apple mobile NativeLib=Static case), ILLink doesn't
-         auto-root the main assembly. Root it explicitly so corelib is reachable. -->
-    <TrimmerRootAssembly Include="$(AssemblyName)" Condition="'$(TargetsAppleMobile)' == 'true'" />
   </ItemGroup>
 
   <ItemGroup>
