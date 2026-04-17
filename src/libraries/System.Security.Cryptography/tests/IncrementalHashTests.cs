@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.DotNet.RemoteExecutor;
+using Microsoft.DotNet.XUnitExtensions;
 using Test.Cryptography;
 using Xunit;
 
@@ -134,6 +135,7 @@ namespace System.Security.Cryptography.Tests
 
         [Theory]
         [MemberData(nameof(GetHashAlgorithms))]
+        [ActiveIssue("https://github.com/dotnet/runtime/issues/124344", TestPlatforms.iOS | TestPlatforms.tvOS | TestPlatforms.MacCatalyst)]
         public static void Verify_Clone_Hash(HashAlgorithm referenceAlgorithm, HashAlgorithmName hashAlgorithmName)
         {
             VerifyCloneResult(referenceAlgorithm, () => IncrementalHash.CreateHash(hashAlgorithmName));
