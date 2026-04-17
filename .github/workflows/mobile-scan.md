@@ -7,7 +7,7 @@ permissions:
   issues: read
   pull-requests: read
 
-if: "!github.event.repository.fork"
+if: github.event.repository.fork == false
 
 on:
   schedule: daily
