@@ -47,8 +47,8 @@
 
   <!-- When trimming non-exe projects, root the whole intermediate assembly.
        The SDK no longer creates a TrimmerRootAssembly item for Library projects (see
-       Microsoft.NET.ILLink.targets), so update the metadata if the item exists and
-       add it outright when it does not. -->
+       Microsoft.NET.ILLink.targets), so replace any existing item and create it when
+       absent to ensure RootMode="all". -->
   <Target Name="RootEntireIntermediateAssembly" AfterTargets="PrepareForILLink" Condition="'$(OutputType)' != 'Exe'">
     <ItemGroup>
       <TrimmerRootAssembly Remove="@(IntermediateAssembly->'%(Filename)')" />
