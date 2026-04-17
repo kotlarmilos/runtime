@@ -31,16 +31,10 @@
     <NativeCompilationDuringPublish>false</NativeCompilationDuringPublish>
   </PropertyGroup>
 
-  <!-- On Apple mobile the test runner (AppleTestRunner.dll) is the IlcCompileInput while
-       test assemblies are IlcReference. Preserve all reflection metadata so that
-       module-level attributes, global fields/methods, and custom modifiers remain
-       available to reflection-heavy tests. -->
-  <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IncludesTestRunner)' == 'true'">
-    <NoWarn>$(NoWarn);IL3000;IL3001;IL3002;IL3003;IL3050;IL3051;IL3052;IL3053</NoWarn>
-    <TrimMode>partial</TrimMode>
-    <IlcTrimMetadata>false</IlcTrimMetadata>
-    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
-    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+  <!-- On Helix we only do app bundling + signing. ILC and trimming already ran on the build
+       machine during the test project's own Publish (via tests.singlefile.targets). -->
+  <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true'">
+    <SkipIlcCompile>true</SkipIlcCompile>
   </PropertyGroup>
 
   <!-- In library mode we depend on NativeAOT publish integration targets -->
@@ -67,12 +61,6 @@
   <Import Project="$(MSBuildThisFileDirectory)$(MSBuildThisFileName).props" />
 
   <Target Name="BundleTestAppleApp" DependsOnTargets="AppleBuild" />
-
-  <!-- Run NativeAOT compilation (trimming + ILC) on the build machine, producing the .o file.
-       App bundling and signing happen separately on Helix via BundleTestAppleApp with SkipIlcCompile=true. -->
-  <Target Name="RunNativeAOTCompilation"
-          Condition="'$(UseNativeAOTRuntime)' == 'true'"
-          DependsOnTargets="_PrepareForAppleBuildAppOnHelix;_InitializeCommonProperties;_BeforeAppleBuild;_AppleResolveReferences;_ScanAssembliesDecideLightweightMarshaler;_AppleNativeAotCompile" />
 
   <Target Name="_PrepareForAppleBuildAppOnHelix">
     <Message Text="** Building a proxy for the original test project, to AOT on helix. In order to do that, this recreates the original inputs for the *iOS/tvOS* part of the build. See $(MSBuildThisFileFullPath), and $(_PropsFile). **"
@@ -118,28 +106,6 @@
     <ItemGroup Condition="'$(UseRuntimeComponents)' == 'true'">
       <RuntimeComponents Include="diagnostics_tracing" />
       <RuntimeComponents Include="marshal-ilgen" />
-    </ItemGroup>
-  </Target>
-
-  <Target Name="_SetupNativeAOTLibraryTestInputs"
-          AfterTargets="ComputeIlcCompileInputs"
-          Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IncludesTestRunner)' == 'true'">
-    <ItemGroup>
-      <IlcCompileInput Remove="@(IlcCompileInput)" />
-      <IlcCompileInput Include="$(OriginalPublishDir)$(MainLibraryFileName)" />
-      <IlcReference Include="$(OriginalPublishDir)*.dll"
-                    Exclude="$(OriginalPublishDir)$(MainLibraryFileName)" />
-
-      <TrimmerRootAssembly Include="$(AssemblyName)" />
-      <TrimmerRootAssembly Include="AppleTestRunner" />
-      <TrimmerRootAssembly Include="TestUtilities" />
-
-      <TrimmerRootAssembly Include="xunit.execution.dotnet" />
-      <TrimmerRootAssembly Include="xunit.core" />
-      <TrimmerRootAssembly Include="xunit.runner.utility.netcoreapp10" />
-      <TrimmerRootAssembly Include="Microsoft.DotNet.XUnitExtensions" />
-
-      <RdXmlFile Include="$(OriginalPublishDir)*.rd.xml" />
     </ItemGroup>
   </Target>
 

@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <OutputType Condition="!('$(TargetOS)' == 'android' and '$(TestNativeAot)' == 'true')">Exe</OutputType>
+    <OutputType Condition="!('$(TargetOS)' == 'android' and '$(TestNativeAot)' == 'true') and !('$(TargetsAppleMobile)' == 'true' and '$(TestNativeAot)' == 'true')">Exe</OutputType>
 
     <BundleDir Condition="'$(BundleDir)' == ''">$([MSBuild]::NormalizeDirectory('$(OutDir)', 'publish'))</BundleDir>
     <RunScriptOutputPath>$([MSBuild]::NormalizePath('$(BundleDir)', '$(RunScriptOutputName)'))</RunScriptOutputPath>
@@ -40,7 +40,7 @@
     <SelfContained>true</SelfContained>
   </PropertyGroup>
 
-  <PropertyGroup Condition="('$(PublishSingleFile)' == 'true' or '$(TestNativeAot)' == 'true') and '$(CLRTestKind)' == '' and '$(IsFunctionalTest)' != 'true'">
+  <PropertyGroup Condition="('$(PublishSingleFile)' == 'true' or '$(TestNativeAot)' == 'true') and '$(CLRTestKind)' == '' and '$(IsFunctionalTest)' != 'true' and '$(TargetsAppleMobile)' != 'true'">
     <DefineConstants>$(DefineConstants);SINGLE_FILE_TEST_RUNNER</DefineConstants>
   </PropertyGroup>
 
@@ -56,7 +56,7 @@
   <ItemGroup>
     <Compile Include="$(CommonTestPath)SingleFileTestRunner\SingleFileTestRunner.cs"
              Link="Common\SingleFileTestRunner\SingleFileTestRunner.cs"
-             Condition="'$(CLRTestKind)' == '' and '$(IsFunctionalTest)' != 'true'" />
+             Condition="'$(CLRTestKind)' == '' and '$(IsFunctionalTest)' != 'true' and '$(TargetsAppleMobile)' != 'true'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -183,7 +183,7 @@
   </Target>
 
   <Target Name="PublishTestAsSingleFile"
-          Condition="'$(IsCrossTargetingBuild)' != 'true'"
+          Condition="'$(IsCrossTargetingBuild)' != 'true' and '$(TargetsAppleMobile)' != 'true'"
           AfterTargets="Build"
           DependsOnTargets="Publish;ArchiveTests" />
 

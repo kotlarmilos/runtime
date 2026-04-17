@@ -3,18 +3,23 @@
     <BundleTestAppTargets>$(BundleTestAppTargets);BundleTestAppleApp</BundleTestAppTargets>
   </PropertyGroup>
 
-  <!-- Trimming + ILC run on the build machine via _CompileNativeAOTOnBuildMachine
-       (using ProxyProjectForAOTOnHelix.proj's RunNativeAOTCompilation target).
-       Disable the SDK's ILLink during the test project's own publish step. -->
+  <!-- For NativeAOT on Apple mobile use the shared library-test NativeAOT infrastructure
+       (tests.singlefile.targets). The test project's own publish runs trimming and ILC,
+       producing a static library that AppleAppBuilder consumes in library-mode.
+       The test project becomes OutputType=Exe with AppleTestRunner.cs supplying Main,
+       matching how desktop NativeAOT library tests are structured. -->
   <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true'">
-    <PublishTrimmed>false</PublishTrimmed>
-    <SkipConfigureTrimming>true</SkipConfigureTrimming>
-    <DynamicCodeSupport>false</DynamicCodeSupport>
+    <TestNativeAot>true</TestNativeAot>
+    <NativeLib>Static</NativeLib>
+    <CustomNativeMain>true</CustomNativeMain>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IsFunctionalTest)' != 'true'">
-    <DefineConstants>$(DefineConstants);SINGLE_FILE_TEST_RUNNER</DefineConstants>
-  </PropertyGroup>
+  <ItemGroup Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(IncludesTestRunner)' != 'false'">
+    <Compile Include="$(CommonTestPath)AppleTestRunner\AppleTestRunner.cs"
+             Link="Common\AppleTestRunner\AppleTestRunner.cs" />
+    <PackageReference Include="Microsoft.DotNet.XHarness.TestRunners.Xunit"
+                      Version="$(MicrosoftDotNetXHarnessTestRunnersXunitVersion)" />
+  </ItemGroup>
 
   <PropertyGroup>
     <BuildTestsOn Condition="'$(ContinuousIntegrationBuild)' == 'true' and '$(Scenario)' == 'BuildAppleApps'">helix</BuildTestsOn>
@@ -64,7 +69,7 @@
     <AppleBuildDependsOn>PrepareForAppleBuildApp;$(AppleBuildDependsOn);_CopyTestArchive</AppleBuildDependsOn>
 
     <BundleTestAppleAppDependsOn Condition="'$(BuildTestsOn)' == 'local'">AppleBuild</BundleTestAppleAppDependsOn>
-    <BundleTestAppleAppDependsOn Condition="'$(BuildTestsOnHelix)' == 'true'">$(BundleTestAppleAppDependsOn);_BundleAOTTestAppleAppForHelix;_CompileNativeAOTOnBuildMachine;_CopyTestArchive</BundleTestAppleAppDependsOn>
+    <BundleTestAppleAppDependsOn Condition="'$(BuildTestsOnHelix)' == 'true'">$(BundleTestAppleAppDependsOn);_BundleAOTTestAppleAppForHelix;_CopyTestArchive</BundleTestAppleAppDependsOn>
   </PropertyGroup>
 
   <Target Name="BundleTestAppleApp" DependsOnTargets="$(BundleTestAppleAppDependsOn)" />
@@ -190,30 +195,6 @@
         Properties="@(_ApplePropertiesToPass)"
         Items="@(_AppleItemsToPass)"
         OutputFile="$(BundleDir)publish\ProxyProjectForAOTOnHelix.props" />
-  </Target>
-
-  <!-- Run NativeAOT trimming and ILC compilation on the build machine instead of Helix.
-       The produced .o file is included in the test archive sent to Helix,
-       where only app bundling and signing happen (with SkipIlcCompile=true). -->
-  <Target Name="_CompileNativeAOTOnBuildMachine"
-          Condition="'$(UseNativeAOTRuntime)' == 'true'">
-    <Message Importance="High" Text="** Compiling NativeAOT on build machine **" />
-    <MSBuild Projects="$(BundleDir)publish/ProxyProjectForAOTOnHelix.proj"
-             Targets="RunNativeAOTCompilation"
-             Properties="
-               RuntimeSrcDir=$(RepoRoot);
-               RuntimeConfig=$(Configuration);
-               TargetOS=$(TargetOS);
-               TargetArchitecture=$(TargetArchitecture);
-               UseNativeAOTRuntime=true;
-               Configuration=$(Configuration);
-               NativeLib=$(NativeLib);
-               IncludesTestRunner=$(IncludesTestRunner);
-               IlcToolsPath=$(CoreCLRCrossILCompilerDir);
-               IlcSdkPath=$(CoreCLRAotSdkDir);
-               IlcFrameworkPath=$(IlcFrameworkPath);
-               IlcFrameworkNativePath=$(IlcFrameworkNativePath);
-               ILCompilerTargetsPath=$(CoreCLRBuildIntegrationDir)Microsoft.DotNet.ILCompiler.SingleEntry.targets" />
   </Target>
 
   <Target Name="PrepareForAppleBuildApp">
