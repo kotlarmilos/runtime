@@ -188,6 +188,14 @@ Capture for each failure: (a) the failing test FQN, (b) the assertion or excepti
 
 ## Step 6: Triage each failure
 
+Before classifying, search for existing open PRs that already fix these failures:
+
+```
+gh search prs "[mobile]" --repo dotnet/runtime --state open --limit 10
+```
+
+Also search for PRs referencing the specific test name or library. If a fix PR already exists, reference it in your comment instead of creating a duplicate.
+
 Classify each mobile failure using the criteria from `.github/skills/mobile-platforms/SKILL.md` and the console log content you fetched:
 
 1. **Known build error** (ci-analysis already matched it): add a comment on that issue with the new build link and the work item name. Do not re-investigate.
