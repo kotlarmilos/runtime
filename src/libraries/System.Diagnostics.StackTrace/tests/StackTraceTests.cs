@@ -603,10 +603,10 @@ namespace System.Diagnostics.Tests
             }
         }
 
-        // On Android and Apple mobile, stack traces do not include file names and line numbers
+        // On Android mobile, stack traces do not include file names and line numbers
         // Tracking issue: https://github.com/dotnet/runtime/issues/124087
         private static string FileInfoPattern(string fileLinePattern) =>
-            PlatformDetection.IsAndroid || PlatformDetection.IsAppleMobile ? "" : fileLinePattern;
+            PlatformDetection.IsAndroid ? "" : fileLinePattern;
 
         public static Dictionary<string, string[]> MethodExceptionStrings = new()
         {
