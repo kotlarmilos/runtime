@@ -95,6 +95,7 @@ timeout-minutes: 60
 network:
   allowed:
     - defaults
+    - github
     - dev.azure.com
     - helix.dot.net
     - "*.blob.core.windows.net"
@@ -108,7 +109,16 @@ You scan the `runtime-extra-platforms` pipeline (AzDO definition 154, org `dncen
 
 ## Step 1: Load domain knowledge
 
-Read `.github/skills/mobile-platforms/SKILL.md`.
+Read `.github/skills/mobile-platforms/SKILL.md` for mobile platform triage criteria.
+
+For deeper Helix investigation patterns (console log analysis, pass/fail comparison, machine-specific diagnosis, XHarness false failure detection), fetch and read the helix-investigation skill from arcade-skills:
+
+```bash
+curl -sL "https://raw.githubusercontent.com/dotnet/arcade-skills/main/plugins/dotnet-dnceng/skills/helix-investigation/SKILL.md" -o /tmp/gh-aw/agent/helix-investigation-skill.md
+cat /tmp/gh-aw/agent/helix-investigation-skill.md
+```
+
+Use the helix-investigation workflow (especially Steps 3-6: console log download, failure pattern matching, pass/fail comparison, root cause categorization) when drilling into individual Helix work item failures in Step 5.
 
 ## Step 2: Get the latest build ID
 
@@ -163,33 +173,18 @@ From the ci-analysis output, keep only failures whose job names match mobile pla
 
 Ignore failures in non-mobile jobs. If no mobile jobs failed, stop.
 
-## Step 5: Drill into Helix console logs
+## Step 5: Drill into Helix failures
 
-**You MUST drill into Helix console logs before classifying any failure.** The `/console` endpoint on `helix.dot.net` redirects to Azure Blob Storage (`helixr*.blob.core.windows.net`, allowed by the network policy). Pass `-L` to `curl` to follow the redirect.
+**You MUST drill into Helix console logs before classifying any failure.** Follow the helix-investigation skill workflow (loaded in Step 1) for each failed mobile work item:
 
-Because the shell guard blocks `$(...)`, invoke the fetch via a reusable script that reads `JOB_ID` and `WORK_ITEM` from files:
+1. Enumerate Helix work items from ci-analysis output (job ID, work item name, exit code, machine)
+2. Download console logs and test result files per the skill's Step 3
+3. Analyze failure patterns per the skill's Step 4 (XHarness exit codes, false failure detection, timeout signatures)
+4. Compare passing vs failing runs per the skill's Step 5 for intermittent failures
 
-```bash
-cat > /tmp/gh-aw/agent/fetch-helix-log.sh <<'SH'
-#!/bin/bash
-set -e
-JOB_ID="$1"
-WORK_ITEM="$2"
-OUT="/tmp/gh-aw/agent/logs/${WORK_ITEM}"
-mkdir -p "$(dirname "$OUT")"
-curl -sL "https://helix.dot.net/api/2019-06-17/jobs/${JOB_ID}/workitems/${WORK_ITEM}/files"   -o "${OUT}.files.json"
-curl -sL "https://helix.dot.net/api/2019-06-17/jobs/${JOB_ID}/workitems/${WORK_ITEM}/console" -o "${OUT}.console.log"
-echo "=== $WORK_ITEM ($(wc -c < "${OUT}.console.log") bytes) ==="
-grep -B2 -A20 '\[FAIL\]' "${OUT}.console.log" | head -200 || true
-echo "--- error lines ---"
-grep -iE 'error|unhandled exception|abort|sigsegv|sigbus|sigabrt|fatal|not.*supported' "${OUT}.console.log" | head -50 || true
-SH
-bash /tmp/gh-aw/agent/fetch-helix-log.sh 730b4b98-bd0b-4578-99bc-0cb6a8eb9289 System.IO.Compression.Tests
-```
+**Network note:** The `/console` endpoint on `helix.dot.net` redirects to Azure Blob Storage (`helixr*.blob.core.windows.net`, allowed by the network policy). Pass `-L` to `curl` to follow the redirect. Because the shell guard blocks `$(...)`, write curl commands to a script file and run it with `bash`.
 
-Iterate over every failed mobile work item by writing a driver loop in another script. Capture for each failure: (a) the failing test FQN, (b) the assertion or exception, (c) the platform/arch, (d) whether the same work item repeats across jobs/runs.
-
-If `curl -sL` returns HTML or `<error>`, save it and inspect it; some endpoints want `Accept: application/json`. Cap logs larger than 1 MB with `head -c 500000 file > file.trimmed`.
+Capture for each failure: (a) the failing test FQN, (b) the assertion or exception, (c) the platform/arch, (d) whether the same work item repeats across jobs/runs.
 
 ## Step 6: Triage each failure
 
