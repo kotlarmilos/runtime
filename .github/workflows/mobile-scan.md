@@ -114,7 +114,7 @@ Read `.github/skills/mobile-platforms/SKILL.md` for mobile platform triage crite
 For deeper Helix investigation patterns (console log analysis, pass/fail comparison, machine-specific diagnosis, XHarness false failure detection), fetch and read the helix-investigation skill from arcade-skills:
 
 ```bash
-curl -sL "https://raw.githubusercontent.com/dotnet/arcade-skills/main/plugins/dotnet-dnceng/skills/helix-investigation/SKILL.md" -o /tmp/gh-aw/agent/helix-investigation-skill.md
+curl -sL "https://raw.githubusercontent.com/dotnet/arcade-skills/f866c30a5b58e76492c90fd089082eb5f7e81a87/plugins/dotnet-dnceng/skills/helix-investigation/SKILL.md" -o /tmp/gh-aw/agent/helix-investigation-skill.md
 cat /tmp/gh-aw/agent/helix-investigation-skill.md
 ```
 
