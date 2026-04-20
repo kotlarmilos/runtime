@@ -233,7 +233,7 @@ For each auto-fix:
 5. Open a draft PR with title `[mobile] <short description>`. The PR body must include: the build link, the failing test name, the Helix job+work item, the console log excerpt (sanitized), and the rationale for the fix class.
 6. **Set `labels` on the PR/issue** (pass them in the `create_pull_request` / `create_issue` safeoutputs call). Required labels:
    - **One or more OS labels** matching the affected platforms: `os-ios`, `os-tvos`, `os-maccatalyst`, `os-android`. If a fix applies to all Apple mobile, include `os-ios`, `os-tvos`, `os-maccatalyst`. If it affects all mobile, also include `os-android`.
-   - **One `area-*` label** matching the test's library (e.g., `area-System.IO.Compression`, `area-System.Runtime.Loader`, `area-Infrastructure-mobile` for build/infra). Pick from the existing repo labels -- do not invent new ones.
+   - **One `area-*` label** matching the test's library (e.g., `area-System.IO.Compression`, `area-System.Runtime.Loader`, `area-Infrastructure` for build/infra). Pick from the existing repo labels -- do not invent new ones.
    - Optional architecture label (`arch-arm64`, `arch-x64`) only if the failure is architecture-specific.
 7. Post a comment on any related existing issue linking the PR.
 
