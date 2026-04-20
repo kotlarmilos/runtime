@@ -1,6 +1,6 @@
 ---
 name: mobile-platforms
-description: "Domain knowledge for triaging and fixing .NET failures on Apple mobile (iOS, tvOS, MacCatalyst) and Android. Use when investigating runtime-extra-platforms pipeline failures, mobile test or build breakages, or when a code change needs mobile platform validation. Covers failure triage (infrastructure vs code), CI pipeline structure, platform-specific code paths, and NativeAOT compilation on mobile."
+description: "Domain knowledge for triaging and fixing .NET failures on Apple mobile (iOS, tvOS, MacCatalyst) and Android. Use when runtime-extra-platforms or mobile CI is failing, when investigating iOS, tvOS, MacCatalyst, iossimulator, tvossimulator, or Android build/test failures, or when a change touches mobile pipeline YAML, AppleAppBuilder/AndroidAppBuilder, code signing, provisioning, simulator/emulator startup, platform conditionals, or NativeAOT-on-mobile behavior. Covers failure triage (infrastructure vs code), CI pipeline structure, platform-specific code paths, and NativeAOT compilation on mobile."
 ---
 
 # Mobile Platforms
@@ -111,7 +111,7 @@ Report infrastructure failures on existing tracking issues with a table entry:
 
 If no matching issue exists, create one with `area-Infrastructure` and platform labels (`os-ios`, `os-tvos`, `os-maccatalyst`, `os-android`).
 
-For already tracked known issues, try to open a PR that fixes the underlying problem rather than just reporting another occurrence.
+For already tracked known issues, check whether the root cause is actionable. If a code or configuration fix is feasible, open a PR. If the issue is purely infrastructure (device provisioning, network), add occurrence data to the tracking issue instead.
 
 ### Code failures
 
@@ -120,7 +120,7 @@ Caused by recent commits. Indicators:
 - Error references managed code
 - Recent commit touched platform-sensitive code
 
-Investigate code failures by checking `git log --oneline --since='3 days ago'` and cross-referencing with the failing path. Common patterns:
+Investigate code failures by starting with `git log --oneline --since='3 days ago'` on the relevant path. If nothing matches, widen the window or check for intermittent patterns across recent builds. Common patterns:
 - New API missing mobile platform handling
 - `#if` conditional compilation missing a mobile target
 - P/Invoke change without a mobile native implementation
@@ -134,4 +134,4 @@ When a mobile fix workflow discovers new patterns or workarounds, record the fin
 - Recurring infrastructure issues and their workarounds
 - Platform gotchas discovered during investigation
 
-Do not make unrelated edits to this skill on PRs that are not fixing or documenting mobile platform work.
+Keep PRs focused on the mobile failure being fixed. Unrelated skill edits make review and blame harder, so avoid editing this file in PRs that are not fixing or documenting mobile platform work.

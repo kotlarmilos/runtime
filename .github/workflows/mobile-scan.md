@@ -105,7 +105,7 @@ network:
 
 You scan the `runtime-extra-platforms` pipeline (AzDO definition 154, org `dnceng-public`, project `public`) for Apple mobile and Android failures on `main`, triage them, and propose fixes.
 
-**Data safety:** Do not include secrets, tokens, internal URLs, machine credentials, or personally identifiable information in PR descriptions, issue comments, or commit messages. Sanitize log excerpts before posting: redact paths containing usernames, environment variables with secrets, and authentication headers.
+**Data safety:** CI logs can contain user paths, environment variables with secrets, and authentication headers. Sanitize log excerpts before posting in PR descriptions, issue comments, or commit messages by redacting these elements.
 
 ## Step 1: Load domain knowledge
 
@@ -203,9 +203,9 @@ Also search for PRs referencing the specific test name or library. If a fix PR a
 
 Classify each mobile failure using the criteria from `.github/skills/mobile-platforms/SKILL.md` and the console log content you fetched:
 
-1. **Known build error** (ci-analysis already matched it): add a comment on that issue with the new build link and the work item name. Do not re-investigate.
+1. **Known build error** (ci-analysis already matched it): add a comment on that issue with the new build link and the work item name. If the root cause has an actionable code fix, proceed to Step 7. If it is purely infrastructure, stop here for this failure.
 2. **Infrastructure**: provisioning/timeout/device-lost/network/Helix agent errors. Report on an existing tracking issue (or create one) with labels `area-Infrastructure` + the mobile `os-*` label. Do not attempt a code fix.
-3. **Code regression**: a test that was passing started failing after a recent commit on `main`. Check `git log --oneline --since='3 days ago' -- <likely-path>` and inspect diffs.
+3. **Code regression**: a test that was passing started failing after a recent commit on `main`. Start with `git log --oneline --since='3 days ago' -- <likely-path>` and inspect diffs. If nothing matches, widen the window or check for intermittent patterns.
 4. **Platform-unsupported test**: a test that depends on behavior mobile platforms cannot support (process spawning, dynamic code emit where AOT-only, filesystem semantics, desktop JIT). The test was previously passing only because the platform was not exercised.
 
 ## Step 7: Apply auto-fixes (do not emit noop)
@@ -245,7 +245,7 @@ For each auto-fix:
 
 ## Step 8: Submit
 
-Before creating a PR, search open PRs for the same fix (`gh search prs` via the github MCP). If one exists, add a comment on the tracking issue linking it instead of duplicating.
+If you found an existing fix PR in Step 6, add a comment on the tracking issue linking it instead of creating a duplicate.
 
 Only emit `noop` if, after Step 5 drill-down, the failure falls into none of the categories above **and** you have already filed or commented on an appropriate issue. A `noop` with "manual investigation required" is not acceptable -- in that case, file a tracking issue with the console log excerpt.
 
