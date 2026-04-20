@@ -144,35 +144,33 @@ namespace System.IO.Compression
         {
             ArgumentOutOfRangeException.ThrowIfNegative(inputLength);
 
-            // This is a managed implementation of zlib-ng's compressBound() formula from compress.c,
-            // which computes the maximum compressed size for zlib-wrapped deflate output.
+            // For inputs up to 2 GiB, delegate to the native compressBound() function, which returns
+            // the exact upper bound for the current platform's zlib implementation (classic zlib on
+            // mobile/Apple/Android, zlib-ng on desktop). This threshold ensures the native result
+            // fits in uint32 on all supported platforms (both classic zlib and zlib-ng).
+            if (inputLength <= (1L << 31))
+            {
+                return Interop.ZLib.compressBound((uint)inputLength);
+            }
+
+            // For larger inputs that exceed the uint range of the native API, use the classic zlib
+            // compressBound() formula extended to 64-bit arithmetic. This is a valid upper bound for
+            // any DEFLATE implementation, including both classic zlib and zlib-ng, since it exceeds
+            // the theoretical maximum compressed size from worst-case stored blocks.
             //
-            // The formula mirrors the NO_QUICK_STRATEGY disabled (quick strategy active) path in zlib-ng:
-            //   sourceLen
-            //   + (sourceLen == 0 ? 1 : 0)           // at least one byte for any input
-            //   + (sourceLen < 9 ? 1 : 0)             // one extra byte for lengths less than 9
-            //   + DEFLATE_QUICK_OVERHEAD(sourceLen)    // (sourceLen * (9 - 8) + 7) >> 3 = (sourceLen + 7) >> 3
-            //   + DEFLATE_BLOCK_OVERHEAD               // (3 + 15 + 6) >> 3 = 3
-            //   + ZLIB_WRAPLEN                         // 6 (zlib header + trailer)
+            // Classic zlib formula: sourceLen + (sourceLen >> 12) + (sourceLen >> 14) +
+            //                       (sourceLen >> 25) + 13
             //
-            // See: src/native/external/zlib-ng/compress.c (lines 88-94)
-            //      src/native/external/zlib-ng/zutil.h (lines 68-78)
+            // See: https://github.com/madler/zlib/blob/v1.3.1/zlib.h#L191-L193
             //
-            // We use a managed implementation instead of calling the native compressBound() P/Invoke
-            // to support input sizes beyond uint.MaxValue. The native function accepts z_uintmax_t,
-            // but the managed P/Invoke signature uses uint, limiting it to ~4 GB.
-            // For raw deflate (no zlib header/trailer), this slightly overestimates, which is safe.
-            //
-            // Compute the bound using ulong arithmetic so the intermediate additions cannot overflow
-            // for any non-negative long input. If the resulting bound cannot be represented as a long,
-            // reject the input rather than returning a wrapped value.
+            // Compute using ulong arithmetic so intermediate additions cannot overflow. If the
+            // resulting bound cannot be represented as a long, reject the input.
             ulong sourceLength = (ulong)inputLength;
             ulong maxCompressedLength = sourceLength
-                + (sourceLength == 0 ? 1u : 0u)
-                + (sourceLength < 9 ? 1u : 0u)
-                + ((sourceLength + 7) >> 3)
-                + 3   // DEFLATE_BLOCK_OVERHEAD: (3 + 15 + 6) >> 3
-                + 6;  // ZLIB_WRAPLEN: zlib header (2 bytes) + Adler32 trailer (4 bytes)
+                + (sourceLength >> 12)
+                + (sourceLength >> 14)
+                + (sourceLength >> 25)
+                + 13;
 
             if (maxCompressedLength > long.MaxValue)
             {
