@@ -126,14 +126,19 @@ Use the helix-investigation workflow (especially Steps 3-6: console log download
 
 - Each shell tool call runs in a fresh subshell -- environment variables do NOT persist across calls. Store intermediate values in files under `/tmp/gh-aw/agent/`.
 - Command substitution like `$(cat file)` and parameter expansion like `${var@P}` are blocked by the agent's shell guard. Instead: either write the full command to a script file and `bash` it, or use `xargs -I{}` to inject file contents.
+- **The shell guard also blocks `-o` and `>` output redirection in direct curl/command calls.** Always use `| tee /path/to/file` instead of `-o file` or `> file` for saving output.
 - OData query params that start with `$` (e.g. `$top`) must be URL-encoded as `%24top` in curl URLs to avoid the shell guard.
 
 ```bash
 mkdir -p /tmp/gh-aw/agent
-curl -sL "https://dev.azure.com/dnceng-public/public/_apis/build/builds?definitions=154&branchName=refs/heads/main&statusFilter=completed&%24top=1&api-version=7.1" -o /tmp/gh-aw/agent/build.json
-jq -r '.value[0].id'     /tmp/gh-aw/agent/build.json > /tmp/gh-aw/agent/build_id.txt
-jq -r '.value[0].result' /tmp/gh-aw/agent/build.json > /tmp/gh-aw/agent/build_result.txt
-cat /tmp/gh-aw/agent/build_id.txt /tmp/gh-aw/agent/build_result.txt
+curl -sL "https://dev.azure.com/dnceng-public/public/_apis/build/builds?definitions=154&branchName=refs/heads/main&statusFilter=completed&%24top=1&api-version=7.1" | tee /tmp/gh-aw/agent/build.json | jq -r '.value[0] | "id=\(.id) result=\(.result)"'
+```
+
+Then extract the build ID and result (use `tee` instead of `>`):
+
+```bash
+jq -r '.value[0].id'     /tmp/gh-aw/agent/build.json | tee /tmp/gh-aw/agent/build_id.txt
+jq -r '.value[0].result' /tmp/gh-aw/agent/build.json | tee /tmp/gh-aw/agent/build_result.txt
 ```
 
 If `build_result.txt` contains `succeeded`, stop -- nothing to fix.
@@ -182,7 +187,7 @@ Ignore failures in non-mobile jobs. If no mobile jobs failed, stop.
 3. Analyze failure patterns per the skill's Step 4 (XHarness exit codes, false failure detection, timeout signatures)
 4. Compare passing vs failing runs per the skill's Step 5 for intermittent failures
 
-**Network note:** The `/console` endpoint on `helix.dot.net` redirects to Azure Blob Storage (`helixr*.blob.core.windows.net`, allowed by the network policy). Pass `-L` to `curl` to follow the redirect. Because the shell guard blocks `$(...)`, write curl commands to a script file and run it with `bash`.
+**Network note:** The `/console` endpoint on `helix.dot.net` redirects to Azure Blob Storage (`helixr*.blob.core.windows.net`, allowed by the network policy). Pass `-L` to `curl` to follow the redirect. Use `| tee /path/to/file` to save output (the shell guard blocks `-o` and `>` redirection). For complex commands with `$(...)`, write them to a script file and run with `bash`.
 
 Capture for each failure: (a) the failing test FQN, (b) the assertion or exception, (c) the platform/arch, (d) whether the same work item repeats across jobs/runs.
 
