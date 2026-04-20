@@ -146,8 +146,10 @@ namespace System.IO.Compression
 
             // For inputs up to 2 GiB, delegate to the native compressBound() function, which returns
             // the exact upper bound for the current platform's zlib implementation (classic zlib on
-            // mobile/Apple/Android, zlib-ng on desktop). This threshold ensures the native result
-            // fits in uint32 on all supported platforms (both classic zlib and zlib-ng).
+            // mobile/Apple/Android, zlib-ng on desktop). The threshold of 2^31 ensures:
+            //   1. The input can safely be cast to uint for the P/Invoke signature.
+            //   2. The native result fits in uint32 on all platforms (classic zlib and zlib-ng both
+            //      return at most ~2.4 GiB for a 2 GiB input, well within uint32 range).
             if (inputLength <= (1L << 31))
             {
                 return Interop.ZLib.compressBound((uint)inputLength);
