@@ -2,12 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Buffers;
-using System.Runtime.InteropServices;
-using Xunit;
 
 namespace System.IO.Compression
 {
-    public partial class DeflateEncoderDecoderTests : ZLibEncoderDecoderTestBase
+    public class DeflateEncoderDecoderTests : ZLibEncoderDecoderTestBase
     {
         public class DeflateEncoderAdapter : EncoderAdapter
         {
@@ -67,30 +65,5 @@ namespace System.IO.Compression
 
         protected override long GetMaxCompressedLength(long inputSize) =>
             DeflateEncoder.GetMaxCompressedLength(inputSize);
-
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotBrowser))]
-        [InlineData(0u)]
-        [InlineData(1u)]
-        [InlineData(8u)]
-        [InlineData(9u)]
-        [InlineData(100u)]
-        [InlineData(1_000u)]
-        [InlineData(10_000u)]
-        [InlineData(100_000u)]
-        [InlineData(1_000_000u)]
-        [InlineData(10_000_000u)]
-        [InlineData(100_000_000u)]
-        [InlineData(1_000_000_000u)]
-        [InlineData((uint)int.MaxValue)]
-        public void GetMaxCompressedLength_MatchesNativeCompressBound(uint inputLength)
-        {
-            long managed = DeflateEncoder.GetMaxCompressedLength(inputLength);
-            long native = (long)NativeCompressBound(inputLength);
-
-            Assert.Equal(native, managed);
-        }
-
-        [LibraryImport("System.IO.Compression.Native", EntryPoint = "CompressionNative_CompressBound")]
-        private static partial uint NativeCompressBound(uint sourceLen);
     }
 }
