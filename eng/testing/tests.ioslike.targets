@@ -10,6 +10,9 @@
        matching how desktop NativeAOT library tests are structured. -->
   <PropertyGroup Condition="'$(UseNativeAOTRuntime)' == 'true'">
     <TestNativeAot>true</TestNativeAot>
+    <TestSingleFile Condition="'$(TestSingleFile)' == ''">true</TestSingleFile>
+    <PublishAotUsingRuntimePack Condition="'$(PublishAotUsingRuntimePack)' == ''">true</PublishAotUsingRuntimePack>
+    <_IsPublishing Condition="'$(_IsPublishing)' == ''">true</_IsPublishing>
     <NativeLib>Static</NativeLib>
     <CustomNativeMain>true</CustomNativeMain>
   </PropertyGroup>
