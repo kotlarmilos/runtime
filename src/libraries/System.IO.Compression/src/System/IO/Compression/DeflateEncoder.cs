@@ -145,34 +145,26 @@ namespace System.IO.Compression
             ArgumentOutOfRangeException.ThrowIfNegative(inputLength);
 
             // For inputs up to 2 GiB, delegate to the native compressBound() function, which returns
-            // the exact upper bound for the current platform's zlib implementation (classic zlib on
-            // mobile/Apple/Android, zlib-ng on desktop). The threshold of 2^31 ensures:
-            //   1. The input can safely be cast to uint for the P/Invoke signature.
-            //   2. The native result fits in uint32 on all platforms (classic zlib and zlib-ng both
-            //      return at most ~2.4 GiB for a 2 GiB input, well within uint32 range).
+            // the exact upper bound for the zlib implementation linked into the current process
+            // (either classic zlib or zlib-ng, depending on platform and build flags). The 2^31
+            // threshold keeps the value within the uint P/Invoke signature on all platforms.
             if (inputLength <= (1L << 31))
             {
                 return Interop.ZLib.compressBound((uint)inputLength);
             }
 
-            // For larger inputs that exceed the uint range of the native API, use the classic zlib
-            // compressBound() formula extended to 64-bit arithmetic. This is a valid upper bound for
-            // any DEFLATE implementation, including both classic zlib and zlib-ng, since it exceeds
-            // the theoretical maximum compressed size from worst-case stored blocks.
-            //
-            // Classic zlib formula: sourceLen + (sourceLen >> 12) + (sourceLen >> 14) +
-            //                       (sourceLen >> 25) + 13
-            //
-            // See: https://github.com/madler/zlib/blob/v1.3.1/zlib.h#L191-L193
-            //
-            // Compute using ulong arithmetic so intermediate additions cannot overflow. If the
-            // resulting bound cannot be represented as a long, reject the input.
+            // For larger inputs, compute the bound in managed code using zlib-ng's quick-strategy
+            // formula. It is strictly larger than classic zlib's compressBound(), so it is a safe
+            // upper bound regardless of which implementation is linked at runtime.
+            // See: src/native/external/zlib-ng/compress.c and zutil.h.
+            // Use ulong to avoid overflow; reject inputs whose bound does not fit in long.
             ulong sourceLength = (ulong)inputLength;
             ulong maxCompressedLength = sourceLength
-                + (sourceLength >> 12)
-                + (sourceLength >> 14)
-                + (sourceLength >> 25)
-                + 13;
+                + (sourceLength == 0 ? 1u : 0u)
+                + (sourceLength < 9 ? 1u : 0u)
+                + ((sourceLength + 7) >> 3)
+                + 3   // DEFLATE_BLOCK_OVERHEAD: (3 + 15 + 6) >> 3
+                + 6;  // ZLIB_WRAPLEN: zlib header (2 bytes) + Adler32 trailer (4 bytes)
 
             if (maxCompressedLength > long.MaxValue)
             {
