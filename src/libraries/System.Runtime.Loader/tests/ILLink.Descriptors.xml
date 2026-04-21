@@ -4,5 +4,4 @@
   <assembly fullname="ReferencedClassLibNeutralIsSatellite" />
   <assembly fullname="System.Runtime.Loader.Test.Assembly" />
   <assembly fullname="System.Runtime.Loader.Test.Assembly2" />
-  <assembly fullname="System.Runtime.Loader.Noop.Assembly" />
 </linker>
