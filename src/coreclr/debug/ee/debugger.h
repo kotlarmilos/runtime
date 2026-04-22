@@ -3487,7 +3487,7 @@ public:
     TypeHandle                         m_ownerTypeHandle;
     DebuggerEvalBreakpointInfoSegment* m_bpInfoSegment;
 
-    DebuggerEval(T_CONTEXT * pContext, DebuggerIPCE_FuncEvalInfo * pEvalInfo, bool fInException, DebuggerEvalBreakpointInfoSegment* bpInfoSegmentRX);
+    DebuggerEval(T_CONTEXT * pContext, DebuggerIPCE_FuncEvalInfo * pEvalInfo, DebuggerEvalBreakpointInfoSegment* bpInfoSegmentRX);
 
     bool Init()
     {

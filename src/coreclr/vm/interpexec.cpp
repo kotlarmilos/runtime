@@ -706,6 +706,11 @@ static const int32_t* InterpBreakpoint(const int32_t *ip, const InterpMethodCont
 
         const int32_t *savedBypassAddress = pThreadContext->m_bypassAddress;
         int32_t savedBypassOpcode = pThreadContext->m_bypassOpcode;
+        const int32_t *originalIp = ip;
+
+        // Clear the bypass before dispatching pending evals
+        pThreadContext->m_bypassAddress = NULL;
+        pThreadContext->m_bypassOpcode = 0;
 
         pThread->SetFilterContext(&ctx);
         EX_TRY
@@ -722,13 +727,22 @@ static const int32_t* InterpBreakpoint(const int32_t *ip, const InterpMethodCont
         EX_END_CATCH
         pThread->SetFilterContext(NULL);
 
-        pThreadContext->m_bypassAddress = savedBypassAddress;
-        pThreadContext->m_bypassOpcode = savedBypassOpcode;
-
         // The debugger may have modified the IP via SetIP (e.g. the setip command).
         // Return the potentially updated IP so the interpreter can resume from the
         // new position.
-        return (const int32_t*)(TADDR)GetIP(&ctx);
+        const int32_t *newIp = (const int32_t*)(TADDR)GetIP(&ctx);
+
+        // Only restore the bypass when the debugger is resuming to the original breakpoint IP.
+        // If SetIP moved execution elsewhere, the bypass (which was set up to skip the opcode
+        // at the original address exactly once) must be dropped; otherwise, if execution later
+        // returns to the original IP, the breakpoint would be incorrectly skipped.
+        if (newIp == originalIp)
+        {
+            pThreadContext->m_bypassAddress = savedBypassAddress;
+            pThreadContext->m_bypassOpcode = savedBypassOpcode;
+        }
+
+        return newIp;
     }
     return ip;
 }
