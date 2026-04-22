@@ -680,7 +680,6 @@ static const int32_t* InterpBreakpoint(const int32_t *ip, const InterpMethodCont
         exceptionRecord.ExceptionCode = STATUS_BREAKPOINT;
         exceptionRecord.ExceptionAddress = (PVOID)ip;
 
-        // Construct a CONTEXT for the debugger
         CONTEXT ctx;
         memset(&ctx, 0, sizeof(CONTEXT));
 
@@ -703,21 +702,15 @@ static const int32_t* InterpBreakpoint(const int32_t *ip, const InterpMethodCont
             STATUS_BREAKPOINT,
             pThread);
 
-        // Execute pending func evals set by the debugger's FuncEvalSetup, if any.
-        // DispatchNativeException clears the filter context before returning.
-        // Re-set it as filter context so FuncEvalHijackWorker can pass the managed-code / GC-safe-point checks.
         InterpThreadContext *pThreadContext = pThread->GetInterpThreadContext();
 
-        // Save and restore bypass state around func eval execution.
-        // Func eval triggers its own INTOP_BREAKPOINT callbacks which would
-        // overwrite the bypass that was set for the original breakpoint.
         const int32_t *savedBypassAddress = pThreadContext->m_bypassAddress;
         int32_t savedBypassOpcode = pThreadContext->m_bypassOpcode;
 
         pThread->SetFilterContext(&ctx);
         EX_TRY
         {
-            g_pDebugInterface->ExecutePendingInterpreterFuncEval(pThread);
+            g_pDebugInterface->ProcessAnyPendingEvals(pThread);
         }
         EX_CATCH
         {
@@ -729,7 +722,6 @@ static const int32_t* InterpBreakpoint(const int32_t *ip, const InterpMethodCont
         EX_END_CATCH
         pThread->SetFilterContext(NULL);
 
-        // Restore bypass state that may have been overwritten during func eval.
         pThreadContext->m_bypassAddress = savedBypassAddress;
         pThreadContext->m_bypassOpcode = savedBypassOpcode;
 

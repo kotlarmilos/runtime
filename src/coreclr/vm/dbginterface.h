@@ -392,12 +392,7 @@ public:
     virtual HRESULT IsMethodDeoptimized(Module *pModule, mdMethodDef methodDef, BOOL *pResult) = 0;
     virtual void MulticastTraceNextStep(DELEGATEREF pbDel, INT32 count) = 0;
     virtual void ExternalMethodFixupNextStep(PCODE address) = 0;
-
-#ifdef FEATURE_INTERPRETER
-    // Execute the pending func eval on the interpreter thread context, if any.
-    // Called from the interpreter's INTOP_BREAKPOINT handler after the debugger callback returns.
-    virtual void ExecutePendingInterpreterFuncEval(Thread* pThread) = 0;
-#endif // FEATURE_INTERPRETER
+    virtual void ProcessAnyPendingEvals(Thread* pThread) = 0;
 
 #endif //DACCESS_COMPILE
 };

@@ -1378,7 +1378,10 @@ DebuggerEval::DebuggerEval(CONTEXT * pContext, DebuggerIPCE_FuncEvalInfo * pEval
     m_aborting = FE_ABORT_NONE;
     m_aborted = false;
     m_completed = false;
-    m_evalUsesHijack = !fInException;
+    // Exception-time evals (fInException) and interpreter evals
+    // (bpInfoSegmentRX == NULL) both use alternate completion paths
+    // and must not be treated as hijacked frames.
+    m_evalUsesHijack = !fInException && (bpInfoSegmentRX != NULL);
     m_retValueBoxing = Debugger::NoValueTypeBoxing;
     m_vmObjectHandle = VMPTR_OBJECTHANDLE::NullPtr();
 
@@ -9864,27 +9867,6 @@ void Debugger::UnloadClass(mdTypeDef classMetadataToken,
 
 }
 
-#ifdef FEATURE_INTERPRETER
-/******************************************************************************
- * Execute pending func evals on the interpreter thread. Called from the
- * interpreter's INTOP_BREAKPOINT handler after the debugger callback returns.
- * Routes through ProcessAnyPendingEvals to share the dispatch logic with the
- * exception-time func-eval path.
- ******************************************************************************/
-void Debugger::ExecutePendingInterpreterFuncEval(Thread* pThread)
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_TRIGGERS;
-        MODE_COOPERATIVE;
-    }
-    CONTRACTL_END;
-
-    ProcessAnyPendingEvals(pThread);
-}
-#endif // FEATURE_INTERPRETER
-
 /******************************************************************************
  *
  ******************************************************************************/
@@ -14381,13 +14363,6 @@ HRESULT Debugger::FuncEvalSetup(DebuggerIPCE_FuncEvalInfo *pEvalInfo,
         EECodeInfo codeInfo((PCODE)GetIP(filterContext));
         fIsInterpreterThread = codeInfo.IsInterpretedCode();
     }
-    else if (!fInException && pThread->GetInterpThreadContext() != NULL)
-    {
-        // The thread is an interpreter thread but not at a breakpoint (no filter context).
-        // Non-exception evals on interpreter threads require a breakpoint stop.
-        LOG((LF_CORDB, LL_INFO1000, "D::FES: Func eval requested on non-breakpoint interpreter thread\n"));
-        return CORDBG_E_FUNC_EVAL_BAD_START_POINT;
-    }
     if (!fIsInterpreterThread)
 #endif // FEATURE_INTERPRETER
     {
@@ -14475,8 +14450,6 @@ HRESULT Debugger::FuncEvalSetup(DebuggerIPCE_FuncEvalInfo *pEvalInfo,
         // after the debugger callback returns.
         if (fIsInterpreterThread)
         {
-            pDE->m_evalUsesHijack = false;
-
             HRESULT hr = CheckInitPendingFuncEvalTable();
             if (FAILED(hr))
             {

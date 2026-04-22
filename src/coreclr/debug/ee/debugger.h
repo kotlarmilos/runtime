@@ -2575,11 +2575,6 @@ public:
 #ifndef DACCESS_COMPILE
     void MulticastTraceNextStep(DELEGATEREF pbDel, INT32 count);
     void ExternalMethodFixupNextStep(PCODE address);
-
-#ifdef FEATURE_INTERPRETER
-    void ExecutePendingInterpreterFuncEval(Thread* pThread);
-#endif // FEATURE_INTERPRETER
-
 #endif
 
 #ifdef DACCESS_COMPILE
@@ -3496,8 +3491,7 @@ public:
 
     bool Init()
     {
-        // Interpreter func evals and exception-time evals don't use the breakpoint instruction segment, so skip the executability check.
-        if (!m_evalUsesHijack)
+        if (m_bpInfoSegment == NULL)
             return true;
 
         _ASSERTE(DbgIsExecutable(&m_bpInfoSegment->m_breakpointInstruction, sizeof(m_bpInfoSegment->m_breakpointInstruction)));
