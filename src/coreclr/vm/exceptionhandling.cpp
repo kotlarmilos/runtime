@@ -3833,13 +3833,6 @@ CLR_BOOL SfiInitWorker(StackFrameIterator* pThis, CONTEXT* pStackwalkCtx, CLR_BO
 
         if (!pThis->m_crawl.HasFaulted() && !pThis->m_crawl.IsIPadjusted())
         {
-            // For interpreter methods the same -1 adjustment applies: pFrame->ip is
-            // advanced past the call opcode before descending into the callee
-            // (see interpexec.cpp, e.g. `ip += 4; pFrame->ip = ip;`), so on
-            // propagation we need to land back inside the call site for the
-            // half-open EH clause match. The faulting case (INTOP_THROW /
-            // INTOP_RETHROW / hardware fault) is handled by !HasFaulted() above,
-            // which is set via InterpreterFrame::m_isFaulting -> CONTEXT_EXCEPTION_ACTIVE.
             controlPC -= STACKWALK_CONTROLPC_ADJUST_OFFSET;
         }
         pThis->SetAdjustedControlPC(controlPC);
@@ -4014,15 +4007,6 @@ CLR_BOOL SfiNextWorker(StackFrameIterator* pThis, uint* uExCollideClauseIdx, CLR
             pFrame = pThis->m_crawl.GetFrame();
 
 #ifdef FEATURE_INTERPRETER
-            // The current explicit frame is the InterpreterFrame pushed by the
-            // last InterpExecMethod we just unwound out of. Skip exactly that
-            // one entry so the unhandled-exception check below can see the
-            // DebuggerU2MCatchHandlerFrame / FRAME_TOP that actually terminates
-            // the chain. Do NOT use a while-loop here: if two InterpreterFrames
-            // happen to be adjacent in the explicit frame chain (nested
-            // InterpExecMethod with no intervening explicit frame), skipping
-            // past both would bypass an outer interpreted catch and cause the
-            // unhandled-exception path to fire incorrectly.
             if (pFrame != FRAME_TOP && pFrame->GetFrameIdentifier() == FrameIdentifier::InterpreterFrame)
             {
                 pFrame = pFrame->PtrNextFrame();
@@ -4165,8 +4149,6 @@ Exit:;
         TADDR controlPC = pThis->m_crawl.GetRegisterSet()->ControlPC;
         if (!pThis->m_crawl.HasFaulted() && !pThis->m_crawl.IsIPadjusted())
         {
-            // Same reasoning as in SfiInitWorker: interp frames also need -1
-            // for half-open EH clause matching on propagation through a call.
             controlPC -= STACKWALK_CONTROLPC_ADJUST_OFFSET;
         }
         pThis->SetAdjustedControlPC(controlPC);
