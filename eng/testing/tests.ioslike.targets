@@ -24,6 +24,14 @@
                       Version="$(MicrosoftDotNetXHarnessTestRunnersXunitVersion)" />
   </ItemGroup>
 
+  <!-- AppleTestRunner.cs P/Invokes into "__Internal" to reach symbols defined by the
+       AppleAppBuilder-generated objc main (e.g. mono_ios_set_summary). With NativeAOT
+       these must be DirectPInvoke so ILC emits static references instead of runtime
+       dlopen("__Internal"). -->
+  <ItemGroup Condition="'$(UseNativeAOTRuntime)' == 'true'">
+    <DirectPInvoke Include="__Internal" />
+  </ItemGroup>
+
   <PropertyGroup>
     <BuildTestsOn Condition="'$(ContinuousIntegrationBuild)' == 'true' and '$(Scenario)' == 'BuildAppleApps'">helix</BuildTestsOn>
     <BuildTestsOn Condition="'$(BuildTestsOnHelix)' == 'true'">helix</BuildTestsOn>
@@ -39,8 +47,6 @@
     <!-- The command below sets default properties for runtime and library tests -->
     <_AOTBuildCommand>$(_AOTBuildCommand) /p:XHARNESS_EXECUTION_DIR=&quot;$XHARNESS_EXECUTION_DIR&quot; /p:RunAOTCompilation=$(RunAOTCompilation) /p:UseNativeAOTRuntime=$(UseNativeAOTRuntime) /p:TargetOS=$(TargetOS) /p:TargetArchitecture=$(TargetArchitecture) /p:UseMonoRuntime=$(UseMonoRuntime) /p:MonoForceInterpreter=$(MonoForceInterpreter) /p:MonoEnableLLVM=true /p:DevTeamProvisioning=$(DevTeamProvisioning) /p:UsePortableRuntimePack=$(UsePortableRuntimePack) /p:Configuration=$(Configuration)</_AOTBuildCommand>
     <_AOTBuildCommand Condition="'$(NativeLib)' != ''">$(_AOTBuildCommand) /p:NativeLib=$(NativeLib) /p:BundlesResources=$(BundlesResources) /p:ForceLibraryModeGenerateAppBundle=$(ForceLibraryModeGenerateAppBundle)</_AOTBuildCommand>
-    <!-- When NativeAOT compilation runs on the build machine, skip ILC on Helix -->
-    <_AOTBuildCommand Condition="'$(UseNativeAOTRuntime)' == 'true'">$(_AOTBuildCommand) /p:SkipIlcCompile=true</_AOTBuildCommand>
     <!-- Pass R2R properties for CoreCLR builds that are built on Helix -->
     <_AOTBuildCommand Condition="'$(UseMonoRuntime)' != 'true' and '$(UseNativeAOTRuntime)' != 'true'">$(_AOTBuildCommand) /p:PublishReadyToRun=true /p:PublishReadyToRunComposite=true /p:PublishReadyToRunContainerFormat=macho /p:StripSymbols=true</_AOTBuildCommand>
     <_AOTBuildCommand>$(_AOTBuildCommand) </_AOTBuildCommand>
@@ -101,6 +107,19 @@
       <BundleFiles Include="$(MonoProjectRoot)\msbuild\apple\data\*" TargetDir="publish" />
       <ExtraFiles Condition="'%(AppleAssembliesToBundle._IsNative)' == 'true'"
                    Include="@(AppleAssembliesToBundle)"          TargetDir="extraFiles\%(AppleAssembliesToBundle.RecursiveDir)" />
+    </ItemGroup>
+
+    <!-- For NativeAOT on Helix: the host Publish already ran ILC+trim and produced
+         lib$(AssemblyName).a (already in AppleNativeFilesToBundle above), but not a
+         fully-linked binary. The Xcode link + .app bundling happens on Helix via the
+         proxy project. Package the NativeAOT link inputs (PAL static libs from the
+         iOS runtime pack and ILC aotsdk libs/objects) so the proxy can link them. -->
+    <ItemGroup Condition="'$(UseNativeAOTRuntime)' == 'true'">
+      <_NativeAotHelixLinkInputs Include="$(MicrosoftNetCoreAppRuntimePackDir)/runtimes/$(TargetOS)-$(TargetArchitecture)/native/*.a" />
+      <_NativeAotHelixLinkInputs Include="$(CoreCLRAotSdkDir)*.a" />
+      <_NativeAotHelixLinkInputs Include="$(CoreCLRAotSdkDir)*.o" />
+      <BundleFiles Include="@(_NativeAotHelixLinkInputs)"
+                   TargetDir="publish\nativeaot-link-inputs" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(UseNativeAOTRuntime)' == 'true' and '$(HybridGlobalization)' == 'false'" >
@@ -210,7 +229,9 @@
       <HybridGlobalization>true</HybridGlobalization>
       <IncludesTestRunner Condition="'$(IncludesTestRunner)' == ''">true</IncludesTestRunner>
       <Optimized Condition="'$(Configuration)' == 'Release'">true</Optimized>
-      <MainLibraryFileName Condition="'$(MainLibraryFileName)' == '' and '$(IncludesTestRunner)' == 'true'">AppleTestRunner.dll</MainLibraryFileName>
+      <MainLibraryFileName Condition="'$(MainLibraryFileName)' == '' and '$(IncludesTestRunner)' == 'true' and '$(UseNativeAOTRuntime)' != 'true'">AppleTestRunner.dll</MainLibraryFileName>
+      <!-- AppleAppBuilder rejects MainLibraryFileName with Runtime=NativeAOT. -->
+      <MainLibraryFileName Condition="'$(UseNativeAOTRuntime)' == 'true'"></MainLibraryFileName>
 
       <AppleBuildDir>$(PublishDir)</AppleBuildDir>
       <AppleBundleDir>$(BundleDir)</AppleBundleDir>
