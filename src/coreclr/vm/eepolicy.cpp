@@ -23,8 +23,6 @@
 #include "eventtrace.h"
 #undef ExitProcess
 
-extern MethodDesc* g_pEnvironmentCallEntryPointMethodDesc;
-
 void SafeExitProcess(UINT exitCode, ShutdownCompleteAction sca = SCA_ExitProcessWhenShutdownComplete)
 {
     STRESS_LOG2(LF_SYNC, LL_INFO10, "SafeExitProcess: exitCode = %d sca = %d\n", exitCode, sca);

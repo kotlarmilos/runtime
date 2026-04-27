@@ -203,4 +203,9 @@ const int32_t* InterpreterWalker::GetSwitchTarget(int32_t caseIndex) const
     return m_ip + offset;
 }
 
+bool InterpreterWalker::IsCallFinally() const
+{
+    return m_opcode == INTOP_CALL_FINALLY;
+}
+
 #endif // FEATURE_INTERPRETER

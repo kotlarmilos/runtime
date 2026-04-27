@@ -307,6 +307,12 @@ HRESULT STDMETHODCALLTYPE DacDbiInterfaceImpl::UnwindStackWalkFrame(StackWalkHan
                         continue;
                     }
 
+                    // Skip Environment.CallEntryPoint ([StackTraceHidden]).
+                    if (pMD == g_pEnvironmentCallEntryPointMethodDesc)
+                    {
+                        continue;
+                    }
+
                     fIsAtEndOfStack = FALSE;
                 }
                 else

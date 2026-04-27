@@ -58,6 +58,8 @@ public:
     // Decode the instruction at the current IP
     void Decode();
 
+    bool IsCallFinally() const;
+
 private:
     // Resolve opcode at address, handling breakpoint patches
     int32_t ResolveOpcode(const int32_t* ip) const;
