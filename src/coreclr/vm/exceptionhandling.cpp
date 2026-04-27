@@ -3415,7 +3415,6 @@ extern "C" CLR_BOOL QCALLTYPE EHEnumInitFromStackFrameIterator(StackFrameIterato
 
     pJitMan->JitTokenToMethodRegionInfo(MethToken, pMethodRegionInfo);
     pFrameIter->UpdateIsRuntimeWrappedExceptions();
-
     return TRUE;
 }
 
@@ -3836,6 +3835,7 @@ CLR_BOOL SfiInitWorker(StackFrameIterator* pThis, CONTEXT* pStackwalkCtx, CLR_BO
             controlPC -= STACKWALK_CONTROLPC_ADJUST_OFFSET;
         }
         pThis->SetAdjustedControlPC(controlPC);
+
         *pfIsExceptionIntercepted = CheckExceptionInterception(pThis, pExInfo);
         EH_LOG((LL_INFO100, "SfiInit (pass %d): Exception stack walking starting at IP=%p, SP=%p, method %s::%s\n",
             pExInfo->m_passNumber, controlPC, GetRegdisplaySP(pThis->m_crawl.GetRegisterSet()),
@@ -4316,7 +4316,6 @@ void DECLSPEC_NORETURN DispatchExSecondPass(ExInfo *pExInfo)
     pExInfo->m_passNumber = 2;
     uint startIdx = MaxTryRegionIdx;
     uint catchingTryRegionIdx = pExInfo->m_idxCurClause;
-
     CLR_BOOL unwoundReversePInvoke = false;
     CLR_BOOL isExceptionIntercepted = false;
     CLR_BOOL isValid = SfiInitWorker(pFrameIter, pExInfo->m_pExContext, ((uint8_t)pExInfo->m_kind & (uint8_t)ExKind::InstructionFaultFlag) != 0, &isExceptionIntercepted);
