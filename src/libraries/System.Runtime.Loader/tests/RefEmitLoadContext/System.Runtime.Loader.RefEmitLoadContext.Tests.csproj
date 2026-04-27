@@ -15,15 +15,9 @@
                       CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- See note in ../DefaultContext/System.Runtime.Loader.DefaultContext.Tests.csproj:
-       ConfigureTrimming on Apple mobile sets TrimMode=link on all ResolvedFileToPublish items,
-       which would strip the reflection-only TestClass from Noop.Assembly.dll. -->
-  <Target Name="_PreserveNoopAssemblyFromTrimming"
-          AfterTargets="ConfigureTrimming"
-          Condition="'$(TargetsAppleMobile)' == 'true' and '$(EnableAggressiveTrimming)' == 'true'">
+  <Target Name="_PreserveNoopAssemblyFromTrimming" AfterTargets="ConfigureTrimming" Condition="'$(TargetsAppleMobile)' == 'true' and '$(EnableAggressiveTrimming)' == 'true'">
     <ItemGroup>
-      <ResolvedFileToPublish TrimMode="copy"
-                             Condition="'%(FileName)%(Extension)' == 'System.Runtime.Loader.Noop.Assembly.dll'" />
+      <ResolvedFileToPublish TrimMode="copy" Condition="'%(FileName)%(Extension)' == 'System.Runtime.Loader.Noop.Assembly.dll'" />
     </ItemGroup>
   </Target>
 </Project>

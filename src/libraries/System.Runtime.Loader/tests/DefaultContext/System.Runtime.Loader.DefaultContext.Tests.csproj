@@ -16,16 +16,9 @@
                       TargetPath="System.Runtime.Loader.Noop.Assembly_test.dll" />
   </ItemGroup>
 
-  <!-- On Apple mobile with aggressive trimming, ConfigureTrimming (eng/testing/tests.mobile.targets)
-       marks every ResolvedFileToPublish with TrimMode=link. The Noop assembly is loaded purely
-       via reflection at runtime, so trimming strips TestClass and reflection lookups fail.
-       Keep it as a copy so its types survive. -->
-  <Target Name="_PreserveNoopAssemblyFromTrimming"
-          AfterTargets="ConfigureTrimming"
-          Condition="'$(TargetsAppleMobile)' == 'true' and '$(EnableAggressiveTrimming)' == 'true'">
+  <Target Name="_PreserveNoopAssemblyFromTrimming" AfterTargets="ConfigureTrimming" Condition="'$(TargetsAppleMobile)' == 'true' and '$(EnableAggressiveTrimming)' == 'true'">
     <ItemGroup>
-      <ResolvedFileToPublish TrimMode="copy"
-                             Condition="'%(FileName)%(Extension)' == 'System.Runtime.Loader.Noop.Assembly_test.dll'" />
+      <ResolvedFileToPublish TrimMode="copy" Condition="'%(FileName)%(Extension)' == 'System.Runtime.Loader.Noop.Assembly_test.dll'" />
     </ItemGroup>
   </Target>
 </Project>
