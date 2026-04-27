@@ -178,7 +178,7 @@ class CallStackLogger
 
         MethodDesc* pMD = pCF->GetFunction();
 
-        // Skip Environment.CallEntryPoint so it doesn't appear in vanilla
+        // Skip Environment.CallEntryPoint so it doesn't appear in
         // unhandled exception experiences.
         if (pMD != nullptr && pMD == g_pEnvironmentCallEntryPointMethodDesc)
         {
