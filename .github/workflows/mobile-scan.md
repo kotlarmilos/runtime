@@ -93,9 +93,11 @@ safe-outputs:
       - "src/tests/**"
       - "eng/testing/**"
     labels: [agentic-workflows]
+    allowed-labels: [agentic-workflows]
   create-issue:
     max: 5
     labels: [agentic-workflows]
+    allowed-labels: ["Known Build Error", "blocking-clean-ci"]
 
 timeout-minutes: 90
 
@@ -162,7 +164,7 @@ Read the relevant skill before classifying / fixing. Skills live under `.github/
   - For JIT/GC stress: `[ActiveIssue("...", typeof(TestLibrary.PlatformDetection), nameof(TestLibrary.PlatformDetection.IsStressTest))]` or wrap with a guard helper that checks `DOTNET_JitStress`/`DOTNET_GCStress` env vars where the existing test infra supports it.
 - **Recurring flaky failure with a stable error signature** (≥ 2 occurrences on `main` in the scanned window, no obvious product fix in flight, blocking unrelated PRs) → file a **Known Build Error** issue (see "Known Build Error issue" section below). This lets Arcade Build Analysis auto-match future hits and unblock PRs.
 - **Build break on a single leg** (`Build product` or similar failed; `Send to Helix` skipped) → file a regular tracking issue (NOT a Known Build Error — Build Analysis explicitly forbids that for build breaks). Reference the failing source file or compile error from the log. Do not attempt an `allowed-files` PR for product code unless the fix is one-line and clearly limited to test infrastructure under `eng/testing/**`.
-- **Anything else** — product regression, native crash, multi-assembly cluster, JIT/GC product bug, infrastructure (queue exhaustion / dead-letter / device-lost) — file a tracking issue. Group all infra failures from one run into a single issue. Before filing, `search_issues` for an open issue with the matching `area-*` + `os-*` label and update its description in place rather than duplicating.
+- **Anything else** — product regression, native crash, multi-assembly cluster, JIT/GC product bug, infrastructure (queue exhaustion / dead-letter / device-lost) — file a tracking issue. Group all infra failures from one run into a single issue. Before filing, `search_issues` for an open issue whose title or body matches the same failure signature and update its description in place rather than duplicating.
 
 For each failure compute a `(definition_id, work_item_or_phase, queue, stress_mode, [FAIL] or compile-error signature)` signature. Look back through ~10 completed builds in the same definition to build first-seen-in-window timestamp and occurrence count.
 
@@ -200,9 +202,13 @@ Five H2 sections, in this exact order:
 2. **Impact on platforms** — bullet list of `(pipeline + platform/arch + Helix queue + stress mode + exit code)` per affected occurrence.
 3. **Errors log** — sanitized excerpt from the Helix console log (the `[FAIL]` line, the assertion or exception, and the `Failed tests:` summary). Strip JWTs, bearer tokens, `ApplicationGatewayAffinity*=`, and per-user paths.
 4. **First build it occurred** — first build in the scanned window where this signature appeared: build link, finish time, commit SHA, occurrences-in-window count. State explicitly that this is computed within the scanned window and may not be the true origin.
-5. **Linked issue** (optional) — if an `ActiveIssue` reference is used, link the issue and quote the matching label set.
+5. **Linked issue** (optional) — if an `ActiveIssue` reference is used, link the issue.
 
-Branch from `origin/main`. Stage only the files you intend to change with `git add <specific path>`; never `git add -A`. Verify with `git diff --name-only --cached` before committing. Labels: at least one `os-*` (`os-android`, `os-ios`, `os-tvos`, `os-maccatalyst`, `os-browser`, `os-wasi`, `os-windows`, `os-linux`, `os-osx`) where applicable, plus the test's `area-*` label, plus `arch-*` for arch-specific failures, plus the relevant configuration label (`disabled-test`, `jit-stress`, `gc-stress`, `pgo`, `nativeaot`, …) when present.
+Branch from `origin/main`. Stage only the files you intend to change with `git add <specific path>`; never `git add -A`. Verify with `git diff --name-only --cached` before committing.
+
+## Labels (hard restriction)
+
+You **MUST NOT** propose any labels in your output. The workflow auto-applies `agentic-workflows` to every issue and PR, and additionally permits **only** `Known Build Error` and `blocking-clean-ci` on Known Build Error issues (see below). Any other label — including `os-*`, `area-*`, `arch-*`, `disabled-test`, `jit-stress`, `gc-stress`, `pgo`, `nativeaot`, `untriaged`, etc. — is rejected by `safe-outputs.allowed-labels` and **will be dropped**. Do not invent new labels under any name. Area, OS, and arch triage is performed by a human reviewer after the issue/PR is filed.
 
 ## Issue body
 
@@ -210,7 +216,7 @@ Use this when a PR is not the right tool — product regression, native crash, m
 
 5. **Recommended action** — concrete next step: which area owner, which file likely needs the fix, or what investigation would localize the root cause. For JIT/GC issues include the exact stress mode env vars and the JIT method-name from the log. Reference any related PR or issue you found via `search_issues`. The issue must be actionable — a checkbox-ready task list, not just "FYI".
 
-Same `os-*`, `area-*`, `arch-*` labels.
+Do not include any labels in the issue creation request (see "Labels (hard restriction)" above).
 
 ## Known Build Error issue
 
@@ -246,9 +252,32 @@ Pull request: <link to the PR if the build was a PR build, otherwise omit this l
 
 Choose `ErrorMessage` (substring) by default. Use `ErrorPattern` only when a regex is genuinely needed and confirm it has no catastrophic backtracking. Set `BuildRetry: true` **only** for confirmed infra/queue-side flakes (dead-letter, device-lost, agent disconnect) where retrying is safe.
 
+### Signature specificity (mandatory)
+
+The `ErrorMessage` / `ErrorPattern` MUST uniquely identify **this specific failure mode**, not an entire category of crashes or build errors. A signature that would match unrelated future regressions is wrong and will mute legitimate failures.
+
+**Reject** signatures that consist only of:
+
+- A bare exit code or signal: `exitcode: 139`, `exit code 1`, `Segmentation fault`, `Aborted`, `SIGSEGV`, `SIGABRT`.
+- A generic tool name + failure verb: `Crossgen2 failed`, `ilasm failed`, `dotnet build failed`, `xharness exited`.
+- A bare exception type with no message: `BadImageFormatException`, `NullReferenceException`, `Fatal error. Invalid Program`, `Assertion failed`.
+- A bare `[FAIL]` line with only the test class name and no exception/assertion text.
+- Common infra strings: `Connection reset`, `Operation timed out`, `Resource temporarily unavailable`, `No space left on device`.
+
+**Prefer** signatures built from the most specific stable token in the log. In order of preference:
+
+1. The exact assertion text or exception **message** (not just the type), e.g. `Assertion failed 'comp->compHndBBtabCount == 0' in 'X' during 'Y'`.
+2. The fully-qualified failing test name combined with a specific exception message, e.g. `System.Text.Json.Tests.Utf8JsonReaderTests.TestFoo … System.InvalidOperationException: Cannot read value of type X`.
+3. A unique native stack frame or symbol from the crash dump excerpt, e.g. `coreclr!Compiler::fgMorphCall + 0x`.
+4. A specific JIT method-being-compiled marker plus the specific stress mode, when the crash is JIT/GC stress only.
+
+**Combining signature parts** — a JSON array in `ErrorMessage` is AND-matched (all substrings must be present in the failure log). Do not pad an array with generic tokens like `exitcode: 139` or `Crash` alongside the specific message — those tokens add no specificity and only risk false negatives if the log format changes. Include at most one supplementary token, and only when it is itself non-generic (e.g. a specific assembly name or test name).
+
+If you cannot produce a signature that meets the bar above, **do not file a Known Build Error**. File a regular tracking issue instead and call out in "Recommended action" that the failure needs a stable signature before it can be muted.
+
 Title: `Test failure: <fully.qualified.TestName>` for test failures, or `Known Build Error: <short description>` for non-test build errors.
 
-Labels: `Known Build Error`, `blocking-clean-ci`, plus the test's `area-*` label and any `os-*` / `arch-*` labels that apply.
+Labels: only `Known Build Error` and `blocking-clean-ci` are permitted on Known Build Error issues. Do not include any other label (no `area-*`, `os-*`, `arch-*`, etc.) — they will be rejected by `safe-outputs.allowed-labels`. Area and platform triage is added later by a human reviewer.
 
 Before filing, search for an existing Known Build Error issue with a matching `ErrorMessage` (`label:"Known Build Error" in:body "<signature>"`). If one exists and is open, do not duplicate — instead append the new build to the existing issue's body via an issue comment with the build link, leg, and timestamp.
 
