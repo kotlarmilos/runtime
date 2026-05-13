@@ -21,6 +21,11 @@ extends:
           buildConfig: checked
           platforms: ${{ parameters.platforms }}
           jobParameters:
+            # Default job timeout is 60 minutes, which is not enough for the
+            # windows-arm64 checked cross-build (arm64 toolchain + every JIT
+            # variant + libraries) on an amd64 agent. Other cross-builds also
+            # benefit from the larger budget.
+            timeoutInMinutes: 360
             buildArgs: -s clr+libs -c $(_BuildConfig) -lc Release
             postBuildSteps:
               - template: /eng/pipelines/coreclr/templates/build-native-test-assets-step.yml
