@@ -55,7 +55,7 @@ safe-outputs:
     labels: [agentic-workflows]
     allowed-labels: [agentic-workflows]
   push-to-pull-request-branch:
-    max: 1
+    max: 10
     allowed-files:
       - ".github/workflows/ci-failure-scan.md"
   update-pull-request:
@@ -100,13 +100,11 @@ Hard rules: no comments on issues/PRs, no edits outside `.github/workflows/ci-fa
      | tee /tmp/gh-aw/agent/tally_<run-id>.txt
    ```
 
-3. Read in-scope feedback. Issues and PRs are in scope when EITHER the `agentic-workflows` label is present OR the title starts with `[ci-scan]`. For each in-scope item updated in the last 30 days, fetch body + all comments via the `github` MCP tool (NOT `gh`, per the hard rule above). Quote any maintainer comment matching: "too broad", "doesn't match", "duplicate", "wrong label", "JSON malformed", "fix-forward", "don't disable", "Known issue did not match", "should be supported", "wait for #".
+3. Read in-scope feedback. Issues and PRs are in scope when the title starts with `[ci-scan]`. The `agentic-workflows` label alone is NOT sufficient — that label is shared with other agentic workflows in this repo, so scoping by label would drag in unrelated artifacts. Meta-issues filed against this workflow itself must also use the `[ci-scan]` title prefix to be picked up. For each in-scope item updated in the last 30 days, fetch body + all comments via the `github` MCP tool (NOT `gh`, per the hard rule above). Quote any maintainer comment matching: "too broad", "doesn't match", "duplicate", "wrong label", "JSON malformed", "fix-forward", "don't disable", "Known issue did not match", "should be supported", "wait for #".
 
-   Discover candidates with the `github` tool's `search_issues` and `search_pull_requests` over both label and title scopes, applying the 30-day window via the search query itself:
+   Discover candidates with the `github` tool's `search_issues` and `search_pull_requests` over the title scope, applying the 30-day window via the search query itself:
 
-   - `repo:dotnet/runtime is:issue label:agentic-workflows updated:>=<today-30d>`
    - `repo:dotnet/runtime is:issue in:title "[ci-scan]" updated:>=<today-30d>`
-   - `repo:dotnet/runtime is:pr label:agentic-workflows updated:>=<today-30d>`
    - `repo:dotnet/runtime is:pr in:title "[ci-scan]" updated:>=<today-30d>`
 
    Both the closed and open state buckets are in scope (closed items often carry the most informative feedback about why the artifact was rejected). For each result, read the body and comments via the `github` tool. When listing comments, request only the most recent 100 (one page at the MCP default size) — the 30-day `updated:>=...` window is the primary filter, and threads with >100 comments are vanishingly rare for `[ci-scan]` artifacts. If a result has >100 comments, fetch the latest page only; do NOT paginate further (older comments are out-of-scope by construction). Record `integrity-filtered: N` for any `[Filtered]` results and continue.
@@ -120,7 +118,7 @@ Hard rules: no comments on issues/PRs, no edits outside `.github/workflows/ci-fa
    - For a sample of in-scope KBEs, cross-check the signature against the cited failing log (`gh run view <id> --log-failed | head -300` or the AzDO/Helix URL in the body) and flag PASS-line collisions or paraphrased signatures.
    - Skip-reason vocabulary stability: any tally row using a `skipped:` reason NOT in the Step 6 'Recognized values' list in `ci-failure-scan.md` is flagged as `unknown-skip-reason: <verbatim string>`. The recognized values list is the source of truth; the feedback PR should propose adding new reasons there before they start appearing in tallies.
 
-5. Translate each failure mode into a targeted edit to `.github/workflows/ci-failure-scan.md`. Prefer rule-shaped edits (tighten Step 4.2, extend Step 4.7's phrase list, add a Bad/Good row, narrow KBE check 7) over wholesale rewrites. Read the file first; reuse the existing voice and section structure.
+5. Translate each failure mode into a targeted edit to `.github/workflows/ci-failure-scan.md`. Prefer rule-shaped edits (tighten Step 4.2, extend Step 4.7's phrase list, add a Bad/Good row, narrow KBE check 7) over wholesale rewrites. Read the file first; reuse the existing voice and section structure. Keep each failure mode's edits in its own logical group so they can be committed separately in Step 6.
 
 6. Emit changes. Check for an existing open `[ci-scan-feedback]` PR first:
 
@@ -131,12 +129,23 @@ Hard rules: no comments on issues/PRs, no edits outside `.github/workflows/ci-fa
 
    Branch on the result:
 
-   - Existing PR found -> emit `push_to_pull_request_branch` to add the new edits as a commit on that PR's branch, then emit `update_pull_request` to append a new dated section to its body. Do NOT call `create_pull_request`.
-   - No existing PR -> emit one `create_pull_request`. Title: `[ci-scan-feedback] <one-line summary>`.
+   - Existing PR found -> emit one `push_to_pull_request_branch` per failure mode (up to 10 per tick) to add each mode's edits as a separate commit on that PR's branch, then emit `update_pull_request` to append a new dated section to its body. Do NOT call `create_pull_request`.
+   - No existing PR -> emit one `create_pull_request` whose patch carries only the first failure mode's edits (the handler creates the branch with one initial commit derived from the PR title), then emit one `push_to_pull_request_branch` per additional failure mode (up to 9 follow-ups) to layer each on top as its own commit.
+
+   One commit per failure mode — reviewers should be able to revert or cherry-pick each independently. For pushes, the `message` MUST follow:
+
+   ```
+   [ci-scan-feedback] <failure mode name + file:line touched>   (subject; <= 72 chars)
+
+   What: <one-sentence description of the rule edit (which step/rubric/regex changed)>
+   Why: <triggering signal — quoted maintainer comment or rubric finding — with issue/PR # and link>
+   ```
+
+   For the initial commit on a fresh PR, the PR title plays the role of the subject — set it to `[ci-scan-feedback] <failure mode name>` when there's only one mode, or `[ci-scan-feedback] <one-line summary>` when several modes are batched (the per-mode subjects then live on the follow-up pushes). Do NOT bundle unrelated edits into one commit.
 
    The PR body (or the appended section, when updating) MUST contain:
    - `## Triggering signals` — bullet list of `(issue/PR #, quoted maintainer comment or rubric finding, link)`.
-   - `## Proposed edits` — bullet list of `(file:line-range, one-line rationale tied to a signal above)`.
+   - `## Proposed edits` — bullet list of `(commit sha or "pending push", file:line-range, one-line rationale tied to a signal above)` — one bullet per commit so reviewers can map signals -> commits 1:1.
    - `## Expected behavior change` — one paragraph naming the failure mode the next run will avoid.
 
    If no signal warrants an edit, skip this step (do NOT call `noop` — Step 7 still emits the tracker update).
