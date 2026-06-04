@@ -37,6 +37,9 @@ public class AppBuilderTask : Task
     [Required]
     public string[] RuntimeHeaders { get; set; } = [];
 
+    /// <summary>
+    /// Backward-compatible alias for <see cref="RuntimeHeaders"/>.
+    /// </summary>
     public string[] MonoRuntimeHeaders
     {
         get => RuntimeHeaders;

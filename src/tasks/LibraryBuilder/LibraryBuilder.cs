@@ -127,7 +127,7 @@ public class LibraryBuilderTask : AppBuilderTask
 
         if (!Enum.TryParse(Runtime, out targetRuntime))
         {
-            throw new ArgumentException($"The \"{nameof(LibraryBuilderTask)}\" task was given an invalid value for parameter \"{nameof(Runtime)}\".");
+            throw new ArgumentException($"The \"{nameof(LibraryBuilderTask)}\" task was given an invalid value \"{Runtime}\" for parameter \"{nameof(Runtime)}\". Valid values are: {string.Join(", ", Enum.GetNames(typeof(TargetRuntime)))}.");
         }
 
         if (targetRuntime != TargetRuntime.MonoVM)
