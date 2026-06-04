@@ -19,6 +19,7 @@ public class LibraryBuilderTask : AppBuilderTask
 {
     private bool isSharedLibrary = true;
     private string nativeLibraryType = "SHARED";
+    private TargetRuntime targetRuntime = TargetRuntime.MonoVM;
 
     private string targetOS = "";
     private bool usesAOTDataFile;
@@ -123,6 +124,16 @@ public class LibraryBuilderTask : AppBuilderTask
         List<string> sources = new List<string>();
         List<string> libs = new List<string>();
         List<string> linkerArgs = new List<string>();
+
+        if (!Enum.TryParse(Runtime, out targetRuntime))
+        {
+            throw new ArgumentException($"The \"{nameof(LibraryBuilderTask)}\" task was given an invalid value for parameter \"{nameof(Runtime)}\".");
+        }
+
+        if (targetRuntime != TargetRuntime.MonoVM)
+        {
+            throw new ArgumentException($"The \"{nameof(LibraryBuilderTask)}\" task does not yet support the \"{Runtime}\" runtime.");
+        }
 
         if (!ValidateValidTargetOS())
         {
@@ -344,7 +355,7 @@ public class LibraryBuilderTask : AppBuilderTask
         buildOptions.CompilerArguments.Add("-D HOST_ANDROID=1");
         buildOptions.CompilerArguments.Add("-fPIC");
         buildOptions.CompilerArguments.Add(IsSharedLibrary ? $"-shared -o {libraryName}" : $"-o {libraryName}");
-        buildOptions.IncludePaths.AddRange(MonoRuntimeHeaders);
+        buildOptions.IncludePaths.AddRange(RuntimeHeaders);
         buildOptions.LinkerArguments.Add($"--soname={libraryName}");
 
         // Google requires all the native libraries to be aligned to 16 bytes (for 16k memory page size)
@@ -386,7 +397,7 @@ public class LibraryBuilderTask : AppBuilderTask
         buildOptions.CompilerArguments.Add(IsSharedLibrary ? $"-dynamiclib -o {libraryName}" : $"-o {libraryName}");
         buildOptions.CompilerArguments.Add("-D HOST_APPLE_MOBILE=1");
         buildOptions.CompilerArguments.Add("-D FORCE_AOT=1");
-        buildOptions.IncludePaths.AddRange(MonoRuntimeHeaders);
+        buildOptions.IncludePaths.AddRange(RuntimeHeaders);
         buildOptions.NativeLibraryPaths.AddRange(libs);
         buildOptions.Sources.AddRange(sources);
         buildOptions.Sources.Add("preloaded-assemblies.c");

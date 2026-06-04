@@ -9,6 +9,7 @@
           DependsOnTargets="_GenerateBundle">
 
     <PropertyGroup>
+      <LibraryBuilderRuntime Condition="'$(LibraryBuilderRuntime)' == ''">MonoVM</LibraryBuilderRuntime>
       <_IsSharedLibrary>false</_IsSharedLibrary>
       <_IsSharedLibrary Condition="'$(NativeLib)' == 'shared'">true</_IsSharedLibrary>
       <_UsesCustomRuntimeInitCallback>false</_UsesCustomRuntimeInitCallback>
@@ -33,7 +34,8 @@
       ExtraLinkerArguments="@(_ExtraLinkerArgs)"
       ExtraSources="@(_ExtraLibrarySources)"
       IsSharedLibrary="$(_IsSharedLibrary)"
-      MonoRuntimeHeaders="@(RuntimeHeaders)"
+      Runtime="$(LibraryBuilderRuntime)"
+      RuntimeHeaders="@(RuntimeHeaders)"
       Name="$(AssemblyName)"
       OutputDirectory="$(BundleDir)"
       RuntimeIdentifier="$(RuntimeIdentifier)"

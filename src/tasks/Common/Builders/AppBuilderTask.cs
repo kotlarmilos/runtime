@@ -27,10 +27,21 @@ public class AppBuilderTask : Task
     public ITaskItem[] Assemblies { get; set; } = Array.Empty<ITaskItem>();
 
     /// <summary>
-    /// Path to Mono public headers (*.h)
+    /// Flavor of runtime assets being bundled. Valid values: MonoVM, CoreCLR, NativeAOT.
+    /// </summary>
+    public string Runtime { get; set; } = nameof(TargetRuntime.MonoVM);
+
+    /// <summary>
+    /// Path to runtime public headers (*.h).
     /// </summary>
     [Required]
-    public string[] MonoRuntimeHeaders { get; set; } = [];
+    public string[] RuntimeHeaders { get; set; } = [];
+
+    public string[] MonoRuntimeHeaders
+    {
+        get => RuntimeHeaders;
+        set => RuntimeHeaders = value ?? [];
+    }
 
     /// <summary>
     /// Path to store build artifacts
